@@ -1,7 +1,7 @@
 :root {
   color-scheme: light;
   font-family: system-ui, sans-serif;
-  background: #f5f1e8;
+  background: #e7eaee;
 }
 
 * {
@@ -18,7 +18,7 @@ body,
 }
 
 body {
-  background: #f5f1e8;
+  background: #e7eaee;
 }
 
 canvas {
