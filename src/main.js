@@ -3,6 +3,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import './style.css';
+import { startIntro, returnToIntro } from './introMarquee.js';
+import { hideWorks, showWorks, setWorksTransition } from './worksDiscs.js';
 
 const app = document.querySelector('#app');
 const scene = new THREE.Scene();
@@ -40,9 +42,9 @@ const DOOR_HEIGHT = LOCKER_HEIGHT - WALL * 2 - FOOT_H;
 const TOTAL_WIDTH = LOCKER_COUNT * LOCKER_WIDTH + (LOCKER_COUNT - 1) * GAP;
 const LOCKER_CENTER_Y = FOOT_H + (LOCKER_HEIGHT - FOOT_H) / 2;
 
-const camera = new THREE.OrthographicCamera(-4.3, 4.3, 2.4, -2.4, 0.1, 100);
-// Straight-on product view, matching the home framing.
-camera.position.set(0.25, 3.2, 16);
+const camera = new THREE.PerspectiveCamera(36, window.innerWidth / window.innerHeight, 0.1, 80);
+// Mild wide lens: the middle of the row stays head-on, the ends pick up a little side.
+camera.position.set(0, 3.18, 15);
 
 const target = new THREE.Vector3(0, LOCKER_CENTER_Y * 0.98, 0);
 camera.lookAt(target);
@@ -54,6 +56,8 @@ controls.dampingFactor = 0.06;
 controls.enablePan = false;
 controls.minZoom = 0.7;
 controls.maxZoom = 3.4;
+controls.minDistance = camera.position.distanceTo(target);
+controls.maxDistance = controls.minDistance;
 controls.minAzimuthAngle = -0.08;
 controls.maxAzimuthAngle = 0.08;
 controls.minPolarAngle = 1.25;
@@ -92,7 +96,7 @@ const softBounce = new THREE.PointLight(0xe7edf3, 3.5, 10, 2);
 softBounce.position.set(0, 2, 3);
 scene.add(softBounce);
 
-scene.fog = new THREE.Fog(0xf6f7fa, 16, 30);
+scene.fog = new THREE.Fog(0xf6f7fa, 32, 60);
 
 // Matte light gray — reference cabinet, not the butter yellow.
 const soft = { roughness: 0.88, metalness: 0.06 };
@@ -103,30 +107,9 @@ const materials = {
   recess: new THREE.MeshStandardMaterial({ color: 0x7d868f, roughness: 0.92, metalness: 0.05 }),
   handle: new THREE.MeshStandardMaterial({ color: 0x5f686f, roughness: 0.88, metalness: 0.08 }),
   interior: new THREE.MeshStandardMaterial({ color: 0xaeb6be, roughness: 0.92, metalness: 0.04 }),
-  gap: new THREE.MeshStandardMaterial({ color: 0x8d969e, roughness: 0.94, metalness: 0.04 }),
-  wire: new THREE.MeshStandardMaterial({ color: 0x6e777f, roughness: 0.4, metalness: 0.45 }),
-  shelf: new THREE.MeshStandardMaterial({ color: 0xd5dae0, roughness: 0.86, metalness: 0.04 }),
-  inset: new THREE.MeshStandardMaterial({ color: 0x9aa3ac, roughness: 0.9, metalness: 0.04 }),
   pages: new THREE.MeshStandardMaterial({ color: 0xf4f0e6, roughness: 0.9, metalness: 0 }),
-  bookRed: new THREE.MeshStandardMaterial({ color: 0xb23a32, roughness: 0.8, metalness: 0 }),
-  bookNavy: new THREE.MeshStandardMaterial({ color: 0x2c3f66, roughness: 0.8, metalness: 0 }),
-  bookCream: new THREE.MeshStandardMaterial({ color: 0xe7e0d2, roughness: 0.86, metalness: 0 }),
-  bookGray: new THREE.MeshStandardMaterial({ color: 0x8d939c, roughness: 0.84, metalness: 0 }),
-  balm: new THREE.MeshStandardMaterial({ color: 0x8e2430, roughness: 0.55, metalness: 0.08 }),
-  balmCap: new THREE.MeshStandardMaterial({ color: 0xf2f4f6, roughness: 0.4, metalness: 0.1 }),
-  lens: new THREE.MeshStandardMaterial({
-    color: 0x1c1e22,
-    roughness: 0.25,
-    metalness: 0.15,
-    transparent: true,
-    opacity: 0.55
-  }),
-  teaBox: new THREE.MeshStandardMaterial({ color: 0x3d7a45, roughness: 0.72, metalness: 0 }),
-  teaLabel: new THREE.MeshStandardMaterial({ color: 0xf3efe2, roughness: 0.8, metalness: 0 }),
-  paperSlip: new THREE.MeshStandardMaterial({ color: 0xd5e4f2, roughness: 0.9, metalness: 0 }),
   pinkNote: new THREE.MeshStandardMaterial({ color: 0xffc4d6, roughness: 0.95, metalness: 0 }),
   yellowNote: new THREE.MeshStandardMaterial({ color: 0xfff8d0, roughness: 0.95, metalness: 0 }),
-  tape: new THREE.MeshStandardMaterial({ color: 0xf7f2e8, roughness: 0.92, metalness: 0 }),
   // Soft-toy Warlock: deep lime base + emissive → neon under soft wrap / ACES.
   guitarBody: new THREE.MeshStandardMaterial({
     color: 0x2aa800,
@@ -171,11 +154,6 @@ const materials = {
   }),
   scissorHandle: new THREE.MeshStandardMaterial({ color: 0xe24b3c, roughness: 0.55, metalness: 0.08 }),
   scissorBlade: new THREE.MeshStandardMaterial({ color: 0xc5ced6, roughness: 0.28, metalness: 0.7 }),
-  posterCream: new THREE.MeshStandardMaterial({ color: 0xf4ead2, roughness: 0.9, metalness: 0 }),
-  posterInk: new THREE.MeshStandardMaterial({ color: 0x1f2430, roughness: 0.86, metalness: 0 }),
-  posterRed: new THREE.MeshStandardMaterial({ color: 0xc94b3a, roughness: 0.82, metalness: 0 }),
-  posterGold: new THREE.MeshStandardMaterial({ color: 0xf0c94a, roughness: 0.78, metalness: 0 }),
-  posterGrid: new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.88, metalness: 0 }),
   stickerY: new THREE.MeshStandardMaterial({ color: 0xffe066, roughness: 0.78, metalness: 0 }),
   stickerY2: new THREE.MeshStandardMaterial({ color: 0xffc107, roughness: 0.76, metalness: 0 }),
   stickerY3: new THREE.MeshStandardMaterial({ color: 0xfff3a0, roughness: 0.82, metalness: 0 }),
@@ -203,6 +181,7 @@ lockerBank.position.y = 0.05;
 scene.add(lockerBank);
 
 const doorPivots = [];
+let idBadge = null;
 
 // Positive Y: right-hinged door swings outward to ~120°.
 const DOOR_OPEN_ANGLE = (Math.PI * 2) / 3;
@@ -1164,61 +1143,52 @@ function varsityBadge(digit) {
 function createBackpack() {
   const pack = new THREE.Group();
   pack.name = 'backpack';
-  const shell = new THREE.MeshStandardMaterial({ color: 0x4eb6f5, roughness: 0.55, metalness: 0.02 });
-  const pocketMat = new THREE.MeshStandardMaterial({ color: 0x3aa4ea, roughness: 0.55, metalness: 0.02 });
-  const ink = new THREE.MeshStandardMaterial({ color: 0x1a1c1f, roughness: 0.7, metalness: 0.05 });
-  const cavity = new THREE.MeshStandardMaterial({ color: 0x1e6eab, roughness: 0.8, metalness: 0 });
+  const shell = new THREE.MeshStandardMaterial({ color: 0x5ec4f2, roughness: 0.62, metalness: 0.02 });
+  const pocketMat = new THREE.MeshStandardMaterial({ color: 0x3eace6, roughness: 0.62, metalness: 0.02 });
+  const ink = new THREE.MeshStandardMaterial({ color: 0x1c1e22, roughness: 0.72, metalness: 0.04 });
+  const cavity = new THREE.MeshStandardMaterial({ color: 0x1a6aa3, roughness: 0.85, metalness: 0 });
 
-  const body = roundedMesh(0.5, 0.42, 0.18, 0.08, shell, 3);
-  body.position.y = 0.04;
+  const body = roundedMesh(0.46, 0.52, 0.16, 0.07, shell, 3);
+  body.position.y = 0.02;
   pack.add(body);
-  const mouth = roundedMesh(0.36, 0.1, 0.1, 0.03, cavity, 2);
-  mouth.position.set(0, 0.22, 0.04);
+  const mouth = roundedMesh(0.32, 0.08, 0.1, 0.03, cavity, 2);
+  mouth.position.set(0, 0.22, 0.02);
   pack.add(mouth);
-  const hood = roundedMesh(0.34, 0.16, 0.1, 0.05, shell, 2);
-  hood.position.set(0, 0.32, -0.02);
-  hood.rotation.x = -0.45;
-  pack.add(hood);
 
-  const pocket = roundedMesh(0.42, 0.24, 0.08, 0.04, pocketMat, 2);
-  pocket.position.set(0, -0.08, 0.1);
+  const pocket = roundedMesh(0.4, 0.22, 0.07, 0.04, pocketMat, 2);
+  pocket.position.set(0, -0.1, 0.08);
   pack.add(pocket);
-  const zip = boxMesh(0.28, 0.01, 0.012, ink);
-  zip.position.set(-0.02, 0.0, 0.14);
-  zip.rotation.z = -0.55;
+  const zip = boxMesh(0.34, 0.012, 0.014, ink);
+  zip.position.set(0, 0.0, 0.12);
+  zip.rotation.z = -0.18;
   pack.add(zip);
-  const tag = boxMesh(0.12, 0.035, 0.008, ink);
-  tag.position.set(0, -0.14, 0.145);
+  const tag = boxMesh(0.1, 0.032, 0.008, ink);
+  tag.position.set(0, -0.16, 0.125);
   pack.add(tag);
-  const strap = boxMesh(0.045, 0.22, 0.02, ink);
-  strap.position.set(0.02, -0.32, 0.04);
+  const strap = boxMesh(0.04, 0.28, 0.016, ink);
+  strap.position.set(0, -0.38, 0.02);
   pack.add(strap);
 
-  const yellow = boxMesh(0.16, 0.12, 0.03, popMat(0xf0d15a));
-  yellow.position.set(-0.02, 0.32, 0.02);
+  const yellow = boxMesh(0.18, 0.16, 0.018, popMat(0xf2d35a));
+  yellow.position.set(-0.02, 0.36, 0.02);
+  yellow.rotation.z = 0.04;
   pack.add(yellow);
-  const orange = boxMesh(0.18, 0.12, 0.025, popMat(0xff6a3d));
-  orange.position.set(0.12, 0.28, 0.05);
-  orange.rotation.z = -0.35;
+  const orange = boxMesh(0.16, 0.18, 0.018, popMat(0xf0783a));
+  orange.position.set(0.1, 0.34, 0.045);
+  orange.rotation.z = -0.28;
   pack.add(orange);
-  const red = boxMesh(0.03, 0.14, 0.08, popMat(0xe23b3b));
-  red.position.set(-0.16, 0.3, 0);
+  const red = boxMesh(0.028, 0.16, 0.07, popMat(0xe23b3b));
+  red.position.set(-0.14, 0.32, 0);
+  red.rotation.z = 0.08;
   pack.add(red);
-  const tube = cylinder(0.018, 0.018, 0.12, popMat(0xff8aa8), 10);
-  tube.rotation.z = Math.PI / 2;
-  tube.position.set(0.04, 0.24, 0.06);
-  pack.add(tube);
 
-  const scissors = boxMesh(0.012, 0.1, 0.012, popMat(0x39c16a));
-  scissors.position.set(-0.06, -0.06, 0.15);
-  pack.add(scissors);
-  const calc = roundedMesh(0.08, 0.07, 0.02, 0.012, popMat(0xff8eb8), 1);
-  calc.position.set(0.06, -0.05, 0.15);
-  pack.add(calc);
-  const pen = cylinder(0.008, 0.008, 0.1, popMat(0xf2f4f6), 6);
-  pen.rotation.z = 0.4;
-  pen.position.set(0.14, -0.04, 0.15);
+  const pen = cylinder(0.009, 0.009, 0.14, popMat(0x3dbe4a), 8);
+  pen.rotation.z = 0.55;
+  pen.position.set(-0.06, -0.02, 0.13);
   pack.add(pen);
+  const calc = roundedMesh(0.09, 0.07, 0.016, 0.01, popMat(0xf7a8c4), 1);
+  calc.position.set(0.06, -0.04, 0.13);
+  pack.add(calc);
   return pack;
 }
 
@@ -1287,53 +1257,67 @@ function createIdBadge() {
   const badge = new THREE.Group();
   badge.name = 'id-badge';
   const metal = new THREE.MeshStandardMaterial({ color: 0xd7dee6, roughness: 0.28, metalness: 0.72 });
-  const pink = popMat(0xf4c6d8);
   const petal = popMat(0xf09ab8);
   const gold = popMat(0xe2b340);
   const hot = popMat(0xe23b78);
   const sky = popMat(0x3aa7d6);
+  const plastic = new THREE.MeshStandardMaterial({
+    color: 0xeee8dc,
+    roughness: 0.34,
+    metalness: 0.14,
+  });
 
-  const shell = roundedMesh(0.72, 0.5, 0.028, 0.045, materials.acrylic, 2);
-  badge.add(shell);
+  const CARD_W = 0.7;
+  const CARD_H = 0.46;
+  const CARD_D = 0.1;
+  const faceZ = CARD_D / 2;
 
-  const card = coverMesh(0.62, 0.4, (ctx, w, h) => {
+  const body = roundedMesh(CARD_W, CARD_H, CARD_D, 0.03, plastic, 2);
+  badge.add(body);
+
+  const card = coverMesh(CARD_W - 0.018, CARD_H - 0.018, (ctx, w, h) => {
     ctx.fillStyle = '#f7f3ea';
     ctx.fillRect(0, 0, w, h);
     ctx.fillStyle = '#1c1c1c';
     ctx.textAlign = 'left';
-    ctx.font = 'bold 36px Georgia, serif';
+    ctx.font = 'bold 34px Georgia, serif';
     ctx.fillText('Studio Card', 28, 78);
     ctx.font = '16px sans-serif';
     ctx.fillText('THE HOLDER OF THIS CARD', 28, 108);
     ctx.font = '18px sans-serif';
-    ['NAME:  Yujie', 'BASED IN:  Campus', 'SPECIALTY:  Design'].forEach((line, i) => {
+    ['NAME:  WANG WENJI', 'BASED IN:  Campus', 'SPECIALTY:  Design'].forEach((line, i) => {
       ctx.fillText(line, 28, 168 + i * 36);
       ctx.beginPath();
       ctx.moveTo(120, 174 + i * 36);
-      ctx.lineTo(300, 174 + i * 36);
+      ctx.lineTo(250, 174 + i * 36);
       ctx.stroke();
     });
     ctx.font = 'bold 16px sans-serif';
     ctx.fillText('MOTTO:  MAKE THINGS', 28, h - 28);
-    ctx.textAlign = 'right';
     ctx.font = '14px sans-serif';
-    ctx.fillText('ID NO. 004', w - 24, 48);
-
-    ctx.fillStyle = '#e4e0d8';
-    ctx.fillRect(w * 0.58, h * 0.22, w * 0.34, h * 0.52);
-    ctx.fillStyle = '#f2c9a8';
-    ctx.beginPath();
-    ctx.ellipse(w * 0.75, h * 0.42, 28, 34, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#3a2a24';
-    ctx.fillRect(w * 0.66, h * 0.28, w * 0.18, 36);
-    ctx.fillStyle = '#d8c4b0';
-    ctx.fillRect(w * 0.64, h * 0.52, w * 0.22, h * 0.2);
-    ctx.strokeStyle = '#1c1c1c';
-    ctx.strokeRect(w * 0.62, h * 0.7, w * 0.3, 16);
+    ctx.fillText('ID NO. 004', 28, 48);
   });
-  card.position.z = 0.016;
+  card.position.z = faceZ + 0.006;
   badge.add(card);
+
+  const portrait = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.5, 0.5),
+    new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      transparent: true,
+      alphaTest: 0.12,
+      roughness: 0.55,
+      metalness: 0,
+    }),
+  );
+  portrait.position.set(0.16, 0.01, faceZ + 0.014);
+  badge.add(portrait);
+  new THREE.TextureLoader().load('/assets/studio-portrait.png', (tex) => {
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 8;
+    portrait.material.map = tex;
+    portrait.material.needsUpdate = true;
+  });
 
   const ticket = coverMesh(0.42, 0.2, (ctx, w, h) => {
     ctx.fillStyle = '#f6d5e4';
@@ -1345,15 +1329,15 @@ function createIdBadge() {
     ctx.font = '14px sans-serif';
     ctx.fillText('FORM, COLOR, MAKE', w / 2, h * 0.68);
   });
-  ticket.position.set(-0.12, 0.28, -0.01);
+  ticket.position.set(-0.12, 0.3, faceZ + 0.01);
   ticket.rotation.z = 0.12;
   badge.add(ticket);
 
-  const clip = boxMesh(0.09, 0.18, 0.02, metal);
-  clip.position.set(0.04, 0.32, 0.03);
+  const clip = boxMesh(0.09, 0.18, 0.03, metal);
+  clip.position.set(0.04, 0.34, faceZ + 0.02);
   badge.add(clip);
-  const jaw = boxMesh(0.1, 0.04, 0.028, metal);
-  jaw.position.set(0.04, 0.4, 0.03);
+  const jaw = boxMesh(0.1, 0.04, 0.04, metal);
+  jaw.position.set(0.04, 0.42, faceZ + 0.02);
   badge.add(jaw);
 
   const bead = (letter, x, y) => {
@@ -1368,7 +1352,7 @@ function createIdBadge() {
       ctx.font = 'bold 28px sans-serif';
       ctx.fillText(letter, w / 2, h / 2);
     });
-    disc.position.set(x, y, 0.03);
+    disc.position.set(x, y, faceZ + 0.016);
     badge.add(disc);
   };
   'FIVE'.split('').forEach((ch, i) => bead(ch, -0.28 + i * 0.09, 0.2));
@@ -1382,23 +1366,23 @@ function createIdBadge() {
     part.position.set(Math.cos(a) * 0.05, Math.sin(a) * 0.04, 0);
     bloom.add(part);
   }
-  bloom.position.set(0.4, 0.22, 0.02);
+  bloom.position.set(0.38, 0.24, faceZ + 0.02);
   badge.add(bloom);
 
   const star = (x, y) => {
     const mesh = boxMesh(0.045, 0.045, 0.01, gold);
     mesh.rotation.z = Math.PI / 4;
-    mesh.position.set(x, y, 0.03);
+    mesh.position.set(x, y, faceZ + 0.02);
     badge.add(mesh);
   };
   star(0.34, 0.16);
   star(-0.22, -0.32);
 
   const heart = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 6), hot);
-  heart.position.set(-0.4, 0.02, 0.03);
+  heart.position.set(-0.4, 0.02, faceZ + 0.02);
   badge.add(heart);
   const wing = new THREE.Mesh(new THREE.SphereGeometry(0.016, 6, 5), sky);
-  wing.position.set(0.4, -0.12, 0.03);
+  wing.position.set(0.4, -0.16, faceZ + 0.02);
   badge.add(wing);
   return badge;
 }
@@ -1438,10 +1422,13 @@ function dressDoor(door, index) {
 
   if (index === 3) {
     const badge = createIdBadge();
-    badge.scale.setScalar(1.2);
+    badge.userData.restScale = 1.2;
+    badge.userData.closedScale = 0.58;
+    badge.scale.setScalar(badge.userData.closedScale);
     badge.position.set(0, 0.35, -DOOR_THICK / 2 - 0.07);
     badge.rotation.y = Math.PI;
     door.add(badge);
+    idBadge = badge;
   }
 
   if (index === 1) {
@@ -1703,15 +1690,14 @@ function createOfficePile() {
   pile.name = 'office-pile';
   const black = popMat(0x1c1e22);
   const paper = popMat(0xe7e2d6);
-  const beige = popMat(0xe6dcc8);
   const mugMat = popMat(0xf4f1ea);
   const orange = popMat(0xe07a32);
 
   const caseBox = roundedMesh(0.44, 0.1, 0.3, 0.02, black, 2);
-  caseBox.position.y = 0.05;
+  caseBox.position.y = -0.12;
   pile.add(caseBox);
   const grip = boxMesh(0.12, 0.02, 0.02, popMat(0x9aa3ac));
-  grip.position.set(0, 0.02, 0.16);
+  grip.position.set(0, -0.15, 0.16);
   pile.add(grip);
 
   for (let i = 0; i < 6; i += 1) {
@@ -1721,25 +1707,16 @@ function createOfficePile() {
     pile.add(sheet);
   }
 
-  const laptop = new THREE.Group();
-  laptop.add(roundedMesh(0.3, 0.02, 0.2, 0.01, beige, 1));
-  const screen = roundedMesh(0.28, 0.16, 0.012, 0.008, beige, 1);
-  screen.position.set(0, 0.09, -0.08);
-  screen.rotation.x = -0.45;
-  laptop.add(screen);
-  const display = boxMesh(0.2, 0.1, 0.004, black);
-  display.position.set(0, 0.09, -0.07);
-  display.rotation.x = -0.45;
-  laptop.add(display);
-  laptop.position.y = 0.24;
-  pile.add(laptop);
+  const printer = createPrinter();
+  printer.position.y = 0.2;
+  pile.add(printer);
 
   const mug = cylinder(0.032, 0.03, 0.05, mugMat, 10);
-  mug.position.set(-0.1, 0.28, 0.04);
+  mug.position.set(-0.16, 0.36, 0.02);
   pile.add(mug);
   const mugHandle = new THREE.Mesh(new THREE.TorusGeometry(0.016, 0.004, 6, 8), mugMat);
   mugHandle.rotation.y = Math.PI / 2;
-  mugHandle.position.set(-0.132, 0.28, 0.04);
+  mugHandle.position.set(-0.192, 0.36, 0.02);
   pile.add(mugHandle);
 
   const glasses = new THREE.Group();
@@ -1748,10 +1725,85 @@ function createOfficePile() {
     lens.position.x = side * 0.022;
     glasses.add(lens);
   });
-  glasses.position.set(0.06, 0.32, 0.02);
+  glasses.position.set(0.14, 0.38, 0.02);
   glasses.rotation.set(-0.7, 0.2, 0.4);
   pile.add(glasses);
   return pile;
+}
+
+function createPrinter() {
+  const printer = new THREE.Group();
+  printer.name = 'printer';
+  const cream = new THREE.MeshStandardMaterial({ color: 0xe6d9c4, roughness: 0.52, metalness: 0.05 });
+  const creamDark = new THREE.MeshStandardMaterial({ color: 0xd2c4ae, roughness: 0.58, metalness: 0.04 });
+  const cavity = new THREE.MeshStandardMaterial({ color: 0x2a2826, roughness: 0.88, metalness: 0 });
+  const lcd = new THREE.MeshStandardMaterial({
+    color: 0x314034,
+    roughness: 0.32,
+    metalness: 0.08,
+    emissive: new THREE.Color(0x1c2a18),
+    emissiveIntensity: 0.25
+  });
+
+  const body = roundedMesh(0.42, 0.15, 0.28, 0.018, cream, 2);
+  body.position.y = 0.09;
+  printer.add(body);
+
+  const lid = roundedMesh(0.4, 0.055, 0.26, 0.016, cream, 2);
+  lid.position.y = 0.188;
+  printer.add(lid);
+
+  const inlet = boxMesh(0.22, 0.008, 0.12, creamDark);
+  inlet.position.set(0, 0.214, -0.01);
+  printer.add(inlet);
+
+  const slot = boxMesh(0.22, 0.042, 0.05, cavity);
+  slot.position.set(0, 0.1, 0.125);
+  printer.add(slot);
+
+  const outTray = roundedMesh(0.24, 0.012, 0.14, 0.008, creamDark, 1);
+  outTray.position.set(0, 0.062, 0.2);
+  printer.add(outTray);
+
+  const drawer = roundedMesh(0.38, 0.042, 0.26, 0.012, cream, 1);
+  drawer.position.set(0, 0.02, 0.008);
+  printer.add(drawer);
+
+  [-1, 1].forEach((side) => {
+    for (let i = 0; i < 6; i += 1) {
+      const vent = boxMesh(0.008, 0.016, 0.036, creamDark);
+      vent.position.set(side * 0.208, 0.1, -0.04 + i * 0.02);
+      printer.add(vent);
+    }
+  });
+
+  const screen = boxMesh(0.07, 0.012, 0.004, lcd);
+  screen.position.set(-0.05, 0.175, 0.13);
+  printer.add(screen);
+  for (let i = 0; i < 3; i += 1) {
+    const btn = cylinder(0.006, 0.006, 0.006, creamDark, 8);
+    btn.rotation.x = Math.PI / 2;
+    btn.position.set(0.03 + i * 0.018, 0.175, 0.132);
+    printer.add(btn);
+  }
+  const knob = cylinder(0.01, 0.01, 0.008, creamDark, 10);
+  knob.rotation.x = Math.PI / 2;
+  knob.position.set(0.1, 0.175, 0.132);
+  printer.add(knob);
+
+  const page = coverMesh(0.16, 0.28, (ctx, w, h) => {
+    ctx.fillStyle = '#f7f4ee';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#2f4a32';
+    ctx.textAlign = 'center';
+    ctx.font = '300 48px "PingFang SC", sans-serif';
+    ctx.fillText('校园', w / 2, h * 0.38);
+    ctx.fillText('笔记', w / 2, h * 0.52);
+  });
+  page.rotation.x = -Math.PI / 2;
+  page.position.set(0, 0.078, 0.26);
+  printer.add(page);
+  return printer;
 }
 
 function createRedFolder() {
@@ -1907,17 +1959,17 @@ function createLocker(index) {
   if (index === 3) {
     const pile = createOfficePile();
     pile.scale.setScalar(2.05);
-    pile.position.set(0, 2.15, 0.02);
+    pile.position.set(0, 1.95, -0.1);
     locker.add(pile);
 
     const binders = createBinderStack();
     binders.scale.setScalar(1.9);
-    binders.position.set(-0.02, 0.28, -0.04);
+    binders.position.set(-0.02, 0.28, -0.14);
     locker.add(binders);
 
     const folder = createRedFolder();
     folder.scale.setScalar(1.45);
-    folder.position.set(0.02, 1.22, 0.06);
+    folder.position.set(0.02, 0.88, -0.08);
     folder.rotation.set(0.1, -0.15, -0.08);
     locker.add(folder);
   }
@@ -1928,7 +1980,7 @@ function createLocker(index) {
 
 for (let index = 0; index < LOCKER_COUNT; index += 1) {
   const { locker, doorPivot, door } = createLocker(index);
-  locker.position.x = -TOTAL_WIDTH / 2 + LOCKER_WIDTH / 2 + index * (LOCKER_WIDTH + GAP);
+  locker.position.x = lockerWorldX(index);
   lockerBank.add(locker);
   locker.userData.lockerIndex = index;
   doorPivots.push(doorPivot);
@@ -1959,11 +2011,15 @@ console.assert(
 
 setShadows(lockerBank);
 
-const rightLockerX =
-  -TOTAL_WIDTH / 2 + LOCKER_WIDTH / 2 + (LOCKER_COUNT - 1) * (LOCKER_WIDTH + GAP);
-const guitarFill = new THREE.PointLight(0xb6ff6a, 5.5, 3.4, 2);
-guitarFill.position.set(rightLockerX + 0.2, 1.15, LOCKER_DEPTH / 2 + 1.0);
-scene.add(guitarFill);
+function addLockerFill(index, color, intensity, y, xOffset = 0) {
+  const light = new THREE.PointLight(color, intensity, 3.4, 2);
+  light.position.set(lockerWorldX(index) + xOffset, y, LOCKER_DEPTH / 2 + 1.0);
+  scene.add(light);
+}
+
+addLockerFill(LOCKER_COUNT - 1, 0xb6ff6a, 5.5, 1.15, 0.2);
+addLockerFill(2, 0x5ec4f2, 4.2, 0.95);
+addLockerFill(0, 0xffe07a, 4.2, 1.15);
 
 const floor = new THREE.Mesh(
   new THREE.PlaneGeometry(24, 16),
@@ -1981,6 +2037,12 @@ let pointerDown = null;
 
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+}
+
+function easeOutBack(t) {
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+  return 1 + c3 * (t - 1) ** 3 + c1 * (t - 1) ** 2;
 }
 
 function setPointerFromEvent(event) {
@@ -2095,8 +2157,64 @@ renderer.domElement.addEventListener('pointerup', (event) => {
   toggleDoor(index);
 });
 
+let worksProgress = 0;
+let worksTarget = 0;
+let switchingWorks = false;
+const transitionAnchor = new THREE.Vector2();
+const lockerRestPosition = lockerBank.position.clone();
+const lockerRestScale = lockerBank.scale.clone();
+let transitionDoorStart = 0;
+let transitionControlEnabled = true;
+const reducedTransitionMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const transitionGlow = new THREE.PointLight(0xffefd8, 0, 2.8, 2);
+transitionGlow.position.set(lockerWorldX(3), 1.9, 0.35);
+lockerBank.add(transitionGlow);
+
+function switchWorks(target) {
+  if (worksTarget === target && (switchingWorks || worksProgress === target)) return;
+  if (!switchingWorks) {
+    if (worksProgress === 0) {
+      const point = lockerBank.localToWorld(new THREE.Vector3(lockerWorldX(3), 1.9, 0.4));
+      point.project(camera);
+      transitionAnchor.set(point.x, point.y);
+      transitionDoorStart = doorAnims[3].progress;
+    }
+    transitionControlEnabled = controls.enabled;
+    zoomAnim = null;
+  }
+  worksTarget = target;
+  switchingWorks = true;
+  controls.enabled = false;
+  document.body.classList.add('is-lockers', 'is-switching');
+  showWorks(scene.background);
+  setWorksTransition(worksProgress, transitionAnchor);
+  window.scrollTo(0, 0);
+}
+
 document.getElementById('nav-home').addEventListener('click', () => {
+  worksTarget = worksProgress = 0;
+  switchingWorks = false;
+  document.body.classList.remove('is-switching');
+  app.style.opacity = '';
+  lockerBank.position.copy(lockerRestPosition);
+  lockerBank.scale.copy(lockerRestScale);
+  controls.enabled = transitionControlEnabled;
+  doorAnims[3].open = false;
+  transitionGlow.intensity = 0;
+  hideWorks();
+  if (focusedLocker >= 0) doorAnims[focusedLocker].open = false;
   moveFocus(-1);
+  returnToIntro();
+});
+
+document.getElementById('nav-works').addEventListener('click', () => {
+  switchWorks(1);
+});
+
+document.getElementById('nav-lockers').addEventListener('click', () => {
+  if (worksProgress > 0 || switchingWorks) switchWorks(0);
+  document.body.classList.add('is-lockers');
+  window.scrollTo(0, 0);
 });
 
 document.getElementById('cam-prev').addEventListener('click', () => {
@@ -2135,14 +2253,7 @@ renderer.domElement.addEventListener('wheel', (event) => {
 function resizeScene() {
   const width = window.innerWidth;
   const height = window.innerHeight;
-  const aspect = width / height;
-  const viewWidth = TOTAL_WIDTH / 0.6;
-  const viewHeight = viewWidth / aspect;
-
-  camera.left = -viewWidth / 2;
-  camera.right = viewWidth / 2;
-  camera.top = viewHeight / 2;
-  camera.bottom = -viewHeight / 2;
+  camera.aspect = width / height;
   camera.updateProjectionMatrix();
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -2151,15 +2262,48 @@ function resizeScene() {
 
 function animate() {
   const dt = Math.min(clock.getDelta(), 0.05);
+  if (switchingWorks) {
+    worksProgress = reducedTransitionMotion.matches ? worksTarget : THREE.MathUtils.clamp(
+      worksProgress + Math.sign(worksTarget - worksProgress) * dt / 1.2, 0, 1);
+    const retreat = THREE.MathUtils.smoothstep(worksProgress, 0.25, 0.85);
+    transitionGlow.intensity = 1.4 * THREE.MathUtils.smoothstep(worksProgress, 0, 0.2) * (1 - retreat);
+    app.style.opacity = String(1 - retreat);
+    lockerBank.position.copy(lockerRestPosition);
+    lockerBank.position.z -= retreat * 1.4;
+    lockerBank.scale.copy(lockerRestScale).multiplyScalar(1 - retreat * 0.08);
+    setWorksTransition(worksProgress, transitionAnchor);
+    doorAnims[3].progress = THREE.MathUtils.lerp(
+      transitionDoorStart, 1,
+      THREE.MathUtils.smoothstep(worksProgress, 0, 0.28));
+    doorAnims[3].open = worksProgress > 0;
+    if (worksProgress === worksTarget) {
+      switchingWorks = false;
+      document.body.classList.remove('is-switching');
+      controls.enabled = transitionControlEnabled;
+      if (worksTarget === 0) {
+        hideWorks();
+        app.style.opacity = '';
+        doorAnims[3].open = false;
+      }
+    }
+  }
   doorAnims.forEach((anim, index) => {
     const dir = anim.open ? 1 : -1;
-    anim.progress = THREE.MathUtils.clamp(
+    if (!(switchingWorks && index === 3)) anim.progress = THREE.MathUtils.clamp(
       anim.progress + (dir * dt) / DOOR_ANIM_DURATION,
       0,
       1
     );
     doorPivots[index].rotation.y = DOOR_OPEN_ANGLE * easeInOutCubic(anim.progress);
   });
+
+  if (idBadge) {
+    const door = doorAnims[3];
+    const t = easeInOutCubic(door.progress);
+    const from = idBadge.userData.closedScale;
+    const to = idBadge.userData.restScale;
+    idBadge.scale.setScalar(THREE.MathUtils.lerp(from, to, t));
+  }
 
   if (zoomAnim) {
     zoomAnim.t = Math.min(1, zoomAnim.t + dt / 0.6);
@@ -2177,3 +2321,4 @@ function animate() {
 window.addEventListener('resize', resizeScene);
 resizeScene();
 renderer.setAnimationLoop(animate);
+startIntro();

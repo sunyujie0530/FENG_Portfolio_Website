@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  font-family: system-ui, sans-serif;
+  font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
   background: #f6f7fa;
 }
 
@@ -8,17 +8,15 @@
   box-sizing: border-box;
 }
 
-html,
-body,
 #app {
   width: 100%;
   height: 100%;
-  margin: 0;
-  overflow: hidden;
 }
 
-body {
-  background: #f6f7fa;
+.stage {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 canvas {
@@ -44,7 +42,7 @@ canvas {
   background: transparent;
   padding: 0;
   color: #1a1a1a;
-  font: 500 16px system-ui, sans-serif;
+  font: 300 16px "PingFang SC", "Hiragino Sans GB", sans-serif;
   cursor: pointer;
 }
 

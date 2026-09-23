@@ -1,0 +1,112 @@
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #2aa800;
+}
+
+body.is-lockers,
+body.is-lockers html {
+  height: 100%;
+  overflow: hidden;
+  background: #f6f7fa;
+}
+
+.intro {
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  background: #2aa800;
+}
+
+.intro__track {
+  width: 100%;
+}
+
+.intro__line {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  gap: 0.55em;
+  padding-left: 100vw;
+  color: #fff;
+  font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 300;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.intro__text {
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.intro__text .char {
+  display: inline-block;
+  will-change: transform;
+}
+
+.pacman {
+  flex: none;
+  width: 1.15em;
+  height: 1.15em;
+  border-radius: 50%;
+  background: conic-gradient(from 270deg, transparent 38deg, #ffe14a 38deg 322deg, transparent 322deg);
+}
+
+.pellet {
+  flex: none;
+  width: 0.38em;
+  height: 0.38em;
+  background: #ffe14a;
+}
+
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #f6f7fa;
+}
+
+.pixel-reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  grid-template-rows: repeat(var(--rows), 1fr);
+  pointer-events: none;
+}
+
+.pixel-reveal i {
+  background: #2aa800;
+}
+
+body.is-lockers .intro,
+body.is-lockers .pixel-reveal {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro__line {
+    padding-left: 6vw;
+    white-space: normal;
+  }
+}

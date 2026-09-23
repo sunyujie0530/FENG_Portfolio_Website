@@ -7,15 +7,31 @@
     <title>Eight Pastel Lockers + Warlock</title>
   </head>
   <body>
-    <div id="app"></div>
-    <nav id="top-nav" aria-label="页面导航">
-      <button type="button" id="nav-home">返回首页</button>
-      <button type="button">全部作品</button>
-      <button type="button">柜子展示</button>
-      <button type="button">老师介绍</button>
-    </nav>
-    <button id="cam-prev" type="button" hidden aria-label="看左边的柜子">‹</button>
-    <button id="cam-next" type="button" hidden aria-label="看右边的柜子">›</button>
+    <section id="intro" class="intro" aria-label="开场">
+      <div class="intro__track">
+        <div class="intro__line">
+          <span class="pacman" aria-hidden="true"></span>
+          <h1 class="intro__text">打开八个创作世界</h1>
+          <span class="pacman" aria-hidden="true"></span>
+          <span class="pellet" aria-hidden="true"></span>
+          <span class="pellet" aria-hidden="true"></span>
+        </div>
+      </div>
+    </section>
+    <div id="stage" class="stage">
+      <div id="app"></div>
+      <div id="works" class="works" aria-label="全部作品">
+        <canvas id="works-scene" aria-label="三维圆盘作品展示"></canvas>
+      </div>
+      <nav id="top-nav" aria-label="页面导航">
+        <button type="button" id="nav-home">返回首页</button>
+        <button type="button" id="nav-lockers">柜子展示</button>
+        <button type="button" id="nav-works">全部作品</button>
+        <button type="button">老师介绍</button>
+      </nav>
+      <button id="cam-prev" type="button" hidden aria-label="看左边的柜子">‹</button>
+      <button id="cam-next" type="button" hidden aria-label="看右边的柜子">›</button>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
