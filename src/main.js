@@ -7,7 +7,7 @@ import './style.css';
 const app = document.querySelector('#app');
 const scene = new THREE.Scene();
 // Fog-white campus backdrop.
-scene.background = new THREE.Color(0xe7eaee);
+scene.background = new THREE.Color(0xf6f7fa);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -41,8 +41,8 @@ const TOTAL_WIDTH = LOCKER_COUNT * LOCKER_WIDTH + (LOCKER_COUNT - 1) * GAP;
 const LOCKER_CENTER_Y = FOOT_H + (LOCKER_HEIGHT - FOOT_H) / 2;
 
 const camera = new THREE.OrthographicCamera(-4.3, 4.3, 2.4, -2.4, 0.1, 100);
-// Near-front, slight upper-right — weak product perspective.
-camera.position.set(1.6, 2.6, 12);
+// Straight-on product view, matching the home framing.
+camera.position.set(0.25, 3.2, 16);
 
 const target = new THREE.Vector3(0, LOCKER_CENTER_Y * 0.98, 0);
 camera.lookAt(target);
@@ -52,12 +52,12 @@ controls.target.copy(target);
 controls.enableDamping = true;
 controls.dampingFactor = 0.06;
 controls.enablePan = false;
-controls.minZoom = 0.85;
+controls.minZoom = 0.7;
 controls.maxZoom = 3.4;
-controls.minAzimuthAngle = -0.32;
-controls.maxAzimuthAngle = 0.32;
-controls.minPolarAngle = 1.2;
-controls.maxPolarAngle = 1.4;
+controls.minAzimuthAngle = -0.08;
+controls.maxAzimuthAngle = 0.08;
+controls.minPolarAngle = 1.25;
+controls.maxPolarAngle = 1.52;
 controls.update();
 
 // Soft cool wrap light — clean, healing campus mood.
@@ -92,7 +92,7 @@ const softBounce = new THREE.PointLight(0xe7edf3, 3.5, 10, 2);
 softBounce.position.set(0, 2, 3);
 scene.add(softBounce);
 
-scene.fog = new THREE.Fog(0xe7eaee, 16, 30);
+scene.fog = new THREE.Fog(0xf6f7fa, 16, 30);
 
 // Matte light gray — reference cabinet, not the butter yellow.
 const soft = { roughness: 0.88, metalness: 0.06 };
@@ -203,7 +203,6 @@ lockerBank.position.y = 0.05;
 scene.add(lockerBank);
 
 const doorPivots = [];
-const clickableDoors = [];
 
 // Positive Y: right-hinged door swings outward to ~120°.
 const DOOR_OPEN_ANGLE = (Math.PI * 2) / 3;
@@ -228,27 +227,6 @@ function roundedMesh(width, height, depth, radius, material, segments = 2) {
     new RoundedBoxGeometry(width, height, depth, segments, radius),
     material
   );
-}
-
-function addWireShelf(locker, y, innerW, innerD) {
-  const shelf = new THREE.Group();
-  const depth = innerD * 0.78;
-  const z0 = -innerD * 0.06;
-  const rails = 6;
-  for (let i = 0; i < rails; i += 1) {
-    const bar = cylinder(0.006, 0.006, innerW * 0.9, materials.wire, 6);
-    bar.rotation.z = Math.PI / 2;
-    bar.position.set(0, 0, z0 - depth / 2 + (i / (rails - 1)) * depth);
-    shelf.add(bar);
-  }
-  [-1, 1].forEach((side) => {
-    const rail = cylinder(0.008, 0.008, depth, materials.wire, 6);
-    rail.rotation.x = Math.PI / 2;
-    rail.position.set(side * innerW * 0.42, 0, z0);
-    shelf.add(rail);
-  });
-  shelf.position.y = y;
-  locker.add(shelf);
 }
 
 function popMat(color) {
@@ -356,32 +334,27 @@ function addTopShelfLife(locker, shelfY, innerW) {
   locker.add(life);
 }
 
-function addInteriorStructure(locker, bodyH, innerW, innerD) {
-  // Inset top bay (solid shelf + back). Mid and low wire racks stay as they are.
+function addInteriorStructure(locker, bodyH, innerW, innerD, cavityMat) {
   const topY = FOOT_H + bodyH * 0.86;
-  const midY = FOOT_H + bodyH * 0.5;
-  const lowY = FOOT_H + bodyH * 0.24;
   const bayH = FOOT_H + bodyH - topY;
 
-  const board = boxMesh(innerW * 0.94, 0.03, innerD * 0.86, materials.shelf);
+  const board = boxMesh(innerW * 0.94, 0.03, innerD * 0.86, cavityMat);
   board.position.set(0, topY, -innerD * 0.02);
   locker.add(board);
 
-  const backPanel = boxMesh(innerW * 0.9, bayH * 0.92, 0.018, materials.inset);
+  const backPanel = boxMesh(innerW * 0.9, bayH * 0.92, 0.018, cavityMat);
   backPanel.position.set(0, topY + bayH * 0.46, -innerD * 0.46);
   locker.add(backPanel);
 
   [-1, 1].forEach((side) => {
-    const cheek = boxMesh(0.02, bayH * 0.92, innerD * 0.7, materials.shelf);
+    const cheek = boxMesh(0.02, bayH * 0.92, innerD * 0.7, cavityMat);
     cheek.position.set(side * innerW * 0.46, topY + bayH * 0.46, -innerD * 0.08);
     locker.add(cheek);
   });
 
   addTopShelfLife(locker, topY, innerW);
-  addWireShelf(locker, midY, innerW, innerD);
-  addWireShelf(locker, lowY, innerW, innerD);
 
-  const rod = cylinder(0.012, 0.012, innerW * 0.78, materials.wire, 8);
+  const rod = cylinder(0.012, 0.012, innerW * 0.78, cavityMat, 8);
   rod.rotation.z = Math.PI / 2;
   rod.position.set(0, topY - 0.16, innerD * 0.08);
   locker.add(rod);
@@ -416,18 +389,6 @@ function addHandle(door) {
 
 function addStickyNote(door, index) {
   // Sparse pink / yellow notes for campus warmth across the eight-door bank.
-  if (index === 0) {
-    const note = roundedMesh(0.22, 0.18, 0.014, 0.02, materials.yellowNote, 1);
-    note.position.set(DOOR_WIDTH * 0.08, DOOR_HEIGHT * 0.18, DOOR_THICK / 2 + 0.01);
-    note.rotation.z = -0.08;
-    door.add(note);
-
-    const tape = roundedMesh(0.07, 0.14, 0.012, 0.01, materials.tape, 1);
-    tape.position.set(DOOR_WIDTH * 0.12, DOOR_HEIGHT * 0.24, DOOR_THICK / 2 + 0.018);
-    tape.rotation.z = 0.18;
-    door.add(tape);
-  }
-
   if (index === 3) {
     const note = roundedMesh(0.2, 0.16, 0.014, 0.02, materials.pinkNote, 1);
     note.position.set(DOOR_WIDTH * 0.05, -DOOR_HEIGHT * 0.22, DOOR_THICK / 2 + 0.01);
@@ -566,6 +527,100 @@ function createPenCup() {
   cup.add(scissors);
 
   return cup;
+}
+
+function createSketchNotebook() {
+  const book = new THREE.Group();
+  book.name = 'sketch-notebook';
+  const pageW = 0.5;
+  const pageH = 0.62;
+  const backing = roundedMesh(pageW + 0.1, pageH + 0.18, 0.012, 0.02, materials.limeBoard, 2);
+  backing.position.set(0, -0.02, -0.012);
+  book.add(backing);
+
+  const page = coverMesh(pageW, pageH, (ctx, w, h) => {
+    ctx.fillStyle = '#f6f3ec';
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = '#1c1c1c';
+    ctx.fillStyle = '#1c1c1c';
+    ctx.lineWidth = 4;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    const stroke = (draw) => {
+      ctx.beginPath();
+      draw();
+      ctx.stroke();
+    };
+    stroke(() => {
+      ctx.roundRect(48, 70, 130, 110, 18);
+      ctx.moveTo(78, 70);
+      ctx.quadraticCurveTo(113, 28, 148, 70);
+    });
+    stroke(() => {
+      ctx.roundRect(210, 60, 150, 90, 8);
+      ctx.moveTo(250, 60);
+      ctx.lineTo(270, 36);
+      ctx.lineTo(310, 36);
+      ctx.lineTo(330, 60);
+    });
+    stroke(() => {
+      ctx.arc(120, 250, 36, Math.PI, 0);
+      ctx.lineTo(156, 290);
+      ctx.lineTo(84, 290);
+      ctx.closePath();
+    });
+    stroke(() => {
+      ctx.moveTo(230, 240);
+      ctx.quadraticCurveTo(280, 200, 340, 250);
+      ctx.quadraticCurveTo(300, 310, 230, 280);
+    });
+    stroke(() => {
+      ctx.moveTo(70, 360);
+      ctx.lineTo(150, 360);
+      ctx.moveTo(110, 360);
+      ctx.lineTo(110, 430);
+      ctx.moveTo(80, 400);
+      ctx.quadraticCurveTo(110, 370, 140, 400);
+    });
+    stroke(() => {
+      ctx.roundRect(250, 360, 90, 55, 6);
+      ctx.moveTo(268, 360);
+      ctx.lineTo(268, 338);
+      ctx.lineTo(322, 338);
+      ctx.lineTo(322, 360);
+    });
+    stroke(() => {
+      ctx.ellipse(160, 480, 28, 16, 0, 0, Math.PI * 2);
+      ctx.moveTo(188, 480);
+      ctx.lineTo(230, 468);
+    });
+  });
+  page.position.z = 0.008;
+  book.add(page);
+
+  const ringMat = new THREE.MeshStandardMaterial({ color: 0xc5ccd2, roughness: 0.35, metalness: 0.55 });
+  for (let i = 0; i < 11; i += 1) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.014, 0.0035, 6, 10), ringMat);
+    ring.rotation.y = Math.PI / 2;
+    ring.position.set(-pageW / 2 + 0.04 + i * 0.042, pageH / 2 - 0.012, 0.01);
+    book.add(ring);
+  }
+
+  const tray = new THREE.Group();
+  tray.add(roundedMesh(pageW * 0.9, 0.055, 0.04, 0.012, materials.acrylic, 1));
+  [0x2f6fe0, 0xe23b3b, 0x4aa3e8, 0xf0c21a, 0x39c16a, 0xff4f9a].forEach((color, i) => {
+    const marker = new THREE.Group();
+    const barrel = cylinder(0.011, 0.011, 0.1, popMat(color), 8);
+    marker.add(barrel);
+    const cap = cylinder(0.012, 0.012, 0.032, popMat(0xf4f1ea), 8);
+    cap.position.y = 0.062;
+    marker.add(cap);
+    marker.position.set(-0.17 + i * 0.068, 0.02, 0.018);
+    tray.add(marker);
+  });
+  tray.position.set(0, -pageH / 2 + 0.01, 0.028);
+  book.add(tray);
+  return book;
 }
 
 function typeBlock(w, h, d, material, x, y, z = 0.01) {
@@ -719,6 +774,214 @@ function createPosterCluster() {
   return cluster;
 }
 
+function createMoodBoard() {
+  const board = new THREE.Group();
+  board.name = 'mood-board';
+  const ink = new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.7, metalness: 0 });
+  const stringMat = new THREE.MeshStandardMaterial({ color: 0x7a45d6, roughness: 0.45, metalness: 0.05 });
+  const tapeMat = new THREE.MeshStandardMaterial({ color: 0xc5c9a4, roughness: 0.85, metalness: 0 });
+  const red = new THREE.MeshStandardMaterial({ color: 0xe23b3b, roughness: 0.6, metalness: 0 });
+  const white = new THREE.MeshStandardMaterial({ color: 0xf4f1ea, roughness: 0.7, metalness: 0 });
+
+  const scrapTex = (w, h, draw) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    draw(canvas.getContext('2d'), w, h);
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(w / 520, h / 520),
+      new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.9, metalness: 0 })
+    );
+    return mesh;
+  };
+
+  const polaroid = (x, y, rot, caption, paint) => {
+    const card = coverMesh(0.28, 0.34, (ctx, cw, ch) => {
+      ctx.fillStyle = '#f7f4ee';
+      ctx.fillRect(0, 0, cw, ch);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(cw * 0.08, ch * 0.06, cw * 0.84, ch * 0.68);
+      ctx.clip();
+      paint(ctx, cw, ch);
+      ctx.restore();
+      ctx.fillStyle = '#3a3a3a';
+      ctx.textAlign = 'center';
+      ctx.font = '28px Georgia, serif';
+      ctx.fillText(caption, cw / 2, ch * 0.9);
+    });
+    card.position.set(x, y, 0.012);
+    card.rotation.z = rot;
+    board.add(card);
+  };
+
+  const link = (ax, ay, bx, by) => {
+    const a = new THREE.Vector3(ax, ay, 0.03);
+    const b = new THREE.Vector3(bx, by, 0.03);
+    const dir = b.clone().sub(a);
+    const mesh = cylinder(0.0032, 0.0032, dir.length(), stringMat, 5);
+    mesh.position.copy(a).lerp(b, 0.5);
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+    board.add(mesh);
+  };
+
+  const pin = (x, y) => {
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 6), stringMat);
+    mesh.position.set(x, y, 0.04);
+    board.add(mesh);
+  };
+
+  polaroid(-0.16, 0.32, -0.04, 'May 12', (ctx, w, h) => {
+    ctx.fillStyle = '#f3e2d4';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#c4372f';
+    ctx.beginPath();
+    ctx.arc(w * 0.5, h * 0.32, 70, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#f7f1e6';
+    ctx.font = 'bold 42px Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('HALL', w * 0.5, h * 0.48);
+    ctx.fillText('PASS', w * 0.5, h * 0.58);
+  });
+  polaroid(0.2, 0.22, 0.05, 'May 13', (ctx, w, h) => {
+    ctx.fillStyle = '#f0cfc4';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#2c3a4a';
+    ctx.fillRect(w * 0.34, h * 0.28, 36, 90);
+    ctx.fillStyle = '#e07a5f';
+    ctx.fillRect(w * 0.52, h * 0.34, 40, 78);
+    ctx.fillStyle = '#6b2d3c';
+    ctx.font = 'bold 48px Impact, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('STAY PUT', w * 0.5, h * 0.22);
+  });
+  polaroid(-0.28, 0.0, -0.08, 'May 14', (ctx, w, h) => {
+    ctx.fillStyle = '#8ec8ea';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#f4e2b0';
+    [[0.12, 0.7], [0.32, 0.55], [0.52, 0.75], [0.7, 0.5]].forEach(([x, ht]) => {
+      ctx.fillRect(w * x, h * (1 - ht), w * 0.16, h * ht);
+    });
+    ctx.fillStyle = '#1d4e89';
+    ctx.font = 'bold 64px Impact, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('STOOP', w * 0.5, h * 0.28);
+  });
+  polaroid(-0.02, -0.18, 0.04, 'May 14', (ctx, w, h) => {
+    ctx.fillStyle = '#f6f1e4';
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = '#c8bfb0';
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 5; i += 1) ctx.strokeRect(w * 0.12 + i * 70, h * 0.22, 18, 28);
+    ctx.fillStyle = '#1f8a4c';
+    ctx.font = 'bold 54px Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('COUNT MAY', w * 0.5, h * 0.62);
+  });
+  polaroid(0.26, -0.32, 0.07, 'May 15', (ctx, w, h) => {
+    ctx.fillStyle = '#1c3d32';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#f4efe6';
+    ctx.font = 'bold 120px Impact, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('12', w * 0.5, h * 0.42);
+    ctx.font = 'bold 36px sans-serif';
+    ctx.fillText('HOME SET', w * 0.5, h * 0.62);
+  });
+
+  const pins = [[-0.04, 0.18], [0.08, 0.08], [-0.16, 0.12], [-0.02, -0.02], [0.14, -0.26], [0.02, -0.5]];
+  [[0, 1], [0, 2], [2, 3], [3, 4], [3, 5], [4, 5]].forEach(([i, j]) => {
+    link(pins[i][0], pins[i][1], pins[j][0], pins[j][1]);
+  });
+  pins.forEach(([x, y]) => pin(x, y));
+
+  const squiggle = new THREE.Mesh(
+    new THREE.TubeGeometry(
+      new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-0.08, 0.52, 0.02),
+        new THREE.Vector3(0.02, 0.58, 0.02),
+        new THREE.Vector3(0.1, 0.5, 0.02),
+        new THREE.Vector3(0.02, 0.46, 0.02)
+      ]),
+      10, 0.006, 5, false
+    ),
+    ink
+  );
+  board.add(squiggle);
+
+  const tape = boxMesh(0.16, 0.07, 0.008, tapeMat);
+  tape.position.set(0.4, 0.5, 0.02);
+  tape.rotation.z = 0.55;
+  board.add(tape);
+
+  const heart = new THREE.Shape();
+  heart.moveTo(0, 0.012);
+  heart.bezierCurveTo(0, 0.04, 0.04, 0.04, 0.04, 0.012);
+  heart.bezierCurveTo(0.04, -0.012, 0, -0.028, 0, -0.04);
+  heart.bezierCurveTo(0, -0.028, -0.04, -0.012, -0.04, 0.012);
+  heart.bezierCurveTo(-0.04, 0.04, 0, 0.04, 0, 0.012);
+  [0.36, 0.42].forEach((x, i) => {
+    const mesh = extrudeShape(heart, 0.006, ink, 0.001);
+    mesh.position.set(x, 0.3 - i * 0.04, 0.02);
+    mesh.scale.setScalar(0.7 + i * 0.25);
+    board.add(mesh);
+  });
+
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), ink);
+  ball.scale.set(1.35, 0.82, 0.25);
+  ball.position.set(0.42, -0.05, 0.02);
+  board.add(ball);
+  const lace = boxMesh(0.006, 0.05, 0.006, white);
+  lace.position.set(0.42, -0.05, 0.034);
+  board.add(lace);
+
+  const hook = new THREE.Mesh(new THREE.TorusGeometry(0.028, 0.008, 6, 10, Math.PI), red);
+  hook.position.set(0.1, -0.4, 0.02);
+  board.add(hook);
+  const cane = cylinder(0.008, 0.008, 0.07, white, 6);
+  cane.position.set(0.128, -0.45, 0.02);
+  board.add(cane);
+
+  const noteA = scrapTex(280, 140, (ctx) => {
+    ctx.fillStyle = '#1c1c1c';
+    ctx.font = 'italic 34px Georgia, serif';
+    ctx.fillText('ring the bell,', 8, 48);
+    ctx.fillText('not for class.', 8, 96);
+  });
+  noteA.scale.setScalar(0.72);
+  noteA.position.set(-0.32, 0.34, 0.02);
+  noteA.rotation.z = -0.08;
+  board.add(noteA);
+
+  const noteB = scrapTex(280, 140, (ctx) => {
+    ctx.fillStyle = '#1c1c1c';
+    ctx.font = 'italic 32px Georgia, serif';
+    ctx.fillText('already feels', 8, 48);
+    ctx.fillText('like friday', 8, 96);
+  });
+  noteB.scale.setScalar(0.72);
+  noteB.position.set(-0.32, -0.22, 0.02);
+  noteB.rotation.z = -0.12;
+  board.add(noteB);
+
+  const mark = scrapTex(360, 150, (ctx, w, h) => {
+    ctx.fillStyle = '#1c1c1c';
+    ctx.font = 'bold 64px Impact, sans-serif';
+    ctx.fillText('CAMP', 8, 62);
+    ctx.fillText('READS', 8, 124);
+    ctx.font = '16px sans-serif';
+    ctx.fillText('LOCKER STORIES', 8, h - 8);
+  });
+  mark.scale.setScalar(0.62);
+  mark.position.set(-0.18, -0.52, 0.02);
+  board.add(mark);
+
+  return board;
+}
+
 function faceDisc(r, depth, material) {
   const disc = new THREE.Mesh(new THREE.CylinderGeometry(r, r, depth, 16), material);
   disc.rotation.x = Math.PI / 2;
@@ -861,9 +1124,9 @@ function varsityBadge(digit) {
   ctx.strokeStyle = '#f4efe6';
   ctx.strokeText(String(digit), 128, 168);
   ctx.lineWidth = 10;
-  ctx.strokeStyle = '#3a1218';
+  ctx.strokeStyle = '#145208';
   ctx.strokeText(String(digit), 128, 168);
-  ctx.fillStyle = '#7a2430';
+  ctx.fillStyle = '#3dbe12';
   ctx.fillText(String(digit), 128, 168);
 
   ctx.beginPath();
@@ -873,7 +1136,7 @@ function varsityBadge(digit) {
   ctx.lineWidth = 4;
   ctx.strokeStyle = '#c4b49a';
   ctx.stroke();
-  ctx.fillStyle = '#7a2430';
+  ctx.fillStyle = '#3dbe12';
   ctx.beginPath();
   for (let i = 0; i < 5; i += 1) {
     const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
@@ -959,12 +1222,198 @@ function createBackpack() {
   return pack;
 }
 
+function createHangingCalendar() {
+  const hang = new THREE.Group();
+  hang.name = 'hanging-calendar';
+  const w = 0.46;
+  const h = 0.62;
+  const tilt = -0.22;
+  const chainMat = new THREE.MeshStandardMaterial({ color: 0xd5dbe2, roughness: 0.3, metalness: 0.65 });
+
+  const board = new THREE.Group();
+  board.rotation.z = tilt;
+  hang.add(board);
+
+  const page = coverMesh(w, h, (ctx, cw, ch) => {
+    ctx.fillStyle = '#f7f4ee';
+    ctx.fillRect(0, 0, cw, ch);
+    ctx.fillStyle = '#b7e3c8';
+    ctx.fillRect(0, 0, cw, ch * 0.1);
+    ctx.fillStyle = '#1c1c1c';
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 28px Georgia, serif';
+    ctx.fillText('CALENDAR', cw / 2, ch * 0.07);
+    ctx.strokeStyle = '#f7f4ee';
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 18; i += 1) {
+      ctx.beginPath();
+      ctx.arc(24 + i * 28, ch * 0.1, 12, 0, Math.PI);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#1c1c1c';
+    ctx.strokeStyle = '#1c1c1c';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(36, ch * 0.16, 78, 78);
+    ctx.font = 'bold 42px sans-serif';
+    ctx.fillText('6', 75, ch * 0.22);
+    ctx.font = '16px sans-serif';
+    ctx.fillText('JUN', 75, ch * 0.27);
+    ctx.font = 'bold 220px Georgia, serif';
+    ctx.fillText('28', cw / 2, ch * 0.62);
+    ctx.font = '18px sans-serif';
+    ctx.fillText('LOCKER  ·  HALL  ·  NOTE', cw / 2, ch * 0.9);
+  });
+  page.position.y = -h / 2;
+  board.add(page);
+
+  const hook = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 6), chainMat);
+  hook.position.set(0, 0.08, 0.02);
+  hang.add(hook);
+
+  [-w / 2, w / 2].forEach((x) => {
+    const end = new THREE.Vector3(x, 0, 0.02).applyAxisAngle(new THREE.Vector3(0, 0, 1), tilt);
+    const start = new THREE.Vector3(0, 0.08, 0.02);
+    const dir = end.clone().sub(start);
+    const link = cylinder(0.004, 0.004, dir.length(), chainMat, 5);
+    link.position.copy(start).lerp(end, 0.5);
+    link.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+    hang.add(link);
+  });
+
+  return hang;
+}
+
+function createIdBadge() {
+  const badge = new THREE.Group();
+  badge.name = 'id-badge';
+  const metal = new THREE.MeshStandardMaterial({ color: 0xd7dee6, roughness: 0.28, metalness: 0.72 });
+  const pink = popMat(0xf4c6d8);
+  const petal = popMat(0xf09ab8);
+  const gold = popMat(0xe2b340);
+  const hot = popMat(0xe23b78);
+  const sky = popMat(0x3aa7d6);
+
+  const shell = roundedMesh(0.72, 0.5, 0.028, 0.045, materials.acrylic, 2);
+  badge.add(shell);
+
+  const card = coverMesh(0.62, 0.4, (ctx, w, h) => {
+    ctx.fillStyle = '#f7f3ea';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#1c1c1c';
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 36px Georgia, serif';
+    ctx.fillText('Studio Card', 28, 78);
+    ctx.font = '16px sans-serif';
+    ctx.fillText('THE HOLDER OF THIS CARD', 28, 108);
+    ctx.font = '18px sans-serif';
+    ['NAME:  Yujie', 'BASED IN:  Campus', 'SPECIALTY:  Design'].forEach((line, i) => {
+      ctx.fillText(line, 28, 168 + i * 36);
+      ctx.beginPath();
+      ctx.moveTo(120, 174 + i * 36);
+      ctx.lineTo(300, 174 + i * 36);
+      ctx.stroke();
+    });
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText('MOTTO:  MAKE THINGS', 28, h - 28);
+    ctx.textAlign = 'right';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('ID NO. 004', w - 24, 48);
+
+    ctx.fillStyle = '#e4e0d8';
+    ctx.fillRect(w * 0.58, h * 0.22, w * 0.34, h * 0.52);
+    ctx.fillStyle = '#f2c9a8';
+    ctx.beginPath();
+    ctx.ellipse(w * 0.75, h * 0.42, 28, 34, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#3a2a24';
+    ctx.fillRect(w * 0.66, h * 0.28, w * 0.18, 36);
+    ctx.fillStyle = '#d8c4b0';
+    ctx.fillRect(w * 0.64, h * 0.52, w * 0.22, h * 0.2);
+    ctx.strokeStyle = '#1c1c1c';
+    ctx.strokeRect(w * 0.62, h * 0.7, w * 0.3, 16);
+  });
+  card.position.z = 0.016;
+  badge.add(card);
+
+  const ticket = coverMesh(0.42, 0.2, (ctx, w, h) => {
+    ctx.fillStyle = '#f6d5e4';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#1c1c1c';
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 22px sans-serif';
+    ctx.fillText('(STUDIO, EST 2026)', w / 2, h * 0.42);
+    ctx.font = '14px sans-serif';
+    ctx.fillText('FORM, COLOR, MAKE', w / 2, h * 0.68);
+  });
+  ticket.position.set(-0.12, 0.28, -0.01);
+  ticket.rotation.z = 0.12;
+  badge.add(ticket);
+
+  const clip = boxMesh(0.09, 0.18, 0.02, metal);
+  clip.position.set(0.04, 0.32, 0.03);
+  badge.add(clip);
+  const jaw = boxMesh(0.1, 0.04, 0.028, metal);
+  jaw.position.set(0.04, 0.4, 0.03);
+  badge.add(jaw);
+
+  const bead = (letter, x, y) => {
+    const disc = coverMesh(0.055, 0.055, (ctx, w, h) => {
+      ctx.fillStyle = '#f4f1ea';
+      ctx.beginPath();
+      ctx.arc(w / 2, h / 2, w * 0.46, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#1c1c1c';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold 28px sans-serif';
+      ctx.fillText(letter, w / 2, h / 2);
+    });
+    disc.position.set(x, y, 0.03);
+    badge.add(disc);
+  };
+  'FIVE'.split('').forEach((ch, i) => bead(ch, -0.28 + i * 0.09, 0.2));
+  'YEARS'.split('').forEach((ch, i) => bead(ch, -0.08 + i * 0.09, -0.3));
+
+  const bloom = new THREE.Group();
+  for (let i = 0; i < 5; i += 1) {
+    const part = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), petal);
+    part.scale.set(1.3, 0.7, 0.35);
+    const a = (i / 5) * Math.PI * 2;
+    part.position.set(Math.cos(a) * 0.05, Math.sin(a) * 0.04, 0);
+    bloom.add(part);
+  }
+  bloom.position.set(0.4, 0.22, 0.02);
+  badge.add(bloom);
+
+  const star = (x, y) => {
+    const mesh = boxMesh(0.045, 0.045, 0.01, gold);
+    mesh.rotation.z = Math.PI / 4;
+    mesh.position.set(x, y, 0.03);
+    badge.add(mesh);
+  };
+  star(0.34, 0.16);
+  star(-0.22, -0.32);
+
+  const heart = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 6), hot);
+  heart.position.set(-0.4, 0.02, 0.03);
+  badge.add(heart);
+  const wing = new THREE.Mesh(new THREE.SphereGeometry(0.016, 6, 5), sky);
+  wing.position.set(0.4, -0.12, 0.03);
+  badge.add(wing);
+  return badge;
+}
+
 function dressDoor(door, index) {
   const badge = varsityBadge(index + 1);
-  badge.position.set(DOOR_WIDTH / 2 - 0.34, DOOR_HEIGHT / 2 - 0.42, DOOR_THICK / 2 + 0.02);
+  badge.position.set(DOOR_WIDTH / 2 - 0.24, DOOR_HEIGHT / 2 - 0.3, DOOR_THICK / 2 + 0.02);
   door.add(badge);
 
   if (index === 0) {
+    const board = createMoodBoard();
+    board.scale.setScalar(1.15);
+    board.position.set(-0.02, -0.06, DOOR_THICK / 2 + 0.04);
+    door.add(board);
+
     const hp = createHeadphones();
     // Inner face of door 1 — hidden until the door swings open.
     hp.position.set(0.04, -DOOR_HEIGHT * 0.06, -DOOR_THICK / 2 - 0.04);
@@ -987,11 +1436,23 @@ function dressDoor(door, index) {
     door.add(pack);
   }
 
+  if (index === 3) {
+    const badge = createIdBadge();
+    badge.scale.setScalar(1.2);
+    badge.position.set(0, 0.35, -DOOR_THICK / 2 - 0.07);
+    badge.rotation.y = Math.PI;
+    door.add(badge);
+  }
+
   if (index === 1) {
     const cup = createPenCup();
     cup.scale.setScalar(1.75);
     cup.position.set(0.04, DOOR_HEIGHT * 0.16, DOOR_THICK / 2 + 0.06);
     door.add(cup);
+
+    const notes = createSketchNotebook();
+    notes.position.set(0.12, -0.22, DOOR_THICK / 2 + 0.05);
+    door.add(notes);
   }
 
   if (index === 4) {
@@ -999,6 +1460,13 @@ function dressDoor(door, index) {
     posters.scale.setScalar(1.85);
     posters.position.set(0.02, DOOR_HEIGHT * 0.2, DOOR_THICK / 2 + 0.04);
     door.add(posters);
+  }
+
+  if (index === 5) {
+    const calendar = createHangingCalendar();
+    calendar.scale.setScalar(1.6);
+    calendar.position.set(0.08, 0.78, DOOR_THICK / 2 + 0.05);
+    door.add(calendar);
   }
 
   const z = DOOR_THICK / 2 + 0.016;
@@ -1010,10 +1478,6 @@ function dressDoor(door, index) {
     4: [
       ['speech', -0.22, -DOOR_HEIGHT * 0.1, -0.18],
       ['rainbow', 0.22, DOOR_HEIGHT * 0.06, 0.1]
-    ],
-    5: [
-      ['peace', 0.18, DOOR_HEIGHT * 0.24, 0.14],
-      ['badge', -0.1, -DOOR_HEIGHT * 0.16, -0.1]
     ],
     7: [
       ['smiley', -0.16, DOOR_HEIGHT * 0.18, -0.22],
@@ -1200,6 +1664,145 @@ function createWarlockGuitar() {
   return guitar;
 }
 
+const LOCKER_TINTS = [
+  0xf0c85a,
+  0xf7c6d6,
+  0x8a6fe8,
+  0x7ed6f8,
+  0xb8f5c8,
+  0x3ad64a,
+  0xf27070,
+  0xf6e85c
+];
+
+function createBinderStack() {
+  const stack = new THREE.Group();
+  stack.name = 'binder-stack';
+  const blue = popMat(0x6a9fd4);
+  const labelMat = popMat(0xe7eef6);
+  const ringMat = new THREE.MeshStandardMaterial({ color: 0xc5ced8, roughness: 0.35, metalness: 0.6 });
+  [0, 0.09, 0.18].forEach((y, i) => {
+    const binder = roundedMesh(0.46, 0.08, 0.3, 0.02, blue, 1);
+    binder.position.set((i - 1) * 0.05, y, 0);
+    binder.rotation.y = (i - 1) * 0.06;
+    stack.add(binder);
+    const label = boxMesh(0.14, 0.04, 0.008, labelMat);
+    label.position.set(binder.position.x, y, 0.155);
+    stack.add(label);
+    [-0.07, 0.07].forEach((x) => {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.004, 6, 8), ringMat);
+      ring.position.set(binder.position.x + x, y, 0.16);
+      stack.add(ring);
+    });
+  });
+  return stack;
+}
+
+function createOfficePile() {
+  const pile = new THREE.Group();
+  pile.name = 'office-pile';
+  const black = popMat(0x1c1e22);
+  const paper = popMat(0xe7e2d6);
+  const beige = popMat(0xe6dcc8);
+  const mugMat = popMat(0xf4f1ea);
+  const orange = popMat(0xe07a32);
+
+  const caseBox = roundedMesh(0.44, 0.1, 0.3, 0.02, black, 2);
+  caseBox.position.y = 0.05;
+  pile.add(caseBox);
+  const grip = boxMesh(0.12, 0.02, 0.02, popMat(0x9aa3ac));
+  grip.position.set(0, 0.02, 0.16);
+  pile.add(grip);
+
+  for (let i = 0; i < 6; i += 1) {
+    const sheet = boxMesh(0.4, 0.012, 0.28, i % 2 ? paper : popMat(0xf6f1e6));
+    sheet.position.set((i - 2) * 0.012, 0.12 + i * 0.016, 0);
+    sheet.rotation.z = (i - 3) * 0.025;
+    pile.add(sheet);
+  }
+
+  const laptop = new THREE.Group();
+  laptop.add(roundedMesh(0.3, 0.02, 0.2, 0.01, beige, 1));
+  const screen = roundedMesh(0.28, 0.16, 0.012, 0.008, beige, 1);
+  screen.position.set(0, 0.09, -0.08);
+  screen.rotation.x = -0.45;
+  laptop.add(screen);
+  const display = boxMesh(0.2, 0.1, 0.004, black);
+  display.position.set(0, 0.09, -0.07);
+  display.rotation.x = -0.45;
+  laptop.add(display);
+  laptop.position.y = 0.24;
+  pile.add(laptop);
+
+  const mug = cylinder(0.032, 0.03, 0.05, mugMat, 10);
+  mug.position.set(-0.1, 0.28, 0.04);
+  pile.add(mug);
+  const mugHandle = new THREE.Mesh(new THREE.TorusGeometry(0.016, 0.004, 6, 8), mugMat);
+  mugHandle.rotation.y = Math.PI / 2;
+  mugHandle.position.set(-0.132, 0.28, 0.04);
+  pile.add(mugHandle);
+
+  const glasses = new THREE.Group();
+  [-1, 1].forEach((side) => {
+    const lens = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.003, 6, 8), orange);
+    lens.position.x = side * 0.022;
+    glasses.add(lens);
+  });
+  glasses.position.set(0.06, 0.32, 0.02);
+  glasses.rotation.set(-0.7, 0.2, 0.4);
+  pile.add(glasses);
+  return pile;
+}
+
+function createRedFolder() {
+  const folder = new THREE.Group();
+  folder.name = 'red-folder';
+  const red = new THREE.MeshPhysicalMaterial({
+    color: 0x143a86,
+    roughness: 0.12,
+    metalness: 0.04,
+    transmission: 0.55,
+    thickness: 0.12,
+    transparent: true,
+    opacity: 0.78,
+    side: THREE.DoubleSide
+  });
+  const metal = new THREE.MeshStandardMaterial({ color: 0xd7dee6, roughness: 0.22, metalness: 0.82 });
+
+  const back = roundedMesh(0.5, 0.32, 0.012, 0.03, red, 1);
+  back.rotation.x = -0.38;
+  back.position.set(0, 0.1, -0.08);
+  folder.add(back);
+  const front = roundedMesh(0.5, 0.3, 0.012, 0.03, red, 1);
+  front.rotation.x = 0.32;
+  front.position.set(0, 0.08, 0.08);
+  folder.add(front);
+  const lip = boxMesh(0.52, 0.014, 0.014, metal);
+  lip.position.set(0, 0.18, 0.18);
+  lip.rotation.x = 0.32;
+  folder.add(lip);
+
+  const sheet = (w, h) => coverMesh(w, h, (ctx, cw, ch) => {
+    ctx.fillStyle = '#f7f5f1';
+    ctx.fillRect(0, 0, cw, ch);
+    ctx.fillStyle = '#c8c4bc';
+    for (let y = 28; y < ch - 16; y += 18) ctx.fillRect(24, y, cw - 48, 6);
+  });
+
+  [
+    [0.22, 0.18, 0.34, 0.02, -0.35, 0.15, 0.2],
+    [0.2, 0.16, 0.48, -0.04, 0.4, -0.2, -0.15],
+    [0.24, 0.2, 0.62, 0.05, -0.15, 0.35, 0.4],
+    [0.18, 0.14, 0.28, 0.06, 0.2, 0.1, -0.5]
+  ].forEach(([w, h, y, x, rx, ry, rz]) => {
+    const page = sheet(w, h);
+    page.position.set(x, y, 0.02);
+    page.rotation.set(rx, ry, rz);
+    folder.add(page);
+  });
+  return folder;
+}
+
 function createLocker(index) {
   const locker = new THREE.Group();
   const bodyH = LOCKER_HEIGHT - FOOT_H;
@@ -1219,9 +1822,30 @@ function createLocker(index) {
   foot.position.set(0, FOOT_H / 2, 0);
   locker.add(foot);
 
-  const back = boxMesh(LOCKER_WIDTH, bodyH, WALL, materials.interior);
+  const cavityColor = new THREE.Color(LOCKER_TINTS[index]).multiplyScalar(0.55);
+  const cavityMat = new THREE.MeshStandardMaterial({
+    color: cavityColor,
+    roughness: 0.86,
+    metalness: 0.04
+  });
+
+  const back = boxMesh(LOCKER_WIDTH, bodyH, WALL, cavityMat);
   back.position.set(0, bodyY, -LOCKER_DEPTH / 2 + WALL / 2);
   locker.add(back);
+
+  const cavityH = bodyH - WALL * 2;
+  const cavityY = bodyY;
+  [-1, 1].forEach((side) => {
+    const wall = boxMesh(0.012, cavityH, innerD * 0.9, cavityMat);
+    wall.position.set(side * (innerW / 2 - 0.008), cavityY, -0.02);
+    locker.add(wall);
+  });
+  const floor = boxMesh(innerW * 0.96, 0.012, innerD * 0.9, cavityMat);
+  floor.position.set(0, FOOT_H + WALL + 0.008, -0.02);
+  locker.add(floor);
+  const ceiling = boxMesh(innerW * 0.96, 0.012, innerD * 0.9, cavityMat);
+  ceiling.position.set(0, FOOT_H + bodyH - WALL - 0.008, -0.02);
+  locker.add(ceiling);
 
   const left = boxMesh(WALL, bodyH, LOCKER_DEPTH, materials.body);
   left.position.set(-LOCKER_WIDTH / 2 + WALL / 2, bodyY, 0);
@@ -1239,7 +1863,7 @@ function createLocker(index) {
   bottom.position.set(0, FOOT_H + WALL / 2, 0);
   locker.add(bottom);
 
-  addInteriorStructure(locker, bodyH, innerW, innerD);
+  addInteriorStructure(locker, bodyH, innerW, innerD, cavityMat);
 
   const frameFront = frontZ - FRAME / 2;
   const frameTop = roundedMesh(LOCKER_WIDTH, FRAME, FRAME, 0.012, materials.frame, 1);
@@ -1270,11 +1894,33 @@ function createLocker(index) {
   door.userData.lockerIndex = index;
   doorPivot.add(door);
 
+  const doorBack = boxMesh(DOOR_WIDTH * 0.94, DOOR_HEIGHT * 0.94, 0.01, cavityMat);
+  doorBack.position.z = -DOOR_THICK / 2 - 0.006;
+  door.add(doorBack);
+
   addVents(door, DOOR_HEIGHT * 0.3);
   addVents(door, -DOOR_HEIGHT * 0.32);
   addHandle(door);
   addStickyNote(door, index);
   dressDoor(door, index);
+
+  if (index === 3) {
+    const pile = createOfficePile();
+    pile.scale.setScalar(2.05);
+    pile.position.set(0, 2.15, 0.02);
+    locker.add(pile);
+
+    const binders = createBinderStack();
+    binders.scale.setScalar(1.9);
+    binders.position.set(-0.02, 0.28, -0.04);
+    locker.add(binders);
+
+    const folder = createRedFolder();
+    folder.scale.setScalar(1.45);
+    folder.position.set(0.02, 1.22, 0.06);
+    folder.rotation.set(0.1, -0.15, -0.08);
+    locker.add(folder);
+  }
 
   setShadows(locker);
   return { locker, doorPivot, door };
@@ -1287,7 +1933,6 @@ for (let index = 0; index < LOCKER_COUNT; index += 1) {
   locker.userData.lockerIndex = index;
   doorPivots.push(doorPivot);
   doorAnims.push({ open: false, progress: 0 });
-  clickableDoors.push(door);
 }
 
 const shellMats = new Set([
@@ -1297,7 +1942,7 @@ const shellMats = new Set([
   materials.recess,
   materials.handle
 ]);
-const HOVER_BLUE = new THREE.Color(0x1a3d78);
+const hoverColors = LOCKER_TINTS.map((hex) => new THREE.Color(hex));
 lockerBank.children.forEach((locker) => {
   locker.traverse((node) => {
     if (!node.isMesh || !shellMats.has(node.material)) return;
@@ -1359,6 +2004,35 @@ function toggleDoor(index) {
   anim.open = !anim.open;
 }
 
+const FAR_TARGET = new THREE.Vector3(0, LOCKER_CENTER_Y * 0.98, 0);
+const NEAR_ZOOM = 2.15;
+let focusedLocker = -1;
+let zoomAnim = null;
+
+function lockerWorldX(index) {
+  return -TOTAL_WIDTH / 2 + LOCKER_WIDTH / 2 + index * (LOCKER_WIDTH + GAP);
+}
+
+function setFocusArrows() {
+  const prev = document.getElementById('cam-prev');
+  const next = document.getElementById('cam-next');
+  const near = focusedLocker >= 0;
+  prev.hidden = !near || focusedLocker === 0;
+  next.hidden = !near || focusedLocker === LOCKER_COUNT - 1;
+}
+
+function moveFocus(index) {
+  zoomAnim = {
+    fromZoom: camera.zoom,
+    toZoom: index < 0 ? 1 : NEAR_ZOOM,
+    from: controls.target.clone(),
+    to: index < 0 ? FAR_TARGET.clone() : new THREE.Vector3(lockerWorldX(index), FAR_TARGET.y, 0),
+    t: 0
+  };
+  focusedLocker = index;
+  setFocusArrows();
+}
+
 let hoveredLocker = -1;
 
 function paintLocker(index, hover) {
@@ -1366,7 +2040,7 @@ function paintLocker(index, hover) {
   if (!locker) return;
   locker.traverse((node) => {
     if (!node.isMesh || !node.userData.baseColor) return;
-    node.material.color.copy(hover ? HOVER_BLUE : node.userData.baseColor);
+    node.material.color.copy(hover ? hoverColors[index] : node.userData.baseColor);
   });
 }
 
@@ -1403,15 +2077,66 @@ renderer.domElement.addEventListener('pointerup', (event) => {
 
   setPointerFromEvent(event);
   raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObjects(clickableDoors, true);
-  if (hits.length > 0) toggleDoor(doorIndexFromObject(hits[0].object));
+  const hits = raycaster.intersectObjects(lockerBank.children, true);
+  if (hits.length === 0) {
+    if (focusedLocker < 0) return;
+    doorAnims[focusedLocker].open = false;
+    moveFocus(-1);
+    return;
+  }
+  const index = doorIndexFromObject(hits[0].object);
+  if (index < 0) return;
+  if (focusedLocker !== index) {
+    if (focusedLocker >= 0) doorAnims[focusedLocker].open = false;
+    moveFocus(index);
+    doorAnims[index].open = true;
+    return;
+  }
+  toggleDoor(index);
 });
+
+document.getElementById('nav-home').addEventListener('click', () => {
+  moveFocus(-1);
+});
+
+document.getElementById('cam-prev').addEventListener('click', () => {
+  if (focusedLocker > 0) moveFocus(focusedLocker - 1);
+});
+document.getElementById('cam-next').addEventListener('click', () => {
+  if (focusedLocker < LOCKER_COUNT - 1) moveFocus(focusedLocker + 1);
+});
+
+function nearestLocker(x) {
+  let best = 0;
+  let bestDist = Infinity;
+  for (let index = 0; index < LOCKER_COUNT; index += 1) {
+    const dist = Math.abs(lockerWorldX(index) - x);
+    if (dist < bestDist) {
+      best = index;
+      bestDist = dist;
+    }
+  }
+  return best;
+}
+
+renderer.domElement.addEventListener('wheel', (event) => {
+  if (focusedLocker < 0) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  zoomAnim = null;
+  const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+  const minX = lockerWorldX(0);
+  const maxX = lockerWorldX(LOCKER_COUNT - 1);
+  controls.target.x = THREE.MathUtils.clamp(controls.target.x + delta * 0.004, minX, maxX);
+  focusedLocker = nearestLocker(controls.target.x);
+  setFocusArrows();
+}, { capture: true, passive: false });
 
 function resizeScene() {
   const width = window.innerWidth;
   const height = window.innerHeight;
   const aspect = width / height;
-  const viewWidth = TOTAL_WIDTH / 0.72;
+  const viewWidth = TOTAL_WIDTH / 0.6;
   const viewHeight = viewWidth / aspect;
 
   camera.left = -viewWidth / 2;
@@ -1435,6 +2160,15 @@ function animate() {
     );
     doorPivots[index].rotation.y = DOOR_OPEN_ANGLE * easeInOutCubic(anim.progress);
   });
+
+  if (zoomAnim) {
+    zoomAnim.t = Math.min(1, zoomAnim.t + dt / 0.6);
+    const eased = easeInOutCubic(zoomAnim.t);
+    camera.zoom = THREE.MathUtils.lerp(zoomAnim.fromZoom, zoomAnim.toZoom, eased);
+    controls.target.lerpVectors(zoomAnim.from, zoomAnim.to, eased);
+    camera.updateProjectionMatrix();
+    if (zoomAnim.t === 1) zoomAnim = null;
+  }
 
   controls.update();
   renderer.render(scene, camera);
