@@ -25,10 +25,13 @@ body.is-lockers html {
   height: 100vh;
   display: flex;
   align-items: center;
-  background: #2aa800;
+  background: transparent;
+  pointer-events: none;
 }
 
 .intro__track {
+  position: relative;
+  z-index: 1;
   width: 100%;
 }
 
@@ -86,22 +89,30 @@ body.is-lockers html {
 }
 
 .pixel-reveal {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: 4;
+  z-index: 0;
   display: grid;
-  grid-template-columns: repeat(var(--cols), 1fr);
-  grid-template-rows: repeat(var(--rows), 1fr);
+  grid-template-rows: repeat(28, 1fr);
   pointer-events: none;
 }
 
 .pixel-reveal i {
   background: #2aa800;
+  transform-origin: left center;
+  will-change: transform;
+  margin-bottom: -1px;
+}
+
+.pin-spacer {
+  pointer-events: none !important;
 }
 
 body.is-lockers .intro,
-body.is-lockers .pixel-reveal {
-  display: none;
+body.is-lockers .pixel-reveal,
+body.is-lockers .pin-spacer {
+  display: none !important;
+  pointer-events: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

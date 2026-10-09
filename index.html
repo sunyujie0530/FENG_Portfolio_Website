@@ -18,17 +18,17 @@
         </div>
       </div>
     </section>
+    <nav id="top-nav" aria-label="页面导航">
+      <button type="button" id="nav-home">返回首页</button>
+      <button type="button" id="nav-lockers">柜子展示</button>
+      <button type="button" id="nav-works">全部作品</button>
+      <button type="button">老师介绍</button>
+    </nav>
     <div id="stage" class="stage">
       <div id="app"></div>
-      <div id="works" class="works" aria-label="全部作品">
+      <div id="works" class="works" hidden aria-hidden="true" aria-label="全部作品">
         <canvas id="works-scene" aria-label="三维圆盘作品展示"></canvas>
       </div>
-      <nav id="top-nav" aria-label="页面导航">
-        <button type="button" id="nav-home">返回首页</button>
-        <button type="button" id="nav-lockers">柜子展示</button>
-        <button type="button" id="nav-works">全部作品</button>
-        <button type="button">老师介绍</button>
-      </nav>
       <button id="cam-prev" type="button" hidden aria-label="看左边的柜子">‹</button>
       <button id="cam-next" type="button" hidden aria-label="看右边的柜子">›</button>
     </div>

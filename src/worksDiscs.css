@@ -1,13 +1,19 @@
 .works {
   position: fixed;
   inset: 0;
-  z-index: 2;
+  z-index: 0;
   display: none;
   background: transparent;
+  pointer-events: none;
 }
 
 body.is-works .works {
   display: block;
+  z-index: 2;
+}
+
+body.is-works:not(.is-switching) .works {
+  pointer-events: auto;
 }
 
 body.is-works,
@@ -17,9 +23,13 @@ body.is-works html {
   background: #f6f7fa;
 }
 
-body.is-works #app,
-body.is-works #cam-prev,
-body.is-works #cam-next {
+body.is-works:not(.is-switching) #app {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+body.is-works:not(.is-switching) #cam-prev,
+body.is-works:not(.is-switching) #cam-next {
   visibility: hidden;
   pointer-events: none;
 }
@@ -35,6 +45,7 @@ body.is-works .pixel-reveal {
   height: 100%;
   cursor: grab;
   touch-action: none;
+  pointer-events: inherit;
 }
 
 #works-scene:active {
@@ -43,10 +54,10 @@ body.is-works .pixel-reveal {
 
 body.is-switching #app {
   visibility: visible;
-  pointer-events: none;
 }
 
-body.is-switching #works-scene {
+body.is-switching #works-scene,
+body.is-switching .works {
   pointer-events: none;
 }
 

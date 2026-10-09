@@ -2,17 +2,17 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText } from 'gsap/SplitText';
 import './introMarquee.css';
+import { revealProgress, stripScale } from './introReveal.js';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
 const SCROLL_DISTANCE = 5000;
 const SCROLL_DISTANCE_MOBILE = 2800;
-const PIXEL_COLS = 48;
 const PIXEL_ROWS = 28;
 
 let teardown = () => {};
 
-export function startIntro({ onReveal } = {}) {
+export function startIntro({ onReveal, onProgress } = {}) {
   const wrapper = document.querySelector('#intro');
   const line = document.querySelector('.intro__line');
   const text = document.querySelector('.intro__text');
@@ -28,35 +28,71 @@ export function startIntro({ onReveal } = {}) {
   let split;
   let ctx;
   let opened = false;
+  let playVersion = 0;
+  const layer = document.createElement('div');
+  layer.className = 'pixel-reveal';
+  layer.setAttribute('aria-hidden', 'true');
+  const strips = Array.from({ length: PIXEL_ROWS }, () => {
+    const strip = document.createElement('i');
+    layer.append(strip);
+    return strip;
+  });
+  wrapper.prepend(layer);
+
+  const updateReveal = () => {
+    if (opened) return;
+    const bounds = text.getBoundingClientRect();
+    const progress = revealProgress(bounds.left, bounds.width, window.innerWidth);
+    onProgress?.(progress);
+    strips.forEach((strip, index) => {
+      strip.style.transform = `scaleX(${stripScale(progress, index)})`;
+    });
+    // Finish when the screen is revealed, not only after passing the pin's end.
+    if (progress === 1) {
+      const version = playVersion;
+      queueMicrotask(() => { if (version === playVersion) reveal(); });
+    }
+  };
+
+  const clearPinSpacers = () => {
+    document.querySelectorAll('.pin-spacer').forEach((spacer) => {
+      const pinned = spacer.querySelector('#intro, .intro');
+      if (pinned) spacer.replaceWith(pinned);
+      else spacer.remove();
+    });
+  };
 
   const stop = () => {
     ctx?.revert();
     split?.revert();
     ctx = null;
     split = null;
+    clearPinSpacers();
   };
 
   const reveal = () => {
     if (opened) return;
     opened = true;
+    playVersion += 1;
     stop();
-    pixelReveal(() => {
-      document.body.classList.add('is-lockers');
-      window.scrollTo(0, 0);
-      onReveal?.();
-    });
+    onProgress?.(1);
+    document.body.classList.add('is-lockers');
+    window.scrollTo(0, 0);
+    onReveal?.();
   };
 
   const play = async () => {
+    const version = ++playVersion;
     opened = false;
     stop();
     gsap.set(wrapper, { autoAlpha: 1, clearProps: 'transform' });
     gsap.set(line, { xPercent: 0, clearProps: 'transform' });
+    strips.forEach((strip) => { strip.style.transform = 'scaleX(1)'; });
+    onProgress?.(reduced ? 1 : 0);
     window.scrollTo(0, 0);
 
     if (reduced) {
-      document.body.classList.add('is-lockers');
-      onReveal?.();
+      reveal();
       return;
     }
 
@@ -69,12 +105,14 @@ export function startIntro({ onReveal } = {}) {
       /* keep going with fallback metrics */
     }
 
+    if (version !== playVersion || opened) return;
     ctx = gsap.context(() => {
       split = SplitText.create(text, { type: 'chars,words', charsClass: 'char', wordsClass: 'word' });
 
       const scrollTween = gsap.to(line, {
         xPercent: -100,
         ease: 'none',
+        onUpdate: updateReveal,
         scrollTrigger: {
           trigger: wrapper,
           pin: true,
@@ -110,15 +148,18 @@ export function startIntro({ onReveal } = {}) {
   window.addEventListener('resize', onResize);
 
   teardown = () => {
+    playVersion += 1;
+    opened = true;
     window.removeEventListener('resize', onResize);
     stop();
+    layer.remove();
   };
 
   startIntro.replay = () => {
     document.body.classList.remove('is-lockers');
-    document.querySelector('.pixel-reveal')?.remove();
     play();
   };
+  startIntro.finish = reveal;
 
   return () => teardown();
 }
@@ -127,33 +168,6 @@ export function returnToIntro() {
   if (typeof startIntro.replay === 'function') startIntro.replay();
 }
 
-function pixelReveal(onDone) {
-  const layer = document.createElement('div');
-  layer.className = 'pixel-reveal';
-  layer.style.setProperty('--cols', PIXEL_COLS);
-  layer.style.setProperty('--rows', PIXEL_ROWS);
-  const cells = [];
-  for (let i = 0; i < PIXEL_COLS * PIXEL_ROWS; i += 1) {
-    const cell = document.createElement('i');
-    cells.push(cell);
-    layer.append(cell);
-  }
-  document.body.append(layer);
-
-  gsap.set('#intro', { autoAlpha: 0 });
-  const order = cells
-    .map((cell, i) => ({ cell, t: ((i * 37 + 17) * 13) % 1000 }))
-    .sort((a, b) => a.t - b.t)
-    .map((item) => item.cell);
-
-  gsap.to(order, {
-    opacity: 0,
-    duration: 0.01,
-    ease: 'none',
-    stagger: { each: 0.0018 },
-    onComplete() {
-      layer.remove();
-      onDone();
-    }
-  });
+export function finishIntro() {
+  if (typeof startIntro.finish === 'function') startIntro.finish();
 }

@@ -3,7 +3,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import './style.css';
-import { startIntro, returnToIntro } from './introMarquee.js';
+import { startIntro, returnToIntro, finishIntro } from './introMarquee.js';
+import { introCameraDistance } from './introReveal.js';
 import { hideWorks, showWorks, setWorksTransition } from './worksDiscs.js';
 
 const app = document.querySelector('#app');
@@ -55,7 +56,7 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.06;
 controls.enablePan = false;
 controls.minZoom = 0.7;
-controls.maxZoom = 3.4;
+controls.maxZoom = 3.8;
 controls.minDistance = camera.position.distanceTo(target);
 controls.maxDistance = controls.minDistance;
 controls.minAzimuthAngle = -0.08;
@@ -63,6 +64,8 @@ controls.maxAzimuthAngle = 0.08;
 controls.minPolarAngle = 1.25;
 controls.maxPolarAngle = 1.52;
 controls.update();
+const introCameraOffset = camera.position.clone().sub(controls.target);
+const introRestDistance = introCameraOffset.length();
 
 // Soft cool wrap light — clean, healing campus mood.
 scene.add(new THREE.AmbientLight(0xf7f9fb, 0.52));
@@ -1424,8 +1427,10 @@ function dressDoor(door, index) {
     const badge = createIdBadge();
     badge.userData.restScale = 1.2;
     badge.userData.closedScale = 0.58;
+    badge.userData.restY = 0.35;
+    badge.userData.hover = 0;
     badge.scale.setScalar(badge.userData.closedScale);
-    badge.position.set(0, 0.35, -DOOR_THICK / 2 - 0.07);
+    badge.position.set(0, badge.userData.restY, -DOOR_THICK / 2 - 0.07);
     badge.rotation.y = Math.PI;
     door.add(badge);
     idBadge = badge;
@@ -1994,7 +1999,7 @@ const shellMats = new Set([
   materials.recess,
   materials.handle
 ]);
-const hoverColors = LOCKER_TINTS.map((hex) => new THREE.Color(hex));
+const hoverColors = LOCKER_TINTS.map((hex) => new THREE.Color(hex).offsetHSL(0, 0.12, 0.08));
 lockerBank.children.forEach((locker) => {
   locker.traverse((node) => {
     if (!node.isMesh || !shellMats.has(node.material)) return;
@@ -2068,8 +2073,76 @@ function toggleDoor(index) {
 
 const FAR_TARGET = new THREE.Vector3(0, LOCKER_CENTER_Y * 0.98, 0);
 const NEAR_ZOOM = 2.15;
+const BADGE_ZOOM = 3.42;
+const INTRO_FAR = introCameraDistance(0);
 let focusedLocker = -1;
+let badgeFocus = false;
 let zoomAnim = null;
+let introArrive = null;
+const badgeAim = new THREE.Vector3();
+const badgeFwd = new THREE.Vector3();
+const badgeFaceCam = new THREE.Vector3();
+
+function isIdBadge(object) {
+  let node = object;
+  while (node) {
+    if (node === idBadge || node.name === 'id-badge') return true;
+    node = node.parent;
+  }
+  return false;
+}
+
+function restoreOrbitLimits() {
+  controls.minAzimuthAngle = -0.08;
+  controls.maxAzimuthAngle = 0.08;
+  controls.minDistance = controls.maxDistance = introRestDistance;
+}
+
+function badgeLookTarget(out) {
+  if (idBadge) return idBadge.getWorldPosition(out);
+  return out.set(lockerWorldX(3) + 0.55, FAR_TARGET.y + 0.22, 0.2);
+}
+
+function badgeCameraPos(target, out) {
+  out.copy(target).add(introCameraOffset);
+  if (!idBadge) return out.setX(out.x - 1.6);
+  idBadge.getWorldDirection(badgeFwd);
+  badgeFaceCam.copy(target).addScaledVector(badgeFwd, introRestDistance);
+  badgeFaceCam.y = out.y;
+  return out.lerp(badgeFaceCam, 0.48);
+}
+
+function focusBadge() {
+  if (!idBadge) return;
+  introArrive = null;
+  controls.enabled = false;
+  controls.minAzimuthAngle = -0.7;
+  controls.maxAzimuthAngle = 0.08;
+  badgeLookTarget(badgeAim);
+  zoomAnim = {
+    fromZoom: camera.zoom,
+    toZoom: BADGE_ZOOM,
+    from: controls.target.clone(),
+    to: badgeAim.clone(),
+    fromPos: camera.position.clone(),
+    toPos: badgeCameraPos(badgeAim, new THREE.Vector3()),
+    t: 0,
+    followBadge: true,
+  };
+  badgeFocus = true;
+  focusedLocker = 3;
+  doorAnims[3].open = true;
+  setFocusArrows();
+}
+
+function setIntroCamera(distance) {
+  camera.zoom = 1;
+  controls.target.copy(FAR_TARGET);
+  camera.position.copy(FAR_TARGET).addScaledVector(introCameraOffset, distance);
+  controls.minDistance = controls.maxDistance = introRestDistance * distance;
+  camera.lookAt(FAR_TARGET);
+  camera.updateProjectionMatrix();
+}
 
 function lockerWorldX(index) {
   return -TOTAL_WIDTH / 2 + LOCKER_WIDTH / 2 + index * (LOCKER_WIDTH + GAP);
@@ -2084,18 +2157,28 @@ function setFocusArrows() {
 }
 
 function moveFocus(index) {
+  introArrive = null;
+  badgeFocus = false;
+  restoreOrbitLimits();
+  controls.enabled = true;
   zoomAnim = {
     fromZoom: camera.zoom,
     toZoom: index < 0 ? 1 : NEAR_ZOOM,
     from: controls.target.clone(),
     to: index < 0 ? FAR_TARGET.clone() : new THREE.Vector3(lockerWorldX(index), FAR_TARGET.y, 0),
-    t: 0
+    fromPos: camera.position.clone(),
+    toPos: (index < 0 ? FAR_TARGET : new THREE.Vector3(lockerWorldX(index), FAR_TARGET.y, 0))
+      .clone()
+      .addScaledVector(introCameraOffset, 1),
+    t: 0,
+    followBadge: false,
   };
   focusedLocker = index;
   setFocusArrows();
 }
 
 let hoveredLocker = -1;
+let hoveredBadge = false;
 
 function paintLocker(index, hover) {
   const locker = lockerBank.children[index];
@@ -2103,34 +2186,46 @@ function paintLocker(index, hover) {
   locker.traverse((node) => {
     if (!node.isMesh || !node.userData.baseColor) return;
     node.material.color.copy(hover ? hoverColors[index] : node.userData.baseColor);
+    node.material.emissive.copy(hover ? hoverColors[index] : node.userData.baseColor);
+    node.material.emissiveIntensity = hover ? 0.28 : 0;
   });
 }
 
+function lockersInteractive() {
+  return !switchingWorks && worksProgress < 1;
+}
+
 function hoverLockerAt(event) {
+  if (!lockersInteractive()) return;
   setPointerFromEvent(event);
   raycaster.setFromCamera(pointer, camera);
   const hits = raycaster.intersectObjects(lockerBank.children, true);
+  hoveredBadge = hits.length > 0 && isIdBadge(hits[0].object);
   const index = hits.length > 0 ? doorIndexFromObject(hits[0].object) : -1;
-  if (index === hoveredLocker) return;
-  if (hoveredLocker >= 0) paintLocker(hoveredLocker, false);
-  hoveredLocker = index;
-  if (hoveredLocker >= 0) paintLocker(hoveredLocker, true);
-  renderer.domElement.style.cursor = hoveredLocker >= 0 ? 'pointer' : '';
+  if (index !== hoveredLocker) {
+    if (hoveredLocker >= 0) paintLocker(hoveredLocker, false);
+    hoveredLocker = index;
+    if (hoveredLocker >= 0) paintLocker(hoveredLocker, true);
+  }
+  renderer.domElement.style.cursor = hoveredBadge || hoveredLocker >= 0 ? 'pointer' : '';
 }
 
 renderer.domElement.addEventListener('pointermove', hoverLockerAt);
 renderer.domElement.addEventListener('pointerleave', () => {
   if (hoveredLocker >= 0) paintLocker(hoveredLocker, false);
   hoveredLocker = -1;
+  hoveredBadge = false;
   renderer.domElement.style.cursor = '';
 });
 
 renderer.domElement.addEventListener('pointerdown', (event) => {
   if (event.button !== 0) return;
+  if (!lockersInteractive()) return;
   pointerDown = { x: event.clientX, y: event.clientY };
 });
 
 renderer.domElement.addEventListener('pointerup', (event) => {
+  if (!lockersInteractive()) return;
   if (!pointerDown || event.button !== 0) return;
   const dx = event.clientX - pointerDown.x;
   const dy = event.clientY - pointerDown.y;
@@ -2146,8 +2241,25 @@ renderer.domElement.addEventListener('pointerup', (event) => {
     moveFocus(-1);
     return;
   }
+  if (isIdBadge(hits[0].object)) {
+    if (badgeFocus) {
+      doorAnims[3].open = true;
+      moveFocus(3);
+      doorAnims[3].open = true;
+      return;
+    }
+    if (focusedLocker >= 0 && focusedLocker !== 3) doorAnims[focusedLocker].open = false;
+    focusBadge();
+    return;
+  }
   const index = doorIndexFromObject(hits[0].object);
   if (index < 0) return;
+  if (badgeFocus && index === 3) {
+    doorAnims[3].open = true;
+    moveFocus(3);
+    doorAnims[3].open = true;
+    return;
+  }
   if (focusedLocker !== index) {
     if (focusedLocker >= 0) doorAnims[focusedLocker].open = false;
     moveFocus(index);
@@ -2171,6 +2283,8 @@ transitionGlow.position.set(lockerWorldX(3), 1.9, 0.35);
 lockerBank.add(transitionGlow);
 
 function switchWorks(target) {
+  // Complete intro cleanup before reading controls or changing page state.
+  finishIntro();
   if (worksTarget === target && (switchingWorks || worksProgress === target)) return;
   if (!switchingWorks) {
     if (worksProgress === 0) {
@@ -2180,6 +2294,8 @@ function switchWorks(target) {
       transitionDoorStart = doorAnims[3].progress;
     }
     transitionControlEnabled = controls.enabled;
+    badgeFocus = false;
+    restoreOrbitLimits();
     zoomAnim = null;
   }
   worksTarget = target;
@@ -2212,16 +2328,26 @@ document.getElementById('nav-works').addEventListener('click', () => {
 });
 
 document.getElementById('nav-lockers').addEventListener('click', () => {
-  if (worksProgress > 0 || switchingWorks) switchWorks(0);
+  finishIntro();
+  if (worksProgress > 0 || switchingWorks) {
+    switchWorks(0);
+  } else {
+    hideWorks();
+    document.body.classList.remove('is-switching');
+    app.style.opacity = '';
+    controls.enabled = true;
+  }
   document.body.classList.add('is-lockers');
   window.scrollTo(0, 0);
 });
 
 document.getElementById('cam-prev').addEventListener('click', () => {
-  if (focusedLocker > 0) moveFocus(focusedLocker - 1);
+  if (!lockersInteractive() || focusedLocker <= 0) return;
+  moveFocus(focusedLocker - 1);
 });
 document.getElementById('cam-next').addEventListener('click', () => {
-  if (focusedLocker < LOCKER_COUNT - 1) moveFocus(focusedLocker + 1);
+  if (!lockersInteractive() || focusedLocker < 0 || focusedLocker >= LOCKER_COUNT - 1) return;
+  moveFocus(focusedLocker + 1);
 });
 
 function nearestLocker(x) {
@@ -2241,6 +2367,11 @@ renderer.domElement.addEventListener('wheel', (event) => {
   if (focusedLocker < 0) return;
   event.preventDefault();
   event.stopImmediatePropagation();
+  if (badgeFocus) {
+    doorAnims[3].open = true;
+    moveFocus(3);
+    doorAnims[3].open = true;
+  }
   zoomAnim = null;
   const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
   const minX = lockerWorldX(0);
@@ -2300,25 +2431,65 @@ function animate() {
   if (idBadge) {
     const door = doorAnims[3];
     const t = easeInOutCubic(door.progress);
-    const from = idBadge.userData.closedScale;
-    const to = idBadge.userData.restScale;
-    idBadge.scale.setScalar(THREE.MathUtils.lerp(from, to, t));
+    const want = hoveredBadge && door.progress > 0.6 ? 1 : 0;
+    idBadge.userData.hover += (want - idBadge.userData.hover) * Math.min(1, dt * 9);
+    const hover = idBadge.userData.hover;
+    const base = THREE.MathUtils.lerp(idBadge.userData.closedScale, idBadge.userData.restScale, t);
+    idBadge.scale.setScalar(base * (1 + 0.09 * hover));
+    idBadge.position.y = idBadge.userData.restY + 0.06 * hover;
   }
 
   if (zoomAnim) {
-    zoomAnim.t = Math.min(1, zoomAnim.t + dt / 0.6);
+    zoomAnim.t = Math.min(1, zoomAnim.t + dt / (zoomAnim.followBadge ? 0.7 : 0.6));
     const eased = easeInOutCubic(zoomAnim.t);
     camera.zoom = THREE.MathUtils.lerp(zoomAnim.fromZoom, zoomAnim.toZoom, eased);
+    if (zoomAnim.followBadge && idBadge) {
+      badgeLookTarget(zoomAnim.to);
+      badgeCameraPos(zoomAnim.to, zoomAnim.toPos);
+    }
     controls.target.lerpVectors(zoomAnim.from, zoomAnim.to, eased);
+    if (zoomAnim.fromPos && zoomAnim.toPos) {
+      camera.position.lerpVectors(zoomAnim.fromPos, zoomAnim.toPos, eased);
+      camera.lookAt(controls.target);
+    }
     camera.updateProjectionMatrix();
     if (zoomAnim.t === 1) zoomAnim = null;
   }
 
-  controls.update();
+  if (introArrive) {
+    introArrive.t = Math.min(1, introArrive.t + dt / 1.15);
+    setIntroCamera(THREE.MathUtils.lerp(introArrive.from, introArrive.to, easeInOutCubic(introArrive.t)));
+    if (introArrive.t === 1) {
+      introArrive = null;
+      controls.minDistance = controls.maxDistance = introRestDistance;
+      controls.enabled = true;
+    }
+  }
+
+  if (controls.enabled && !zoomAnim && !badgeFocus) controls.update();
   renderer.render(scene, camera);
 }
 
 window.addEventListener('resize', resizeScene);
 resizeScene();
 renderer.setAnimationLoop(animate);
-startIntro();
+startIntro({
+  onProgress(progress) {
+    if (document.body.classList.contains('is-lockers') || focusedLocker >= 0 || zoomAnim || introArrive) return;
+    controls.enabled = false;
+    setIntroCamera(INTRO_FAR);
+  },
+  onReveal() {
+    hideWorks();
+    document.body.classList.remove('is-switching');
+    app.style.opacity = '';
+    if (focusedLocker >= 0 || zoomAnim) {
+      controls.minDistance = controls.maxDistance = introRestDistance;
+      controls.enabled = true;
+      return;
+    }
+    controls.enabled = false;
+    introArrive = { t: 0, from: INTRO_FAR, to: 1 };
+    setIntroCamera(INTRO_FAR);
+  }
+});
