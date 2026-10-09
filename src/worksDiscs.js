@@ -77,6 +77,7 @@ function bindPageSnap(panel, index) {
 
 const source = new THREE.Vector2(0, 0);
 const smooth = (a, b, value) => THREE.MathUtils.smoothstep(value, a, b);
+const textureLoader = new THREE.TextureLoader();
 
 export function setWorksTransition(progress, anchor) {
   if (progress < 1 && detail) resetDetail();
@@ -159,9 +160,16 @@ export function initWorks(background = 0xf6f7fa) {
   const rimMaterial = new THREE.MeshPhysicalMaterial({
     color: 0x2e343a, roughness: 0.18, metalness: 0.42, clearcoat: 0.9,
   });
+  const discParts = {
+    outerHub: hubGeometry(0.14, 0.245, 0.018),
+    innerHub: hubGeometry(0.14, 0.213, 0.012),
+    rim: new THREE.TorusGeometry(0.998, 0.006, 8, 128),
+    glow: new THREE.TorusGeometry(1.012, 0.018, 10, 96),
+    halo: new THREE.TorusGeometry(1.04, 0.04, 10, 96),
+  };
 
   for (let i = 0; i < COUNT; i += 1) {
-    const disc = createDisc(i, geometry, palettes[i % palettes.length], hubMaterial, darkHub, rimMaterial);
+    const disc = createDisc(i, geometry, palettes[i % palettes.length], hubMaterial, darkHub, rimMaterial, discParts);
     scene.add(disc);
     discs.push(disc);
   }
@@ -175,21 +183,39 @@ export function initWorks(background = 0xf6f7fa) {
   let moved = false;
   const pointer = new THREE.Vector2(4, 4);
   const raycaster = new THREE.Raycaster();
-  const detailPanels = {
-    0: createWrongPlaneDetail(closeDetail),
-    1: createWorkDetail(closeDetail),
-    2: createBarbarianDetail(closeDetail),
-    3: createBcwDetail(closeDetail),
-    4: createPantheonDetail(closeDetail),
-    5: createVelvetDetail(closeDetail),
-    6: createStrideDetail(closeDetail),
-    7: createBeakerDetail(closeDetail),
-    8: createShiDaoDetail(closeDetail),
-    19: createSlimeDetail(closeDetail),
+  const visibleDiscs = [];
+  const collectVisibleDiscs = () => {
+    visibleDiscs.length = 0;
+    for (const disc of discs) if (disc.visible) visibleDiscs.push(disc);
+    return visibleDiscs;
+  };
+  const detailFactories = {
+    0: createWrongPlaneDetail,
+    1: createWorkDetail,
+    2: createBarbarianDetail,
+    3: createBcwDetail,
+    4: createPantheonDetail,
+    5: createVelvetDetail,
+    6: createStrideDetail,
+    7: createBeakerDetail,
+    8: createShiDaoDetail,
+    19: createSlimeDetail,
+  };
+  const detailPanels = new Map();
+  const getDetailPanel = (index) => {
+    const factory = detailFactories[index];
+    if (!factory) return null;
+    if (!detailPanels.has(index)) {
+      const panel = factory(closeDetail);
+      panel.addEventListener('scroll', () => panel.updateLayout?.(), { passive: true });
+      detailPanels.set(index, panel);
+    }
+    return detailPanels.get(index);
   };
   const openDetail = (disc) => {
-    if (detail || reveal < 1 || !detailPanels[disc.userData.index]) return;
-    detailPanel = detailPanels[disc.userData.index];
+    if (detail || reveal < 1) return;
+    detailPanel = getDetailPanel(disc.userData.index);
+    if (!detailPanel) return;
     dragging = false;
     velocity = 0;
     targetAngle = angle;
@@ -201,6 +227,7 @@ export function initWorks(background = 0xf6f7fa) {
     detailPanel.scrollTop = 0;
     bindPageSnap(detailPanel, disc.userData.index);
     document.body.classList.add('is-work-detail');
+    detailPanel.updateLayout?.();
     detailTween = gsap.to(detail, {
       progress: 1, duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1.7,
       ease: 'none', onComplete() {
@@ -219,7 +246,8 @@ export function initWorks(background = 0xf6f7fa) {
       targetAngle += event.key === 'ArrowLeft' ? 1 / 3 : -1 / 3;
     }
     if (event.key === 'Enter') {
-      const center = discs.filter((disc) => disc.visible).sort((a, b) => Math.abs(a.position.x) - Math.abs(b.position.x))[0];
+      const center = collectVisibleDiscs().reduce((best, disc) =>
+        !best || Math.abs(disc.position.x) < Math.abs(best.position.x) ? disc : best, null);
       if (center) openDetail(center);
     }
   });
@@ -240,6 +268,7 @@ export function initWorks(background = 0xf6f7fa) {
     const rect = canvas.getBoundingClientRect();
     pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    hoverDirty = true;
     if (!dragging) return;
     if (Math.hypot(e.clientX - downPoint.x, e.clientY - downPoint.y) > 6) moved = true;
     const dx = e.clientX - lastX;
@@ -255,14 +284,17 @@ export function initWorks(background = 0xf6f7fa) {
     const rect = canvas.getBoundingClientRect();
     pointer.set((e.clientX - rect.left) / rect.width * 2 - 1, -(e.clientY - rect.top) / rect.height * 2 + 1);
     raycaster.setFromCamera(pointer, camera);
-    const hit = raycaster.intersectObjects(discs.filter((disc) => disc.visible), true)[0];
+    const hit = raycaster.intersectObjects(collectVisibleDiscs(), true)[0];
     if (hit) openDetail(hit.object.parent);
   };
   canvas.addEventListener('pointerdown', onDown);
   canvas.addEventListener('pointermove', onMove);
   canvas.addEventListener('pointerup', onUp);
   canvas.addEventListener('pointercancel', onUp);
-  canvas.addEventListener('pointerleave', () => pointer.set(4, 4));
+  canvas.addEventListener('pointerleave', () => {
+    pointer.set(4, 4);
+    hoverDirty = true;
+  });
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
     if (reveal < 1 || detail) return;
@@ -271,6 +303,8 @@ export function initWorks(background = 0xf6f7fa) {
     velocity = 0;
   }, { passive: false });
 
+  let hovered = null;
+  let hoverDirty = true;
   const loop = () => {
     requestAnimationFrame(loop);
     if (!document.body.classList.contains('is-works')) return;
@@ -279,13 +313,21 @@ export function initWorks(background = 0xf6f7fa) {
       velocity *= 0.94;
       if (Math.abs(velocity) < 0.00005) velocity = 0;
     }
+    const moving = dragging || velocity !== 0 || Math.abs(targetAngle - angle) > 0.00005 || reveal < 1;
     angle += (targetAngle - angle) * 0.16;
 
     placeDiscs(angle, camera);
-    raycaster.setFromCamera(pointer, camera);
-    const hits = raycaster.intersectObjects(discs.filter((disc) => disc.visible), true);
-    const hovered = detail ? null : hits[0]?.object?.parent;
-    canvas.style.cursor = hovered ? 'pointer' : '';
+    const visible = collectVisibleDiscs();
+    if (detail) {
+      hovered = null;
+      hoverDirty = true;
+    } else if (hoverDirty || moving) {
+      raycaster.setFromCamera(pointer, camera);
+      hovered = raycaster.intersectObjects(visible, true)[0]?.object?.parent ?? null;
+      hoverDirty = false;
+    }
+    const cursor = hovered ? 'pointer' : '';
+    if (canvas.style.cursor !== cursor) canvas.style.cursor = cursor;
     discs.forEach((disc) => {
       const active = hovered === disc;
       disc.userData.hover += ((active ? 1 : 0) - disc.userData.hover) * 0.14;
@@ -298,7 +340,6 @@ export function initWorks(background = 0xf6f7fa) {
     // Project the open locker into this fixed camera's coordinate system.
     const originX = source.x * camera.right;
     const originY = source.y * camera.top;
-    const visible = discs.filter((disc) => disc.visible);
     const hero = visible.reduce((best, disc) =>
       !best || Math.abs(disc.position.x) < Math.abs(best.position.x) ? disc : best, null);
     visible.forEach((disc, i) => {
@@ -313,7 +354,6 @@ export function initWorks(background = 0xf6f7fa) {
       disc.rotation.z = THREE.MathUtils.lerp(0.08, -0.42, p);
     });
     if (detail) {
-      detailPanel.updateLayout?.();
       const p = detail.progress;
       const { gather, flip, move, text } = detailPhases(p);
       const direct = DIRECT_DETAIL.has(detail.disc.userData.index);
@@ -327,7 +367,11 @@ export function initWorks(background = 0xf6f7fa) {
         const pose = detail.poses[index];
         if (disc !== detail.disc) {
           disc.visible = pose.visible && gather < 0.99;
-          disc.position.copy(pose.position).lerp(new THREE.Vector3(0, 0, -0.3 - index * 0.02), gather);
+          disc.position.set(
+            THREE.MathUtils.lerp(pose.position.x, 0, gather),
+            THREE.MathUtils.lerp(pose.position.y, 0, gather),
+            THREE.MathUtils.lerp(pose.position.z, -0.3 - index * 0.02, gather),
+          );
           disc.scale.setScalar(THREE.MathUtils.lerp(pose.scale, 1.3, gather));
           return;
         }
@@ -344,7 +388,11 @@ export function initWorks(background = 0xf6f7fa) {
           disc.scale.setScalar(THREE.MathUtils.lerp(pose.scale, THREE.MathUtils.lerp(heroRadius, smallRadius, scroll), move));
           return;
         }
-        disc.position.copy(pose.position).lerp(new THREE.Vector3(0, 0, 1), gather);
+        disc.position.set(
+          THREE.MathUtils.lerp(pose.position.x, 0, gather),
+          THREE.MathUtils.lerp(pose.position.y, 0, gather),
+          THREE.MathUtils.lerp(pose.position.z, 1, gather),
+        );
         disc.position.x = THREE.MathUtils.lerp(disc.position.x, x, move);
         disc.position.y = THREE.MathUtils.lerp(disc.position.y, y, move);
         disc.rotation.set(0, THREE.MathUtils.lerp(pose.rotation.y, Math.PI, flip), THREE.MathUtils.lerp(pose.rotation.z, 0, flip), 'ZYX');
@@ -369,6 +417,7 @@ export function initWorks(background = 0xf6f7fa) {
     camera.bottom = -viewHeight / 2;
     camera.updateProjectionMatrix();
     placeDiscs(angle, camera);
+    detailPanel?.updateLayout?.();
   };
   addEventListener('resize', resize);
   resize();
@@ -396,27 +445,28 @@ export function hideWorks() {
   reveal = 1;
 }
 
+const TRACK_STOPS = [
+  [-5.40, -1.10, 1.18], [-2.95, -0.83, 1.48],
+  [0.20, -0.05, 1.96], [4.30, 1.80, 2.40],
+];
+
 function placeDiscs(offset, view) {
   // Monotonic track avoids sin(a) == sin(PI-a), which stacked pairs of discs.
   // Reference centers (1100 × 600): (10,410), (255,383), (570,305), (980,120).
-  const stops = [
-    [-5.40, -1.10, 1.18], [-2.95, -0.83, 1.48],
-    [0.20, -0.05, 1.96], [4.30, 1.80, 2.40],
-  ];
   const first = -2;
-  const interpolate = (slot) => {
-    const segment = Math.max(0, Math.min(2, Math.floor(slot)));
-    const t = slot - segment;
-    return stops[segment].map((value, axis) =>
-      THREE.MathUtils.lerp(value, stops[segment + 1][axis], t));
-  };
   discs.forEach((disc, i) => {
     const slot = THREE.MathUtils.euclideanModulo(i + offset * 3 - first, COUNT) + first;
     if (slot <= -2 || slot >= 6) {
       disc.visible = false;
       return;
     }
-    const [x, y, radius] = interpolate(slot);
+    const segment = Math.max(0, Math.min(2, Math.floor(slot)));
+    const t = slot - segment;
+    const current = TRACK_STOPS[segment];
+    const next = TRACK_STOPS[segment + 1];
+    const x = THREE.MathUtils.lerp(current[0], next[0], t);
+    const y = THREE.MathUtils.lerp(current[1], next[1], t);
+    const radius = THREE.MathUtils.lerp(current[2], next[2], t);
     const size = Math.max(0.6, radius);
     disc.position.set(x, y, slot * 0.06);
     disc.scale.setScalar(size);
@@ -427,7 +477,7 @@ function placeDiscs(offset, view) {
   });
 }
 
-function createDisc(index, geometry, palette, hubMaterial, darkHub, rimMaterial) {
+function createDisc(index, geometry, palette, hubMaterial, darkHub, rimMaterial, discParts) {
   const group = new THREE.Group();
   const face = new THREE.MeshPhysicalMaterial({
     map: COVER_ART[index] ? coverTexture(COVER_ART[index]) : faceTexture(palette, 0.17 + index * 0.11),
@@ -453,15 +503,15 @@ function createDisc(index, geometry, palette, hubMaterial, darkHub, rimMaterial)
   body.castShadow = true;
   body.receiveShadow = true;
   group.add(body);
-  const outerHub = new THREE.Mesh(hubGeometry(0.14, 0.245, 0.018), darkHub);
+  const outerHub = new THREE.Mesh(discParts.outerHub, darkHub);
   outerHub.position.z = 0.014;
   outerHub.castShadow = true;
   group.add(outerHub);
-  const innerHub = new THREE.Mesh(hubGeometry(0.14, 0.213, 0.012), hubMaterial);
+  const innerHub = new THREE.Mesh(discParts.innerHub, hubMaterial);
   innerHub.position.z = 0.031;
   innerHub.castShadow = true;
   group.add(innerHub);
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.998, 0.006, 8, 128), hubMaterial);
+  const rim = new THREE.Mesh(discParts.rim, hubMaterial);
   rim.position.z = 0.01;
   group.add(rim);
   for (const front of [outerHub, innerHub, rim]) {
@@ -477,11 +527,11 @@ function createDisc(index, geometry, palette, hubMaterial, darkHub, rimMaterial)
     depthWrite: false,
     blending: THREE.AdditiveBlending,
   });
-  const glow = new THREE.Mesh(new THREE.TorusGeometry(1.012, 0.018, 10, 96), glowMat);
+  const glow = new THREE.Mesh(discParts.glow, glowMat);
   glow.position.z = 0.014;
   glow.renderOrder = 2;
   group.add(glow);
-  const halo = new THREE.Mesh(new THREE.TorusGeometry(1.04, 0.04, 10, 96), glowMat.clone());
+  const halo = new THREE.Mesh(discParts.halo, glowMat.clone());
   halo.position.z = 0.01;
   halo.renderOrder = 1;
   group.add(halo);
@@ -513,7 +563,7 @@ function coverTexture(url) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 8;
-  new THREE.TextureLoader().load(url, (source) => {
+  textureLoader.load(url, (source) => {
     const image = source.image;
     const scale = Math.max(size / image.width, size / image.height);
     const w = image.width * scale;

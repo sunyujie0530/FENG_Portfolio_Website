@@ -26,6 +26,7 @@ scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 scene.environmentIntensity = 0.16;
 pmrem.dispose();
 app.append(renderer.domElement);
+let sceneDirty = true;
 
 const LOCKER_COUNT = 8;
 // Wider than the first slim pass; height stays put.
@@ -1320,6 +1321,7 @@ function createIdBadge() {
     tex.anisotropy = 8;
     portrait.material.map = tex;
     portrait.material.needsUpdate = true;
+    sceneDirty = true;
   });
 
   const ticket = coverMesh(0.42, 0.2, (ctx, w, h) => {
@@ -2142,6 +2144,7 @@ function setIntroCamera(distance) {
   controls.minDistance = controls.maxDistance = introRestDistance * distance;
   camera.lookAt(FAR_TARGET);
   camera.updateProjectionMatrix();
+  sceneDirty = true;
 }
 
 function lockerWorldX(index) {
@@ -2189,6 +2192,7 @@ function paintLocker(index, hover) {
     node.material.emissive.copy(hover ? hoverColors[index] : node.userData.baseColor);
     node.material.emissiveIntensity = hover ? 0.28 : 0;
   });
+  sceneDirty = true;
 }
 
 function lockersInteractive() {
@@ -2389,11 +2393,15 @@ function resizeScene() {
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(width, height);
+  sceneDirty = true;
 }
 
 function animate() {
   const dt = Math.min(clock.getDelta(), 0.05);
+  // The works scene has its own renderer; do not draw the fully hidden locker scene too.
+  if (!switchingWorks && worksProgress === 1) return;
   if (switchingWorks) {
+    sceneDirty = true;
     worksProgress = reducedTransitionMotion.matches ? worksTarget : THREE.MathUtils.clamp(
       worksProgress + Math.sign(worksTarget - worksProgress) * dt / 1.2, 0, 1);
     const retreat = THREE.MathUtils.smoothstep(worksProgress, 0.25, 0.85);
@@ -2419,6 +2427,7 @@ function animate() {
     }
   }
   doorAnims.forEach((anim, index) => {
+    const previous = anim.progress;
     const dir = anim.open ? 1 : -1;
     if (!(switchingWorks && index === 3)) anim.progress = THREE.MathUtils.clamp(
       anim.progress + (dir * dt) / DOOR_ANIM_DURATION,
@@ -2426,12 +2435,14 @@ function animate() {
       1
     );
     doorPivots[index].rotation.y = DOOR_OPEN_ANGLE * easeInOutCubic(anim.progress);
+    if (anim.progress !== previous) sceneDirty = true;
   });
 
   if (idBadge) {
     const door = doorAnims[3];
     const t = easeInOutCubic(door.progress);
     const want = hoveredBadge && door.progress > 0.6 ? 1 : 0;
+    if (Math.abs(want - idBadge.userData.hover) > 0.0001) sceneDirty = true;
     idBadge.userData.hover += (want - idBadge.userData.hover) * Math.min(1, dt * 9);
     const hover = idBadge.userData.hover;
     const base = THREE.MathUtils.lerp(idBadge.userData.closedScale, idBadge.userData.restScale, t);
@@ -2440,6 +2451,7 @@ function animate() {
   }
 
   if (zoomAnim) {
+    sceneDirty = true;
     zoomAnim.t = Math.min(1, zoomAnim.t + dt / (zoomAnim.followBadge ? 0.7 : 0.6));
     const eased = easeInOutCubic(zoomAnim.t);
     camera.zoom = THREE.MathUtils.lerp(zoomAnim.fromZoom, zoomAnim.toZoom, eased);
@@ -2457,6 +2469,7 @@ function animate() {
   }
 
   if (introArrive) {
+    sceneDirty = true;
     introArrive.t = Math.min(1, introArrive.t + dt / 1.15);
     setIntroCamera(THREE.MathUtils.lerp(introArrive.from, introArrive.to, easeInOutCubic(introArrive.t)));
     if (introArrive.t === 1) {
@@ -2466,8 +2479,11 @@ function animate() {
     }
   }
 
-  if (controls.enabled && !zoomAnim && !badgeFocus) controls.update();
-  renderer.render(scene, camera);
+  const controlsChanged = controls.enabled && !zoomAnim && !badgeFocus && controls.update();
+  if (sceneDirty || controlsChanged) {
+    renderer.render(scene, camera);
+    sceneDirty = false;
+  }
 }
 
 window.addEventListener('resize', resizeScene);
