@@ -4,34 +4,152 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#e6d48a" />
-    <title>Eight Pastel Lockers + Warlock</title>
+    <title>FENG Portfolio</title>
   </head>
   <body>
-    <section id="intro" class="intro" aria-label="开场">
-      <div class="intro__track">
-        <div class="intro__line">
-          <span class="pacman" aria-hidden="true"></span>
-          <h1 class="intro__text">打开八个创作世界</h1>
-          <span class="pacman" aria-hidden="true"></span>
-          <span class="pellet" aria-hidden="true"></span>
-          <span class="pellet" aria-hidden="true"></span>
-        </div>
+    <section id="intro" class="intro" aria-label="FENG 作品集介绍">
+      <div class="intro__content">
+        <p class="intro__eyebrow">FENG PORTFOLIO · 2024—2026</p>
+        <h1 class="intro__text">打开八个<br>创作世界</h1>
+        <p class="intro__summary">汇集三个年级、八位学生的游戏、动画、三维与视觉作品。每一扇柜门，都是一段仍在发生的创作现场。</p>
+        <button class="intro__enter" type="button">进入学生展厅 →</button>
       </div>
+      <p class="intro__count" aria-hidden="true"><span>03</span> GRADES <span>08</span> STUDENTS</p>
     </section>
     <nav id="top-nav" aria-label="页面导航">
-      <button type="button" id="nav-home">返回首页</button>
-      <button type="button" id="nav-lockers">柜子展示</button>
+      <button type="button" id="nav-lockers">学生</button>
       <button type="button" id="nav-works">全部作品</button>
-      <button type="button">老师介绍</button>
+      <button type="button" id="nav-submit">上传作品</button>
+      <button type="button" id="nav-about">关于</button>
     </nav>
     <div id="stage" class="stage">
       <div id="app"></div>
       <div id="works" class="works" hidden aria-hidden="true" aria-label="全部作品">
+        <div class="works-chrome">
+          <p class="works-hero">All works</p>
+          <div class="works-filters" role="group" aria-label="作品类型筛选">
+            <label><input type="checkbox" name="workKind" value="model"><span>模型制作</span></label>
+            <label><input type="checkbox" name="workKind" value="game"><span>游戏设计</span></label>
+            <label><input type="checkbox" name="workKind" value="video"><span>视频生成</span></label>
+            <label><input type="checkbox" name="workKind" value="scene"><span>场景设计</span></label>
+          </div>
+        </div>
         <canvas id="works-scene" aria-label="三维圆盘作品展示"></canvas>
+      </div>
+      <div id="locker-hover-card" class="locker-hover-card" role="tooltip" aria-hidden="true">
+        <strong></strong>
+        <span>点击打开看看</span>
       </div>
       <button id="cam-prev" type="button" hidden aria-label="看左边的柜子">‹</button>
       <button id="cam-next" type="button" hidden aria-label="看右边的柜子">›</button>
     </div>
+    <section id="submit-view" class="portal-view submit-view" hidden aria-hidden="true">
+      <div class="submit-hero" aria-hidden="true">
+        <p>Upload Works</p>
+        <span>＋</span>
+        <div class="submit-cursor" aria-hidden="true"></div>
+      </div>
+      <aside id="deco-picker" class="deco-picker" aria-label="柜外装饰">
+        <p>柜外装饰</p>
+        <strong id="deco-picker-label">无</strong>
+        <div class="deco-drum">
+          <div class="deco-window" aria-hidden="true"></div>
+          <div id="deco-scroller" class="deco-scroller" tabindex="0">
+            <button type="button" data-deco="-1" class="is-on"><small>00</small>无</button>
+            <button type="button" data-deco="0"><small>01</small>心情板</button>
+            <button type="button" data-deco="1"><small>02</small>笔筒</button>
+            <button type="button" data-deco="2"><small>03</small>背包</button>
+            <button type="button" data-deco="3"><small>04</small>便签</button>
+            <button type="button" data-deco="4"><small>05</small>海报</button>
+            <button type="button" data-deco="5"><small>06</small>日历</button>
+            <button type="button" data-deco="6"><small>07</small>便条</button>
+            <button type="button" data-deco="7"><small>08</small>吉他</button>
+          </div>
+        </div>
+      </aside>
+      <button id="close-submit" class="close-submit" type="button" aria-label="关闭上传作品页面">×</button>
+      <div class="portal-shell">
+        <header class="portal-header">
+          <p>上传作品 · SUBMISSION</p>
+          <h1>UPLOAD YOUR WORK</h1>
+          <span>先选择并设计你的展示柜，再填写作品资料。文件通过格式和大小检查后进入审核。</span>
+        </header>
+        <form id="submission-form" novalidate>
+          <div class="submission-layout">
+            <aside class="locker-builder" aria-labelledby="locker-builder-title">
+              <p>STEP 01 · YOUR LOCKER</p>
+              <h2 id="locker-builder-title">先选一个柜子</h2>
+              <div class="locker-identity" aria-label="柜子身份信息">
+                <div class="locker-avatar"><span>头像</span><img alt="头像预览" hidden></div>
+                <div><small>SELECTED LOCKER</small><strong class="locker-choice-number">01</strong></div>
+              </div>
+              <fieldset class="locker-controls">
+                <legend>柜子编号</legend>
+                <div class="locker-numbers">
+                  <label><input type="radio" name="lockerNumber" value="01" required><span>01</span></label>
+                  <label><input type="radio" name="lockerNumber" value="02"><span>02</span></label>
+                  <label><input type="radio" name="lockerNumber" value="03"><span>03</span></label>
+                  <label><input type="radio" name="lockerNumber" value="04"><span>04</span></label>
+                  <label><input type="radio" name="lockerNumber" value="05"><span>05</span></label>
+                  <label><input type="radio" name="lockerNumber" value="06"><span>06</span></label>
+                  <label><input type="radio" name="lockerNumber" value="07"><span>07</span></label>
+                  <label><input type="radio" name="lockerNumber" value="08"><span>08</span></label>
+                </div>
+                <div class="locker-colors">
+                  <label>柜体颜色<input name="lockerColor" type="color" value="#9aa3ac"></label>
+                  <label>强调颜色<input name="lockerAccent" type="color" value="#2aa800"></label>
+                </div>
+                <label class="avatar-picker">个人头像<span>JPG / PNG / WebP · 最大 5MB</span><input name="avatar" type="file" accept="image/jpeg,image/png,image/webp"></label>
+              </fieldset>
+              <button id="confirm-locker" class="confirm-locker" type="button">确认柜子并继续 →</button>
+              <p id="locker-status" class="locker-status" aria-live="polite">请选择一个柜子编号。</p>
+            </aside>
+            <div id="work-upload" class="submission-fields is-locked" aria-disabled="true">
+              <fieldset data-work-field disabled>
+                <legend><span>01</span>学生信息</legend>
+                <div class="form-grid">
+                  <label>姓名<input name="studentName" required minlength="2" maxlength="20" autocomplete="name"></label>
+                  <label>学校邮箱<input name="email" type="email" required autocomplete="email"></label>
+                  <label>年级<select name="grade" required><option value="">请选择</option><option>2024级</option><option>2025级</option><option>2026级</option></select></label>
+                  <label>学号（不会公开）<input name="studentId" required maxlength="30" autocomplete="off"></label>
+                </div>
+              </fieldset>
+              <fieldset data-work-field disabled>
+                <legend><span>02</span>作品信息</legend>
+                <div class="form-grid">
+                  <label>作品名称<input name="title" required minlength="2" maxlength="40"></label>
+                  <label>作品类型<select name="category" required><option value="">请选择</option><option>游戏</option><option>动画</option><option>3D</option><option>视觉设计</option><option>交互设计</option><option>其他</option></select></label>
+                  <label>创作年份<input name="year" type="number" min="2020" max="2030" required></label>
+                  <label>团队成员与分工<input name="roles" maxlength="200" placeholder="个人作品可填写：独立完成"></label>
+                </div>
+                <label>作品简介 <small data-counter="summary">0 / 500</small><textarea name="summary" required minlength="80" maxlength="500" rows="6" placeholder="请用 80–500 字介绍作品背景、过程和最终成果"></textarea></label>
+              </fieldset>
+              <fieldset data-work-field disabled>
+                <legend><span>03</span>上传文件</legend>
+                <div class="upload-grid">
+                  <label class="upload-box">封面图<span>JPG / PNG / WebP · 1:1 · 最大 5MB</span><input name="cover" type="file" accept="image/jpeg,image/png,image/webp" required></label>
+                  <label class="upload-box">展示图片<span>最多 12 张 · 每张 8MB · 总计 60MB</span><input name="gallery" type="file" accept="image/jpeg,image/png,image/webp" multiple></label>
+                  <label class="upload-box">演示视频<span>MP4 / WebM · 最大 200MB</span><input name="video" type="file" accept="video/mp4,video/webm"></label>
+                  <label class="upload-box">作品 PDF<span>可选 · 最大 20MB</span><input name="document" type="file" accept="application/pdf"></label>
+                </div>
+                <div id="file-summary" class="file-summary" aria-live="polite">尚未选择文件 · 单次投稿总量最大 250MB</div>
+              </fieldset>
+              <label class="consent"><input name="consent" type="checkbox" required disabled>我确认拥有作品及上传材料的展示授权，并同意提交后进入审核。</label>
+              <button class="submit-button" type="submit" disabled>检查并生成投稿预览</button>
+              <p id="submission-status" class="submission-status" aria-live="polite"></p>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+    <section id="about-view" class="portal-view about-view" hidden aria-hidden="true">
+      <div class="portal-shell about-shell">
+        <p class="intro__eyebrow">ABOUT FENG PORTFOLIO</p>
+        <h1>三个年级，八个创作世界。</h1>
+        <p>这里汇总学生的游戏、动画、三维与视觉作品。学生展厅保留每个人独立的柜子，全部作品页面则跨年级集中展示。</p>
+        <div class="about-note"><span>指导教师</span><strong>教师信息待补充</strong></div>
+      </div>
+    </section>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

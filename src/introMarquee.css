@@ -1,81 +1,107 @@
+@font-face {
+  font-family: "HY Pixel";
+  src: url("/fonts/HYPixel11pxU.ttf") format("truetype");
+  font-display: swap;
+}
+
 html,
 body {
   width: 100%;
-  min-height: 100%;
+  height: 100%;
   margin: 0;
 }
 
 body {
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   background: #2aa800;
 }
 
 body.is-lockers,
-body.is-lockers html {
-  height: 100%;
-  overflow: hidden;
+body.is-works,
+body.is-submit,
+body.is-about {
   background: #f6f7fa;
 }
 
 .intro {
-  position: relative;
+  position: fixed;
+  inset: 0;
   z-index: 2;
+  display: grid;
+  place-items: center;
   overflow: hidden;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  background: transparent;
+  background: #2aa800;
+  color: #fff;
+}
+
+.intro::before {
+  content: "";
+  position: absolute;
+  inset: 20px;
+  border: 1px solid rgb(255 255 255 / 0.3);
   pointer-events: none;
 }
 
-.intro__track {
+.intro__content {
   position: relative;
-  z-index: 1;
-  width: 100%;
+  width: min(1120px, calc(100% - 112px));
+  padding-bottom: 24px;
 }
 
-.intro__line {
-  display: flex;
-  align-items: center;
-  width: max-content;
-  gap: 0.55em;
-  padding-left: 100vw;
-  color: #fff;
-  font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
-  font-size: clamp(1.5rem, 2.4vw, 2rem);
-  font-weight: 300;
-  line-height: 1.1;
-  white-space: nowrap;
+.intro__eyebrow {
+  margin: 0 0 28px;
+  font: 400 12px/1.3 "HY Pixel", monospace;
+  letter-spacing: 0.2em;
 }
 
 .intro__text {
+  max-width: 1100px;
   margin: 0;
-  color: inherit;
-  font: inherit;
-  font-weight: 300;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
+  font: 400 clamp(68px, 12vw, 188px)/0.82 "HY Pixel", "PingFang SC", sans-serif;
+  letter-spacing: -0.045em;
 }
 
-.intro__text .char {
-  display: inline-block;
-  will-change: transform;
+.intro__summary {
+  max-width: 540px;
+  margin: clamp(32px, 5vh, 54px) 0 0;
+  font-size: 15px;
+  line-height: 1.8;
+  letter-spacing: 0.06em;
 }
 
-.pacman {
-  flex: none;
-  width: 1.15em;
-  height: 1.15em;
-  border-radius: 50%;
-  background: conic-gradient(from 270deg, transparent 38deg, #ffe14a 38deg 322deg, transparent 322deg);
-}
-
-.pellet {
-  flex: none;
-  width: 0.38em;
-  height: 0.38em;
+.intro__enter {
+  min-width: 190px;
+  margin-top: 28px;
+  border: 1px solid #ffe14a;
+  border-radius: 999px;
   background: #ffe14a;
+  padding: 15px 24px;
+  color: #171a17;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.intro__enter:hover,
+.intro__enter:focus-visible {
+  transform: translateX(6px);
+  background: #fff178;
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.intro__count {
+  position: absolute;
+  right: 48px;
+  bottom: 38px;
+  margin: 0;
+  font: 400 11px/1 "HY Pixel", monospace;
+  letter-spacing: 0.18em;
+}
+
+.intro__count span {
+  color: #ffe14a;
+  font-size: 24px;
 }
 
 .stage {
@@ -88,36 +114,47 @@ body.is-lockers html {
   background: #f6f7fa;
 }
 
-.pixel-reveal {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  display: grid;
-  grid-template-rows: repeat(28, 1fr);
-  pointer-events: none;
-}
-
-.pixel-reveal i {
-  background: #2aa800;
-  transform-origin: left center;
-  will-change: transform;
-  margin-bottom: -1px;
-}
-
-.pin-spacer {
-  pointer-events: none !important;
+body:not(.is-lockers):not(.is-works):not(.is-submit):not(.is-about) .stage {
+  visibility: hidden;
 }
 
 body.is-lockers .intro,
-body.is-lockers .pixel-reveal,
-body.is-lockers .pin-spacer {
-  display: none !important;
-  pointer-events: none !important;
+body.is-works .intro,
+body.is-submit .intro,
+body.is-about .intro {
+  display: none;
+}
+
+body:not(.is-lockers):not(.is-works):not(.is-submit):not(.is-about) #top-nav {
+  visibility: hidden;
+}
+
+@media (max-width: 720px) {
+  .intro::before {
+    inset: 12px;
+  }
+
+  .intro__content {
+    width: calc(100% - 52px);
+  }
+
+  .intro__text {
+    font-size: clamp(60px, 22vw, 104px);
+  }
+
+  .intro__summary {
+    max-width: 90%;
+    font-size: 13px;
+  }
+
+  .intro__count {
+    right: 24px;
+    bottom: 22px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .intro__line {
-    padding-left: 6vw;
-    white-space: normal;
+  .intro__enter {
+    transition: none;
   }
 }

@@ -65,3 +65,107 @@ body.is-switching #cam-prev,
 body.is-switching #cam-next {
   visibility: hidden;
 }
+
+.works-chrome {
+  position: fixed;
+  top: clamp(72px, 8vh, 96px);
+  left: clamp(28px, 3.4vw, 56px);
+  z-index: 4;
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+  pointer-events: none;
+}
+
+.works-hero {
+  position: relative;
+  margin: 0;
+  padding: 2px 18px 8px;
+  color: #111;
+  font: 800 clamp(52px, 6.4vw, 88px)/0.9 "Arial Black", "Helvetica Neue", "PingFang SC", sans-serif;
+  letter-spacing: -0.045em;
+}
+
+.works-hero::before {
+  content: "";
+  position: absolute;
+  inset: -2px 0 6px;
+  border: 1.5px solid #111;
+  pointer-events: none;
+}
+
+.works-hero::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: -5px -3px 3px -3px;
+  background:
+    linear-gradient(#111, #111) left top / 7px 7px no-repeat,
+    linear-gradient(#111, #111) right top / 7px 7px no-repeat,
+    linear-gradient(#111, #111) left bottom / 7px 7px no-repeat,
+    linear-gradient(#111, #111) right bottom / 7px 7px no-repeat;
+  pointer-events: none;
+}
+
+.works-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.works-filters label {
+  display: block;
+}
+
+.works-filters input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.works-filters span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid #111;
+  border-radius: 999px;
+  background: #fff;
+  padding: 5px 12px;
+  color: #111;
+  cursor: pointer;
+  font: 500 13px/1 "PingFang SC", "Hiragino Sans GB", sans-serif;
+}
+
+.works-filters input:checked + span {
+  background: #dfff21;
+}
+
+.works-filters input:checked + span::after {
+  content: "✓";
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.works-filters input:focus-visible + span {
+  outline: 2px solid rgb(42 168 0 / 0.3);
+  outline-offset: 2px;
+}
+
+body.is-work-detail .works-chrome,
+body.is-switching .works-chrome {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .works-chrome {
+    top: 64px;
+    left: 16px;
+    right: 16px;
+  }
+
+  .works-hero {
+    font-size: 42px;
+  }
+}

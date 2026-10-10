@@ -3,9 +3,10 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import './style.css';
-import { startIntro, returnToIntro, finishIntro } from './introMarquee.js';
+import { startIntro, finishIntro } from './introMarquee.js';
 import { introCameraDistance } from './introReveal.js';
 import { hideWorks, showWorks, setWorksTransition } from './worksDiscs.js';
+import { hidePortals, showPortal } from './portal.js';
 
 const app = document.querySelector('#app');
 const scene = new THREE.Scene();
@@ -67,6 +68,8 @@ controls.maxPolarAngle = 1.52;
 controls.update();
 const introCameraOffset = camera.position.clone().sub(controls.target);
 const introRestDistance = introCameraOffset.length();
+const FAR_TARGET = new THREE.Vector3(0, LOCKER_CENTER_Y * 0.98, 0);
+const NEAR_ZOOM = 2.15;
 
 // Soft cool wrap light — clean, healing campus mood.
 scene.add(new THREE.AmbientLight(0xf7f9fb, 0.52));
@@ -186,6 +189,7 @@ scene.add(lockerBank);
 
 const doorPivots = [];
 let idBadge = null;
+let expandedBadge = null;
 
 // Positive Y: right-hinged door swings outward to ~120°.
 const DOOR_OPEN_ANGLE = (Math.PI * 2) / 3;
@@ -317,7 +321,7 @@ function addTopShelfLife(locker, shelfY, innerW) {
   locker.add(life);
 }
 
-function addInteriorStructure(locker, bodyH, innerW, innerD, cavityMat) {
+function addInteriorStructure(locker, bodyH, innerW, innerD, cavityMat, includeObjects = true) {
   const topY = FOOT_H + bodyH * 0.86;
   const bayH = FOOT_H + bodyH - topY;
 
@@ -335,7 +339,7 @@ function addInteriorStructure(locker, bodyH, innerW, innerD, cavityMat) {
     locker.add(cheek);
   });
 
-  addTopShelfLife(locker, topY, innerW);
+  if (includeObjects) addTopShelfLife(locker, topY, innerW);
 
   const rod = cylinder(0.012, 0.012, innerW * 0.78, cavityMat, 8);
   rod.rotation.z = Math.PI / 2;
@@ -1392,22 +1396,285 @@ function createIdBadge() {
   return badge;
 }
 
-function dressDoor(door, index) {
-  const badge = varsityBadge(index + 1);
-  badge.position.set(DOOR_WIDTH / 2 - 0.24, DOOR_HEIGHT / 2 - 0.3, DOOR_THICK / 2 + 0.02);
-  door.add(badge);
+function createExpandedIdBadge() {
+  const badge = new THREE.Group();
+  badge.name = 'expanded-id-badge';
+  badge.userData.sculptRuntime = {
+    source: 'decorative-id-holder-reference',
+    style: 'studio-card-blue-pink',
+    clickableParts: ['holder', 'clip', 'ticket', 'petals', 'charms', 'letter-beads'],
+  };
+
+  const candy = (hex, extra = {}) => new THREE.MeshStandardMaterial({
+    color: hex,
+    roughness: 0.38,
+    metalness: 0.03,
+    emissive: new THREE.Color(hex),
+    emissiveIntensity: 0.4,
+    ...extra,
+  });
+  const cream = new THREE.MeshStandardMaterial({ color: 0xfff3dc, roughness: 0.78, metalness: 0 });
+  const clear = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    roughness: 0.08,
+    metalness: 0,
+    transmission: 0.1,
+    thickness: 0.04,
+    transparent: true,
+    opacity: 0.14,
+    ior: 1.46,
+    side: THREE.DoubleSide,
+  });
+  const clearEdge = new THREE.MeshPhysicalMaterial({
+    color: 0xb8ecff,
+    roughness: 0.14,
+    metalness: 0,
+    transparent: true,
+    opacity: 0.62,
+  });
+  const silver = new THREE.MeshStandardMaterial({ color: 0xd7dee6, roughness: 0.24, metalness: 0.78 });
+  const silverDark = new THREE.MeshStandardMaterial({ color: 0x89949e, roughness: 0.32, metalness: 0.82 });
+  const pinkPaper = candy(0xff7eb8, { roughness: 0.7, metalness: 0, emissiveIntensity: 0.28 });
+  const petalMat = candy(0xff4a9a);
+  const gold = candy(0xffc400, { roughness: 0.24, metalness: 0.32, emissiveIntensity: 0.28 });
+  const hotPink = candy(0xff1e78);
+  const cyan = candy(0x00b8ff);
+  const beadMat = candy(0xffd0ea, { roughness: 0.5, metalness: 0, emissiveIntensity: 0.16 });
+
+  const ticketGroup = new THREE.Group();
+  ticketGroup.name = 'ticket';
+  const ticket = roundedMesh(1.42, 0.62, 0.035, 0.045, pinkPaper, 3);
+  ticketGroup.add(ticket);
+  const ticketPrint = coverMesh(1.34, 0.54, (ctx, w, h) => {
+    ctx.fillStyle = '#ff86be';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#20242a';
+    ctx.textAlign = 'center';
+    ctx.font = '700 30px monospace';
+    ctx.fillText('(STUDIO, EST 2026)', w / 2, h * 0.44);
+    ctx.font = '16px monospace';
+    ctx.fillText('FORM, COLOR, MAKE', w / 2, h * 0.68);
+  });
+  ticketPrint.position.z = 0.024;
+  ticketGroup.add(ticketPrint);
+  ticketGroup.position.set(-0.48, 1.0, -0.1);
+  ticketGroup.rotation.z = 0.12;
+  badge.add(ticketGroup);
+
+  const petals = new THREE.Group();
+  petals.name = 'petals';
+  [[0, 0.12, 0.12], [0.24, 0.06, -0.25], [-0.22, 0.04, 0.32], [0.14, -0.16, -0.55], [-0.16, -0.17, 0.58]].forEach(([x, y, rz]) => {
+    const petal = new THREE.Mesh(new THREE.SphereGeometry(0.26, 18, 10), petalMat);
+    petal.scale.set(1.35, 0.62, 0.24);
+    petal.position.set(x, y, 0);
+    petal.rotation.z = rz;
+    petals.add(petal);
+  });
+  petals.position.set(1.18, 0.86, -0.11);
+  badge.add(petals);
+
+  const holder = new THREE.Group();
+  holder.name = 'holder';
+  const shell = roundedMesh(2.72, 1.86, 0.12, 0.12, clear, 5);
+  shell.renderOrder = 3;
+  holder.add(shell);
+
+  const rimParts = [
+    [2.5, 0.075, 0, 0.85], [2.5, 0.075, 0, -0.85],
+    [0.075, 1.62, -1.27, 0], [0.075, 1.62, 1.27, 0],
+  ];
+  rimParts.forEach(([w, h, x, y]) => {
+    const rim = roundedMesh(w, h, 0.15, 0.035, clearEdge, 2);
+    rim.position.set(x, y, 0.012);
+    holder.add(rim);
+  });
+
+  const insert = roundedMesh(2.46, 1.58, 0.045, 0.035, cream, 2);
+  insert.position.z = 0.06;
+  holder.add(insert);
+
+  const print = coverMesh(2.4, 1.52, (ctx, w, h) => {
+    ctx.fillStyle = '#fff3dc';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#171a1e';
+    ctx.textAlign = 'left';
+    ctx.font = '700 40px Georgia, serif';
+    ctx.fillText('Studio Card', 34, 64);
+    ctx.font = '15px sans-serif';
+    ctx.fillText('THE HOLDER OF THIS CARD', 36, 88);
+    ctx.font = '14px monospace';
+    ctx.fillText('ID NO. 004', w - 120, 31);
+    const rows = [['NAME:', 'WANG WENJI'], ['BASED IN:', 'Campus'], ['SPECIALTY:', 'Design']];
+    rows.forEach(([label, value], i) => {
+      const y = 146 + i * 46;
+      ctx.font = '15px monospace';
+      ctx.fillText(label, 38, y);
+      ctx.font = '17px sans-serif';
+      ctx.fillText(value, 132, y);
+      ctx.strokeStyle = '#6b6d70';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(126, y + 7);
+      ctx.lineTo(300, y + 7);
+      ctx.stroke();
+    });
+    ctx.font = '700 14px monospace';
+    ctx.fillText('MOTTO: MAKE THINGS', 38, h - 20);
+    ctx.fillStyle = '#111';
+    for (let i = 0, x = w - 165; i < 20; i += 1) {
+      const width = i % 4 === 0 ? 7 : i % 3 === 0 ? 4 : 2;
+      ctx.fillRect(x, h - 47, width, 30);
+      x += width + 4;
+    }
+  });
+  print.position.z = 0.087;
+  holder.add(print);
+
+  const portrait = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.82, 0.82),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, alphaTest: 0.1, roughness: 0.5 }),
+  );
+  portrait.name = 'portrait';
+  portrait.scale.setScalar(0.88);
+  portrait.position.set(0.79, -0.02, 0.105);
+  portrait.rotation.z = -0.055;
+  holder.add(portrait);
+  new THREE.TextureLoader().load('/assets/studio-portrait.png', (texture) => {
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 8;
+    portrait.material.map = texture;
+    portrait.material.needsUpdate = true;
+    sceneDirty = true;
+  });
+  badge.add(holder);
+
+  const clip = new THREE.Group();
+  clip.name = 'clip';
+  const strap = roundedMesh(0.3, 0.88, 0.11, 0.055, silver, 4);
+  strap.position.y = 1.27;
+  clip.add(strap);
+  const jaw = roundedMesh(0.34, 0.28, 0.14, 0.045, silver, 3);
+  jaw.position.set(0, 1.64, 0.01);
+  clip.add(jaw);
+  [1.12, 1.4].forEach((y, i) => {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(i ? 0.07 : 0.09, 0.018, 8, 24), silverDark);
+    ring.position.set(0, y, 0.09);
+    clip.add(ring);
+    const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.022, 20), silver);
+    rivet.rotation.x = Math.PI / 2;
+    rivet.position.set(0, y, 0.088);
+    clip.add(rivet);
+  });
+  clip.position.x = 0.18;
+  badge.add(clip);
+
+  const makeBead = (letter, x, y, rotation = 0) => {
+    const group = new THREE.Group();
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.115, 0.055, 24), beadMat);
+    disc.rotation.x = Math.PI / 2;
+    group.add(disc);
+    const face = coverMesh(0.19, 0.19, (ctx, w, h) => {
+      ctx.fillStyle = '#ffd0ea';
+      ctx.beginPath();
+      ctx.arc(w / 2, h / 2, w * 0.46, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#15171a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = '700 58px monospace';
+      ctx.fillText(letter, w / 2, h / 2 + 2);
+    });
+    face.position.z = 0.04;
+    group.add(face);
+    group.position.set(x, y, 0.14);
+    group.rotation.z = rotation;
+    group.name = `bead-${letter}`;
+    badge.add(group);
+  };
+  'FIVE'.split('').forEach((letter, i) => makeBead(letter, -1.34 + i * 0.42, 0.71 + (i % 2) * 0.08, (i - 1.5) * 0.08));
+  'YEARS'.split('').forEach((letter, i) => makeBead(letter, 0.35 + i * 0.34, -1.02 + (i % 2) * 0.05, (2 - i) * 0.07));
+
+  const makeStar = (x, y, scale = 1) => {
+    const shape = new THREE.Shape();
+    for (let i = 0; i < 10; i += 1) {
+      const a = Math.PI / 2 + i * Math.PI / 5;
+      const r = i % 2 === 0 ? 0.17 : 0.075;
+      const px = Math.cos(a) * r;
+      const py = Math.sin(a) * r;
+      if (i === 0) shape.moveTo(px, py); else shape.lineTo(px, py);
+    }
+    shape.closePath();
+    const star = extrudeShape(shape, 0.035, gold, 0.008);
+    star.position.set(x, y, 0.13);
+    star.scale.setScalar(scale);
+    star.name = 'gold-star';
+    badge.add(star);
+  };
+  makeStar(1.33, 0.43, 0.86);
+  makeStar(-0.95, -1.04, 0.72);
+
+  const makeButterfly = (x, y, material, scale = 1, rotation = 0) => {
+    const butterfly = new THREE.Group();
+    [-1, 1].forEach((side) => {
+      const upper = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 7), material);
+      upper.scale.set(1.35, 0.72, 0.18);
+      upper.position.set(side * 0.07, 0.04, 0);
+      upper.rotation.z = side * 0.6;
+      butterfly.add(upper);
+      const lower = upper.clone();
+      lower.scale.set(0.8, 0.55, 0.15);
+      lower.position.set(side * 0.055, -0.06, 0);
+      lower.rotation.z = side * -0.55;
+      butterfly.add(lower);
+    });
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 6), silverDark);
+    body.scale.y = 2.6;
+    butterfly.add(body);
+    butterfly.position.set(x, y, 0.15);
+    butterfly.rotation.z = rotation;
+    butterfly.scale.setScalar(scale);
+    butterfly.name = 'butterfly-charm';
+    badge.add(butterfly);
+  };
+  makeButterfly(0.82, 1.42, hotPink, 0.82, -0.22);
+  makeButterfly(1.55, -0.58, cyan, 0.7, 0.2);
+
+  const heart = new THREE.Group();
+  [-0.065, 0.065].forEach((x) => {
+    const lobe = new THREE.Mesh(new THREE.SphereGeometry(0.105, 14, 9), hotPink);
+    lobe.scale.set(1.05, 0.86, 0.28);
+    lobe.position.set(x, 0.055, 0);
+    heart.add(lobe);
+  });
+  const heartPoint = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.25, 4), hotPink);
+  heartPoint.rotation.z = Math.PI;
+  heartPoint.rotation.y = Math.PI / 4;
+  heartPoint.scale.z = 0.28;
+  heartPoint.position.y = -0.085;
+  heart.add(heartPoint);
+  heart.position.set(-1.52, -0.2, 0.13);
+  heart.rotation.z = -0.12;
+  heart.name = 'heart-charm';
+  badge.add(heart);
+
+  badge.rotation.set(-0.06, -0.12, -0.035);
+  badge.userData.restRotation = badge.rotation.clone();
+  const badgeKey = new THREE.PointLight(0xffd4c0, 3.1, 5.2, 1.7);
+  badgeKey.position.set(0.15, 0.35, 1.55);
+  badge.add(badgeKey);
+  setShadows(badge);
+  shell.castShadow = false;
+  return badge;
+}
+
+function addDoorExterior(door, index) {
+  addStickyNote(door, index);
 
   if (index === 0) {
     const board = createMoodBoard();
     board.scale.setScalar(1.15);
     board.position.set(-0.02, -0.06, DOOR_THICK / 2 + 0.04);
     door.add(board);
-
-    const hp = createHeadphones();
-    // Inner face of door 1 — hidden until the door swings open.
-    hp.position.set(0.04, -DOOR_HEIGHT * 0.06, -DOOR_THICK / 2 - 0.04);
-    hp.rotation.set(0.04, Math.PI, 0.05);
-    door.add(hp);
   }
 
   if (index === LOCKER_COUNT - 1) {
@@ -1423,19 +1690,6 @@ function dressDoor(door, index) {
     pack.scale.setScalar(1.35);
     pack.position.set(0, -DOOR_HEIGHT * 0.28, DOOR_THICK / 2 + 0.12);
     door.add(pack);
-  }
-
-  if (index === 3) {
-    const badge = createIdBadge();
-    badge.userData.restScale = 1.2;
-    badge.userData.closedScale = 0.58;
-    badge.userData.restY = 0.35;
-    badge.userData.hover = 0;
-    badge.scale.setScalar(badge.userData.closedScale);
-    badge.position.set(0, badge.userData.restY, -DOOR_THICK / 2 - 0.07);
-    badge.rotation.y = Math.PI;
-    door.add(badge);
-    idBadge = badge;
   }
 
   if (index === 1) {
@@ -1486,6 +1740,33 @@ function dressDoor(door, index) {
     sticker.rotation.z = rz;
     door.add(sticker);
   });
+}
+
+function dressDoor(door, index) {
+  const badge = varsityBadge(index + 1);
+  badge.position.set(DOOR_WIDTH / 2 - 0.24, DOOR_HEIGHT / 2 - 0.3, DOOR_THICK / 2 + 0.02);
+  door.add(badge);
+  addDoorExterior(door, index);
+
+  if (index === 0) {
+    const hp = createHeadphones();
+    hp.position.set(0.04, -DOOR_HEIGHT * 0.06, -DOOR_THICK / 2 - 0.04);
+    hp.rotation.set(0.04, Math.PI, 0.05);
+    door.add(hp);
+  }
+
+  if (index === 3) {
+    const badgeCard = createIdBadge();
+    badgeCard.userData.restScale = 1.2;
+    badgeCard.userData.closedScale = 0.58;
+    badgeCard.userData.restY = 0.35;
+    badgeCard.userData.hover = 0;
+    badgeCard.scale.setScalar(badgeCard.userData.closedScale);
+    badgeCard.position.set(0, badgeCard.userData.restY, -DOOR_THICK / 2 - 0.07);
+    badgeCard.rotation.y = Math.PI;
+    door.add(badgeCard);
+    idBadge = badgeCard;
+  }
 }
 
 function warlockBodyShape() {
@@ -1862,7 +2143,7 @@ function createRedFolder() {
   return folder;
 }
 
-function createLocker(index) {
+function createLocker(index, { empty = false } = {}) {
   const locker = new THREE.Group();
   const bodyH = LOCKER_HEIGHT - FOOT_H;
   const bodyY = FOOT_H + bodyH / 2;
@@ -1881,12 +2162,13 @@ function createLocker(index) {
   foot.position.set(0, FOOT_H / 2, 0);
   locker.add(foot);
 
-  const cavityColor = new THREE.Color(LOCKER_TINTS[index]).multiplyScalar(0.55);
-  const cavityMat = new THREE.MeshStandardMaterial({
-    color: cavityColor,
-    roughness: 0.86,
-    metalness: 0.04
-  });
+  const cavityMat = empty
+    ? materials.body
+    : new THREE.MeshStandardMaterial({
+      color: new THREE.Color(LOCKER_TINTS[index]).multiplyScalar(0.55),
+      roughness: 0.86,
+      metalness: 0.04
+    });
 
   const back = boxMesh(LOCKER_WIDTH, bodyH, WALL, cavityMat);
   back.position.set(0, bodyY, -LOCKER_DEPTH / 2 + WALL / 2);
@@ -1922,7 +2204,7 @@ function createLocker(index) {
   bottom.position.set(0, FOOT_H + WALL / 2, 0);
   locker.add(bottom);
 
-  addInteriorStructure(locker, bodyH, innerW, innerD, cavityMat);
+  addInteriorStructure(locker, bodyH, innerW, innerD, cavityMat, !empty);
 
   const frameFront = frontZ - FRAME / 2;
   const frameTop = roundedMesh(LOCKER_WIDTH, FRAME, FRAME, 0.012, materials.frame, 1);
@@ -1960,10 +2242,9 @@ function createLocker(index) {
   addVents(door, DOOR_HEIGHT * 0.3);
   addVents(door, -DOOR_HEIGHT * 0.32);
   addHandle(door);
-  addStickyNote(door, index);
-  dressDoor(door, index);
+  if (!empty) dressDoor(door, index);
 
-  if (index === 3) {
+  if (!empty && index === 3) {
     const pile = createOfficePile();
     pile.scale.setScalar(2.05);
     pile.position.set(0, 1.95, -0.1);
@@ -1994,6 +2275,12 @@ for (let index = 0; index < LOCKER_COUNT; index += 1) {
   doorAnims.push({ open: false, progress: 0 });
 }
 
+expandedBadge = createExpandedIdBadge();
+expandedBadge.position.set(lockerWorldX(3), 1.48, 1.05);
+expandedBadge.scale.setScalar(0.94);
+expandedBadge.visible = false;
+scene.add(expandedBadge);
+
 const shellMats = new Set([
   materials.body,
   materials.door,
@@ -2009,6 +2296,131 @@ lockerBank.children.forEach((locker) => {
     node.material = mat;
     node.userData.baseColor = mat.color.clone();
   });
+});
+
+const {
+  locker: submissionLocker,
+  doorPivot: submissionDoorPivot,
+  door: submissionDoor,
+} = createLocker(0, { empty: true });
+const submissionBackdrop = new THREE.Mesh(
+  new THREE.PlaneGeometry(1.8, 1.8),
+  new THREE.MeshBasicMaterial({ color: 0xdfff21, side: THREE.DoubleSide, toneMapped: false }),
+);
+submissionBackdrop.position.set(-2.18, 1.4, -0.82);
+submissionBackdrop.rotation.z = -0.08;
+submissionBackdrop.scale.setScalar(0.68);
+submissionBackdrop.visible = false;
+scene.add(submissionBackdrop);
+const submissionBodyMaterials = new Set();
+submissionLocker.scale.setScalar(1);
+submissionLocker.position.set(-1.88, 0.05, 0);
+submissionLocker.visible = false;
+const submissionAccentMaterials = new Set();
+submissionLocker.traverse((node) => {
+  if (!node.isMesh) return;
+  if (node.material === materials.body) {
+    node.material = node.material.clone();
+    submissionBodyMaterials.add(node.material);
+    return;
+  }
+  if (node.material === materials.door || node.material === materials.frame) {
+    node.material = node.material.clone();
+    return;
+  }
+  if (node.material === materials.handle) {
+    node.material = node.material.clone();
+    submissionAccentMaterials.add(node.material);
+  }
+});
+scene.add(submissionLocker);
+
+let submissionBadge = null;
+function setSubmissionBadge(value) {
+  if (submissionBadge) submissionDoor.remove(submissionBadge);
+  submissionBadge = varsityBadge(Number(value) || 1);
+  submissionBadge.position.set(DOOR_WIDTH / 2 - 0.24, DOOR_HEIGHT / 2 - 0.3, DOOR_THICK / 2 + 0.02);
+  submissionDoor.add(submissionBadge);
+}
+setSubmissionBadge('01');
+
+const submissionDecor = new THREE.Group();
+submissionDecor.name = 'submission-decor';
+submissionDoor.add(submissionDecor);
+function setSubmissionDecor(index) {
+  while (submissionDecor.children.length) submissionDecor.remove(submissionDecor.children[0]);
+  const kit = Number(index);
+  if (!Number.isFinite(kit) || kit < 0) {
+    sceneDirty = true;
+    return;
+  }
+  addDoorExterior(submissionDecor, kit);
+  submissionDoorAnim.open = false;
+  submissionDoorAnim.progress = 0;
+  submissionDoorPivot.rotation.y = 0;
+  sceneDirty = true;
+}
+
+const submissionDoorAnim = { open: false, progress: 0 };
+let submissionDragRotation = 0;
+let submissionPreviewActive = false;
+const submissionCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 80);
+function viewCamera() {
+  return submissionPreviewActive ? submissionCamera : camera;
+}
+function fitSubmissionCamera() {
+  const halfH = 3.05;
+  const aspect = window.innerWidth / Math.max(window.innerHeight, 1);
+  submissionCamera.left = -halfH * aspect;
+  submissionCamera.right = halfH * aspect;
+  submissionCamera.top = halfH;
+  submissionCamera.bottom = -halfH;
+  submissionCamera.updateProjectionMatrix();
+}
+function setSubmissionCamera() {
+  const look = new THREE.Vector3(
+    submissionLocker.position.x + 1.72,
+    submissionLocker.position.y + LOCKER_CENTER_Y * submissionLocker.scale.y + 0.47,
+    0
+  );
+  submissionCamera.position.set(look.x - 2.2, look.y + 0.9, 12);
+  submissionCamera.up.set(0, 1, 0);
+  submissionCamera.lookAt(look);
+  fitSubmissionCamera();
+}
+function setSubmissionPreview(active) {
+  submissionPreviewActive = active;
+  expandedBadge.visible = false;
+  badgeDetailOpen = false;
+  lockerBank.visible = !active;
+  submissionLocker.visible = active;
+  submissionBackdrop.visible = active;
+  submissionDoorAnim.open = active;
+  submissionDoorAnim.progress = active ? 1 : 0;
+  submissionDoorPivot.rotation.y = active ? DOOR_OPEN_ANGLE : 0;
+  if (active) {
+    introArrive = null;
+    zoomAnim = null;
+    badgeFocus = false;
+    if (focusedLocker >= 0) doorAnims[focusedLocker].open = false;
+    focusedLocker = -1;
+    setFocusArrows();
+    controls.enabled = false;
+    setSubmissionCamera();
+  } else {
+    restoreOrbitLimits();
+    setIntroCamera(1);
+    controls.enabled = true;
+  }
+  sceneDirty = true;
+}
+
+window.addEventListener('submission-locker-change', ({ detail }) => {
+  if (detail.color) submissionBodyMaterials.forEach((material) => material.color.set(detail.color));
+  if (detail.accent) submissionAccentMaterials.forEach((material) => material.color.set(detail.accent));
+  if (detail.number) setSubmissionBadge(detail.number);
+  if ('deco' in detail) setSubmissionDecor(detail.deco);
+  sceneDirty = true;
 });
 
 console.assert(
@@ -2073,12 +2485,12 @@ function toggleDoor(index) {
   anim.open = !anim.open;
 }
 
-const FAR_TARGET = new THREE.Vector3(0, LOCKER_CENTER_Y * 0.98, 0);
-const NEAR_ZOOM = 2.15;
 const BADGE_ZOOM = 3.42;
+const BADGE_DETAIL_ZOOM = 1.34;
 const INTRO_FAR = introCameraDistance(0);
 let focusedLocker = -1;
 let badgeFocus = false;
+let badgeDetailOpen = false;
 let zoomAnim = null;
 let introArrive = null;
 const badgeAim = new THREE.Vector3();
@@ -2097,15 +2509,19 @@ function isIdBadge(object) {
 function restoreOrbitLimits() {
   controls.minAzimuthAngle = -0.08;
   controls.maxAzimuthAngle = 0.08;
+  controls.minPolarAngle = 1.25;
+  controls.maxPolarAngle = 1.52;
   controls.minDistance = controls.maxDistance = introRestDistance;
 }
 
 function badgeLookTarget(out) {
+  if (expandedBadge?.visible) return expandedBadge.getWorldPosition(out);
   if (idBadge) return idBadge.getWorldPosition(out);
   return out.set(lockerWorldX(3) + 0.55, FAR_TARGET.y + 0.22, 0.2);
 }
 
-function badgeCameraPos(target, out) {
+function badgeCameraPos(target, out, useDetail = expandedBadge?.visible) {
+  if (useDetail) return out.copy(target).add(new THREE.Vector3(0.34, 0.16, 7.8));
   out.copy(target).add(introCameraOffset);
   if (!idBadge) return out.setX(out.x - 1.6);
   idBadge.getWorldDirection(badgeFwd);
@@ -2115,11 +2531,14 @@ function badgeCameraPos(target, out) {
 }
 
 function focusBadge() {
-  if (!idBadge) return;
+  if (!idBadge || !expandedBadge) return;
   introArrive = null;
   controls.enabled = false;
   controls.minAzimuthAngle = -0.7;
   controls.maxAzimuthAngle = 0.08;
+  expandedBadge.visible = false;
+  lockerBank.visible = true;
+  badgeDetailOpen = false;
   badgeLookTarget(badgeAim);
   zoomAnim = {
     fromZoom: camera.zoom,
@@ -2135,6 +2554,34 @@ function focusBadge() {
   focusedLocker = 3;
   doorAnims[3].open = true;
   setFocusArrows();
+}
+
+function openBadgeDetail() {
+  if (!badgeFocus || !expandedBadge) return;
+  expandedBadge.visible = true;
+  lockerBank.visible = false;
+  badgeDetailOpen = true;
+  badgeLookTarget(badgeAim);
+  zoomAnim = {
+    fromZoom: camera.zoom,
+    toZoom: BADGE_DETAIL_ZOOM,
+    from: controls.target.clone(),
+    to: badgeAim.clone(),
+    fromPos: camera.position.clone(),
+    toPos: badgeCameraPos(badgeAim, new THREE.Vector3()),
+    t: 0,
+    followBadge: true,
+  };
+  setFocusArrows();
+}
+
+function closeBadgeDetail() {
+  badgeDetailOpen = false;
+  expandedBadge.visible = false;
+  expandedBadge.rotation.copy(expandedBadge.userData.restRotation);
+  lockerBank.visible = true;
+  doorAnims[3].open = true;
+  focusBadge();
 }
 
 function setIntroCamera(distance) {
@@ -2154,7 +2601,7 @@ function lockerWorldX(index) {
 function setFocusArrows() {
   const prev = document.getElementById('cam-prev');
   const next = document.getElementById('cam-next');
-  const near = focusedLocker >= 0;
+  const near = focusedLocker >= 0 && !badgeFocus;
   prev.hidden = !near || focusedLocker === 0;
   next.hidden = !near || focusedLocker === LOCKER_COUNT - 1;
 }
@@ -2162,6 +2609,9 @@ function setFocusArrows() {
 function moveFocus(index) {
   introArrive = null;
   badgeFocus = false;
+  badgeDetailOpen = false;
+  if (expandedBadge) expandedBadge.visible = false;
+  lockerBank.visible = !submissionPreviewActive;
   restoreOrbitLimits();
   controls.enabled = true;
   zoomAnim = {
@@ -2182,6 +2632,18 @@ function moveFocus(index) {
 
 let hoveredLocker = -1;
 let hoveredBadge = false;
+const lockerHoverCard = document.getElementById('locker-hover-card');
+const lockerNames = ['01号学生', '02号学生', '03号学生', '王文骥', '孙玉洁', '06号学生', '07号学生', '08号学生'];
+
+function setLockerHoverCard(index, event) {
+  if (!lockerHoverCard) return;
+  lockerHoverCard.setAttribute('aria-hidden', String(index < 0));
+  if (index < 0) return;
+  lockerHoverCard.querySelector('strong').textContent = `${lockerNames[index]}的柜子`;
+  lockerHoverCard.querySelector('span').textContent = index === 4 ? '千万别点开' : '点击打开看看';
+  lockerHoverCard.style.left = `${Math.min(event.clientX, window.innerWidth - 230)}px`;
+  lockerHoverCard.style.top = `${Math.min(event.clientY, window.innerHeight - 120)}px`;
+}
 
 function paintLocker(index, hover) {
   const locker = lockerBank.children[index];
@@ -2196,21 +2658,54 @@ function paintLocker(index, hover) {
 }
 
 function lockersInteractive() {
-  return !switchingWorks && worksProgress < 1;
+  return !submissionPreviewActive && !switchingWorks && worksProgress < 1;
 }
 
 function hoverLockerAt(event) {
-  if (!lockersInteractive()) return;
+  if (submissionPreviewActive) {
+    setLockerHoverCard(-1);
+    if (pointerDown) {
+      submissionLocker.rotation.y = THREE.MathUtils.clamp(
+        submissionDragRotation + (event.clientX - pointerDown.x) * 0.003,
+        -0.12,
+        0.12
+      );
+      renderer.domElement.style.cursor = 'grabbing';
+      sceneDirty = true;
+      return;
+    }
+    setPointerFromEvent(event);
+    raycaster.setFromCamera(pointer, viewCamera());
+    const hits = raycaster.intersectObject(submissionLocker, true);
+    renderer.domElement.style.cursor = hits.length > 0 ? 'pointer' : '';
+    return;
+  }
+  if (badgeDetailOpen && expandedBadge) {
+    setLockerHoverCard(-1);
+    const rect = renderer.domElement.getBoundingClientRect();
+    const nx = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    const ny = ((event.clientY - rect.top) / rect.height) * 2 - 1;
+    expandedBadge.rotation.y = expandedBadge.userData.restRotation.y + nx * 0.08;
+    expandedBadge.rotation.x = expandedBadge.userData.restRotation.x - ny * 0.045;
+    renderer.domElement.style.cursor = 'zoom-out';
+    sceneDirty = true;
+    return;
+  }
+  if (!lockersInteractive()) {
+    setLockerHoverCard(-1);
+    return;
+  }
   setPointerFromEvent(event);
   raycaster.setFromCamera(pointer, camera);
   const hits = raycaster.intersectObjects(lockerBank.children, true);
-  hoveredBadge = hits.length > 0 && isIdBadge(hits[0].object);
+  hoveredBadge = hits.some((hit) => isIdBadge(hit.object));
   const index = hits.length > 0 ? doorIndexFromObject(hits[0].object) : -1;
   if (index !== hoveredLocker) {
     if (hoveredLocker >= 0) paintLocker(hoveredLocker, false);
     hoveredLocker = index;
     if (hoveredLocker >= 0) paintLocker(hoveredLocker, true);
   }
+  setLockerHoverCard(doorAnims[hoveredLocker]?.open ? -1 : hoveredLocker, event);
   renderer.domElement.style.cursor = hoveredBadge || hoveredLocker >= 0 ? 'pointer' : '';
 }
 
@@ -2219,16 +2714,43 @@ renderer.domElement.addEventListener('pointerleave', () => {
   if (hoveredLocker >= 0) paintLocker(hoveredLocker, false);
   hoveredLocker = -1;
   hoveredBadge = false;
+  setLockerHoverCard(-1);
   renderer.domElement.style.cursor = '';
 });
 
 renderer.domElement.addEventListener('pointerdown', (event) => {
   if (event.button !== 0) return;
-  if (!lockersInteractive()) return;
+  if (!submissionPreviewActive && !lockersInteractive()) return;
   pointerDown = { x: event.clientX, y: event.clientY };
+  if (submissionPreviewActive) submissionDragRotation = submissionLocker.rotation.y;
 });
 
 renderer.domElement.addEventListener('pointerup', (event) => {
+  if (submissionPreviewActive) {
+    if (!pointerDown || event.button !== 0) return;
+    const sdx = event.clientX - pointerDown.x;
+    const sdy = event.clientY - pointerDown.y;
+    pointerDown = null;
+    if (sdx * sdx + sdy * sdy > 36) return;
+    setPointerFromEvent(event);
+    raycaster.setFromCamera(pointer, viewCamera());
+    const hits = raycaster.intersectObject(submissionLocker, true);
+    if (hits.length === 0) {
+      submissionDoorAnim.open = false;
+      return;
+    }
+    submissionDoorAnim.open = !submissionDoorAnim.open;
+    return;
+  }
+  if (badgeDetailOpen) {
+    if (!pointerDown || event.button !== 0) return;
+    const bdx = event.clientX - pointerDown.x;
+    const bdy = event.clientY - pointerDown.y;
+    pointerDown = null;
+    if (bdx * bdx + bdy * bdy > 36) return;
+    closeBadgeDetail();
+    return;
+  }
   if (!lockersInteractive()) return;
   if (!pointerDown || event.button !== 0) return;
   const dx = event.clientX - pointerDown.x;
@@ -2239,17 +2761,17 @@ renderer.domElement.addEventListener('pointerup', (event) => {
   setPointerFromEvent(event);
   raycaster.setFromCamera(pointer, camera);
   const hits = raycaster.intersectObjects(lockerBank.children, true);
+  const badgeHit = hits.find((hit) => isIdBadge(hit.object));
+  if (hits.length > 0) setLockerHoverCard(-1);
   if (hits.length === 0) {
     if (focusedLocker < 0) return;
     doorAnims[focusedLocker].open = false;
     moveFocus(-1);
     return;
   }
-  if (isIdBadge(hits[0].object)) {
+  if (badgeHit) {
     if (badgeFocus) {
-      doorAnims[3].open = true;
-      moveFocus(3);
-      doorAnims[3].open = true;
+      openBadgeDetail();
       return;
     }
     if (focusedLocker >= 0 && focusedLocker !== 3) doorAnims[focusedLocker].open = false;
@@ -2286,9 +2808,16 @@ const transitionGlow = new THREE.PointLight(0xffefd8, 0, 2.8, 2);
 transitionGlow.position.set(lockerWorldX(3), 1.9, 0.35);
 lockerBank.add(transitionGlow);
 
+function markNav(id) {
+  document.querySelectorAll('#top-nav button').forEach((button) => {
+    button.toggleAttribute('aria-current', button.id === id);
+  });
+}
+
 function switchWorks(target) {
   // Complete intro cleanup before reading controls or changing page state.
   finishIntro();
+  setLockerHoverCard(-1);
   if (worksTarget === target && (switchingWorks || worksProgress === target)) return;
   if (!switchingWorks) {
     if (worksProgress === 0) {
@@ -2311,27 +2840,19 @@ function switchWorks(target) {
   window.scrollTo(0, 0);
 }
 
-document.getElementById('nav-home').addEventListener('click', () => {
-  worksTarget = worksProgress = 0;
-  switchingWorks = false;
-  document.body.classList.remove('is-switching');
-  app.style.opacity = '';
-  lockerBank.position.copy(lockerRestPosition);
-  lockerBank.scale.copy(lockerRestScale);
-  controls.enabled = transitionControlEnabled;
-  doorAnims[3].open = false;
-  transitionGlow.intensity = 0;
-  hideWorks();
-  if (focusedLocker >= 0) doorAnims[focusedLocker].open = false;
-  moveFocus(-1);
-  returnToIntro();
-});
-
 document.getElementById('nav-works').addEventListener('click', () => {
+  setPath('/works');
+  markNav('nav-works');
+  hidePortals();
+  setSubmissionPreview(false);
   switchWorks(1);
 });
 
 document.getElementById('nav-lockers').addEventListener('click', () => {
+  setPath('/students');
+  markNav('nav-lockers');
+  hidePortals();
+  setSubmissionPreview(false);
   finishIntro();
   if (worksProgress > 0 || switchingWorks) {
     switchWorks(0);
@@ -2343,6 +2864,40 @@ document.getElementById('nav-lockers').addEventListener('click', () => {
   }
   document.body.classList.add('is-lockers');
   window.scrollTo(0, 0);
+});
+
+function openPortal(name) {
+  finishIntro();
+  setLockerHoverCard(-1);
+  worksTarget = worksProgress = 0;
+  switchingWorks = false;
+  hideWorks();
+  document.body.classList.remove('is-lockers', 'is-switching', 'is-work-detail');
+  app.style.opacity = '';
+  lockerBank.position.copy(lockerRestPosition);
+  lockerBank.scale.copy(lockerRestScale);
+  transitionGlow.intensity = 0;
+  showPortal(name);
+  setSubmissionPreview(name === 'submit');
+}
+
+function setPath(path, replace = false) {
+  if (location.pathname === path) return;
+  history[replace ? 'replaceState' : 'pushState']({}, '', path);
+}
+
+document.getElementById('nav-submit').addEventListener('click', () => {
+  setPath('/submit');
+  markNav('nav-submit');
+  openPortal('submit');
+});
+document.getElementById('close-submit').addEventListener('click', () => {
+  document.getElementById('nav-lockers').click();
+});
+document.getElementById('nav-about').addEventListener('click', () => {
+  setPath('/about');
+  markNav('nav-about');
+  openPortal('about');
 });
 
 document.getElementById('cam-prev').addEventListener('click', () => {
@@ -2390,6 +2945,7 @@ function resizeScene() {
   const height = window.innerHeight;
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
+  if (submissionPreviewActive) fitSubmissionCamera();
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(width, height);
@@ -2437,6 +2993,17 @@ function animate() {
     doorPivots[index].rotation.y = DOOR_OPEN_ANGLE * easeInOutCubic(anim.progress);
     if (anim.progress !== previous) sceneDirty = true;
   });
+  if (submissionPreviewActive) {
+    const previous = submissionDoorAnim.progress;
+    const dir = submissionDoorAnim.open ? 1 : -1;
+    submissionDoorAnim.progress = THREE.MathUtils.clamp(
+      submissionDoorAnim.progress + (dir * dt) / DOOR_ANIM_DURATION,
+      0,
+      1
+    );
+    submissionDoorPivot.rotation.y = DOOR_OPEN_ANGLE * easeInOutCubic(submissionDoorAnim.progress);
+    if (submissionDoorAnim.progress !== previous) sceneDirty = true;
+  }
 
   if (idBadge) {
     const door = doorAnims[3];
@@ -2481,7 +3048,7 @@ function animate() {
 
   const controlsChanged = controls.enabled && !zoomAnim && !badgeFocus && controls.update();
   if (sceneDirty || controlsChanged) {
-    renderer.render(scene, camera);
+    renderer.render(scene, viewCamera());
     sceneDirty = false;
   }
 }
@@ -2490,12 +3057,11 @@ window.addEventListener('resize', resizeScene);
 resizeScene();
 renderer.setAnimationLoop(animate);
 startIntro({
-  onProgress(progress) {
-    if (document.body.classList.contains('is-lockers') || focusedLocker >= 0 || zoomAnim || introArrive) return;
-    controls.enabled = false;
-    setIntroCamera(INTRO_FAR);
-  },
-  onReveal() {
+  onReveal(fromEntry) {
+    if (fromEntry) {
+      setPath('/students', true);
+      markNav('nav-lockers');
+    }
     hideWorks();
     document.body.classList.remove('is-switching');
     app.style.opacity = '';
@@ -2509,3 +3075,16 @@ startIntro({
     setIntroCamera(INTRO_FAR);
   }
 });
+
+const routeButtons = {
+  '/students': 'nav-lockers',
+  '/works': 'nav-works',
+  '/submit': 'nav-submit',
+  '/about': 'nav-about',
+};
+function openCurrentRoute() {
+  const button = document.getElementById(routeButtons[location.pathname]);
+  if (button) button.click();
+}
+window.addEventListener('popstate', openCurrentRoute);
+if (location.pathname !== '/') queueMicrotask(openCurrentRoute);

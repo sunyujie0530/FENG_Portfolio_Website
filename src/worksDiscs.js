@@ -86,6 +86,20 @@ export function setWorksTransition(progress, anchor) {
 }
 
 const COUNT = 20;
+const DISC_KIND = {
+  0: 'game',
+  1: 'game',
+  2: 'model',
+  3: 'game',
+  4: 'scene',
+  5: 'scene',
+  6: 'video',
+  7: 'game',
+  8: 'game',
+  18: 'scene',
+  19: 'game',
+};
+const workKinds = new Set();
 // Fixed reference framing; input moves the works, never the camera.
 const CAMERA_POS = new THREE.Vector3(0, 0, 20);
 const CAMERA_LOOK = new THREE.Vector3(0, 0, 0);
@@ -173,6 +187,13 @@ export function initWorks(background = 0xf6f7fa) {
     scene.add(disc);
     discs.push(disc);
   }
+  document.querySelector('.works-filters')?.addEventListener('change', (event) => {
+    if (event.target.name !== 'workKind') return;
+    workKinds.clear();
+    document.querySelectorAll('.works-filters input:checked').forEach((input) => {
+      workKinds.add(input.value);
+    });
+  });
 
   let angle = 0;
   let targetAngle = 0;
@@ -450,16 +471,21 @@ const TRACK_STOPS = [
   [0.20, -0.05, 1.96], [4.30, 1.80, 2.40],
 ];
 
+function matchingDiscs() {
+  if (workKinds.size === 0) return discs;
+  return discs.filter((disc) => workKinds.has(disc.userData.kind));
+}
+
 function placeDiscs(offset, view) {
   // Monotonic track avoids sin(a) == sin(PI-a), which stacked pairs of discs.
   // Reference centers (1100 × 600): (10,410), (255,383), (570,305), (980,120).
-  const first = -2;
-  discs.forEach((disc, i) => {
-    const slot = THREE.MathUtils.euclideanModulo(i + offset * 3 - first, COUNT) + first;
-    if (slot <= -2 || slot >= 6) {
-      disc.visible = false;
-      return;
-    }
+  const list = matchingDiscs();
+  const span = Math.max(list.length, 1);
+  const first = span > 6 ? -2 : Math.max(0, 2 - (span - 1) / 2);
+  discs.forEach((disc) => { disc.visible = false; });
+  list.forEach((disc, i) => {
+    const slot = THREE.MathUtils.euclideanModulo(i + offset * 3 - first, span) + first;
+    if (slot <= -2 || slot >= 6) return;
     const segment = Math.max(0, Math.min(2, Math.floor(slot)));
     const t = slot - segment;
     const current = TRACK_STOPS[segment];
@@ -536,6 +562,7 @@ function createDisc(index, geometry, palette, hubMaterial, darkHub, rimMaterial,
   halo.renderOrder = 1;
   group.add(halo);
   group.userData.index = index;
+  group.userData.kind = DISC_KIND[index];
   group.userData.hover = 0;
   group.userData.glow = glow;
   group.userData.halo = halo;

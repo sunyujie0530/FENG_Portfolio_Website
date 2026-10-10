@@ -28,16 +28,51 @@ canvas {
   touch-action: none;
 }
 
+.locker-hover-card {
+  position: fixed;
+  z-index: 8;
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  color: #101820;
+  font: 400 15px/1.25 "HY Pixel", monospace;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  transform: translate(18px, 18px);
+}
+
+.locker-hover-card[aria-hidden="true"] {
+  display: none;
+}
+
+.locker-hover-card strong {
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.locker-hover-card strong,
+.locker-hover-card span {
+  width: fit-content;
+  padding: 3px 5px;
+  background: #dfff21;
+}
+
 #top-nav {
   position: fixed;
   top: 22px;
   left: 0;
   right: 0;
-  z-index: 5;
+  z-index: 30;
   pointer-events: auto;
   display: flex;
   justify-content: center;
   gap: 64px;
+}
+
+body.is-submit #top-nav {
+  top: 0;
+  padding: 22px 0 14px;
+  background: #f6f7fa;
 }
 
 #top-nav button {
@@ -47,6 +82,35 @@ canvas {
   color: #1a1a1a;
   font: 300 16px "PingFang SC", "Hiragino Sans GB", sans-serif;
   cursor: pointer;
+}
+
+#top-nav button:hover,
+#top-nav button:focus-visible,
+#top-nav button[aria-current="true"] {
+  color: #2aa800;
+  outline: none;
+}
+
+body.is-works .locker-hover-card,
+body.is-submit .locker-hover-card,
+body.is-about .locker-hover-card,
+body.is-work-detail .locker-hover-card {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  #top-nav {
+    top: 18px;
+    gap: 18px;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding: 0 18px 8px;
+  }
+
+  #top-nav button {
+    flex: none;
+    font-size: 14px;
+  }
 }
 
 #cam-prev,

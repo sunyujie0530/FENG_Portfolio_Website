@@ -1,0 +1,14 @@
+{
+  "admitted": true,
+  "reasons": [],
+  "provenance": {
+    "viewpoint": "reference",
+    "sourcePath": "/Users/sunyujie/Documents/GitHub/FENG_Portfolio_Website/.img2threejs/badge/reference.png",
+    "width": 908,
+    "height": 1092,
+    "foregroundCoverage": 0.3209,
+    "largestComponentFraction": 0.6854,
+    "pHash": 18076261550804474192,
+    "duplicateOfHash": null
+  }
+}

@@ -1,0 +1,746 @@
+.portal-view {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  overflow-y: auto;
+  background: #f6f7fa;
+  color: #171a17;
+}
+
+.portal-view[hidden] {
+  display: none;
+}
+
+.portal-shell {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 132px 0 100px;
+}
+
+.submit-view .portal-shell {
+  width: min(500px, 34vw);
+  min-height: 100%;
+  margin: 0 clamp(72px, 8vw, 128px) 0 auto;
+  padding: 12px clamp(14px, 1.6vw, 22px) 72px;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.submit-view {
+  --submit-green: #dfff21;
+  top: 56px;
+  background: transparent;
+  pointer-events: none;
+  overscroll-behavior: contain;
+}
+
+.submit-hero {
+  position: fixed;
+  top: clamp(72px, 8vh, 96px);
+  left: clamp(28px, 3.4vw, 56px);
+  z-index: 3;
+  width: max-content;
+  color: #111;
+  pointer-events: none;
+  transform: none;
+}
+
+.submit-hero::before {
+  content: "";
+  position: absolute;
+  inset: -2px 0 6px;
+  border: 1.5px solid #111;
+}
+
+.submit-hero p {
+  position: relative;
+  width: max-content;
+  margin: 0;
+  padding: 2px 18px 8px;
+  font: 800 clamp(52px, 6.4vw, 88px)/0.9 "Arial Black", "Helvetica Neue", "PingFang SC", sans-serif;
+  letter-spacing: -0.045em;
+}
+
+.submit-hero span {
+  position: absolute;
+  top: 112%;
+  left: 2%;
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border: 3px dashed #171a17;
+  font: 400 42px/1 "HY Pixel", monospace;
+}
+
+.submit-cursor {
+  position: absolute;
+  top: 54%;
+  left: 82%;
+  z-index: 4;
+  width: clamp(46px, 4.6vw, 68px);
+  aspect-ratio: 0.76;
+  background: var(--submit-green);
+  clip-path: polygon(0 0, 100% 61%, 62% 66%, 79% 94%, 59% 100%, 42% 71%, 14% 94%);
+  filter: drop-shadow(3px 0 #111) drop-shadow(-3px 0 #111) drop-shadow(0 3px #111) drop-shadow(0 -3px #111);
+  pointer-events: none;
+  transform: rotate(-18deg);
+}
+
+.deco-picker {
+  position: fixed;
+  left: clamp(56px, 6.4vw, 96px);
+  top: 38%;
+  z-index: 20;
+  width: 228px;
+  padding: 12px 0 0;
+  border: 0;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.deco-picker p {
+  width: max-content;
+  margin: 0 0 6px;
+  background: var(--submit-green);
+  padding: 3px 6px;
+  color: #111;
+  font: 400 12px/1.3 "HY Pixel", monospace;
+  letter-spacing: 0.16em;
+}
+
+.deco-picker strong {
+  display: block;
+  margin: 0 0 8px;
+  font: 400 22px/1 "HY Pixel", "PingFang SC", sans-serif;
+}
+
+.deco-drum {
+  position: relative;
+  height: 236px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+}
+
+.deco-drum::before,
+.deco-drum::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  z-index: 2;
+  width: 6px;
+  border: 1.5px solid #171a17;
+  background:
+    repeating-linear-gradient(#171a17 0 2px, transparent 2px 7px);
+  pointer-events: none;
+}
+
+.deco-drum::before { left: 0; }
+.deco-drum::after { right: 0; }
+
+.deco-window {
+  position: absolute;
+  inset: calc(50% - 22px) 14px auto;
+  z-index: 0;
+  height: 44px;
+  border: 1.5px solid #111;
+  background: rgb(223 255 33 / 0.92);
+  pointer-events: none;
+}
+
+.deco-scroller {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 96px 22px;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  perspective: 520px;
+}
+
+.deco-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.deco-scroller button {
+  flex: 0 0 44px;
+  scroll-snap-align: center;
+  display: grid;
+  align-content: center;
+  gap: 1px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #171a17;
+  cursor: pointer;
+  font: 400 15px/1 "HY Pixel", "PingFang SC", sans-serif;
+  transform-origin: center center;
+}
+
+.deco-scroller button small {
+  color: #69736d;
+  font: 400 10px/1 "HY Pixel", monospace;
+}
+
+.deco-scroller button.is-on {
+  color: #111;
+  font-size: 17px;
+}
+
+.deco-scroller button.is-on small {
+  color: #111;
+}
+
+.close-submit {
+  position: fixed;
+  top: 68px;
+  right: clamp(72px, 8vw, 128px);
+  z-index: 14;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #171a17;
+  font: 300 42px/1 sans-serif;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+body.is-submit .stage,
+body.is-submit #app {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.submit-view .portal-header {
+  position: relative;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  padding: 18px 48px 22px 18px;
+  border: 1px solid #171a17;
+  transform: rotate(-2.5deg);
+}
+
+.submit-view .portal-header h1 {
+  font: 400 clamp(26px, 2.3vw, 40px)/0.95 "HY Pixel", sans-serif;
+  letter-spacing: -0.04em;
+}
+
+.submit-view .portal-header > p,
+.locker-builder > p:first-child {
+  width: max-content;
+  background: var(--submit-green);
+  padding: 3px 6px;
+  color: #111;
+}
+
+.portal-header {
+  display: grid;
+  grid-template-columns: 1fr minmax(260px, 0.65fr);
+  gap: 20px 64px;
+  padding-bottom: 54px;
+  border-bottom: 1px solid #171a17;
+}
+
+.portal-header p,
+.about-note span {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #2aa800;
+  font: 400 12px/1.3 "HY Pixel", monospace;
+  letter-spacing: 0.2em;
+}
+
+.portal-header h1,
+.about-shell h1 {
+  margin: 0;
+  font: 400 clamp(64px, 10vw, 148px)/0.82 "HY Pixel", "PingFang SC", sans-serif;
+}
+
+.portal-header > span {
+  align-self: end;
+  color: #59625d;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+#submission-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.submission-layout {
+  display: block;
+}
+
+.locker-builder {
+  --locker-accent: var(--submit-green);
+  position: relative;
+  display: grid;
+  width: 100%;
+  gap: 13px;
+  margin-bottom: 18px;
+  border: 1px solid #171a17;
+  background: transparent;
+  padding: 18px;
+  pointer-events: auto;
+  transform: rotate(0.9deg);
+}
+
+.locker-builder > p:first-child {
+  margin: 0;
+  color: #2aa800;
+  font: 400 12px/1.3 "HY Pixel", monospace;
+  letter-spacing: 0.18em;
+}
+
+.locker-builder h2 {
+  margin: 0;
+  font: 400 24px/1 "HY Pixel", "PingFang SC", sans-serif;
+}
+
+.locker-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.locker-identity > div:last-child {
+  display: grid;
+  gap: 4px;
+}
+
+.locker-identity small {
+  color: #69736d;
+  font: 400 10px/1 "HY Pixel", monospace;
+  letter-spacing: 0.12em;
+}
+
+.locker-choice-number {
+  color: var(--locker-accent);
+  font: 400 32px/0.9 "HY Pixel", monospace;
+}
+
+.locker-avatar {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  overflow: hidden;
+  border: 4px solid var(--locker-accent);
+  border-radius: 50%;
+  background: #f6f7fa;
+  color: #68716d;
+  font-size: 12px;
+}
+
+.locker-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#submission-form .locker-controls {
+  display: grid;
+  gap: 18px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+#submission-form .locker-controls legend {
+  padding: 0;
+  font-size: 14px;
+}
+
+.locker-numbers {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+}
+
+#submission-form .locker-numbers label {
+  display: block;
+}
+
+.locker-numbers input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.locker-numbers span {
+  display: grid;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid #aeb7b1;
+  border-radius: 2px;
+  background: #fff;
+  cursor: pointer;
+  font: 400 13px/1 "HY Pixel", monospace;
+}
+
+.locker-numbers input:checked + span {
+  border-color: #111;
+  background: var(--submit-green);
+  color: #111;
+}
+
+.locker-numbers input:focus-visible + span {
+  outline: 2px solid rgb(42 168 0 / 0.3);
+  outline-offset: 2px;
+}
+
+.locker-colors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+#submission-form .locker-colors input[type="color"] {
+  height: 38px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.avatar-picker {
+  border: 1px dashed #829087;
+  border-radius: 0;
+  background: #fff;
+  padding: 12px;
+}
+
+.avatar-picker span {
+  color: #69736d;
+  font-size: 11px;
+}
+
+.avatar-picker input {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 5px 0 0 !important;
+}
+
+.confirm-locker {
+  justify-self: end;
+  border: 1px solid #171a17;
+  border-radius: 2px;
+  background: #dfff21;
+  padding: 11px 18px;
+  color: #171a17;
+  font: inherit;
+  cursor: pointer;
+}
+
+.confirm-locker:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.locker-status {
+  min-height: 18px;
+  margin: 0;
+  color: #5f6963;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.locker-status.has-error {
+  color: #a22418;
+}
+
+.submission-fields {
+  display: grid;
+  gap: 14px;
+  transition: opacity 180ms ease;
+}
+
+.submission-fields.is-locked {
+  opacity: 0.42;
+}
+
+.submission-fields.is-locked::before {
+  content: "请先在左侧确认柜子";
+  border: 1px solid #aeb7b1;
+  border-radius: 0;
+  background: var(--submit-green);
+  padding: 15px 18px;
+  color: #111;
+  text-align: center;
+}
+
+#submission-form fieldset {
+  position: relative;
+  margin: 0;
+  border: 1px solid #171a17;
+  border-radius: 0;
+  background: transparent;
+  padding: 20px;
+}
+
+.submission-fields > fieldset:nth-of-type(1) { transform: rotate(-0.8deg); }
+.submission-fields > fieldset:nth-of-type(2) { transform: rotate(0.8deg); }
+.submission-fields > fieldset:nth-of-type(3) { transform: rotate(-0.65deg); }
+
+.submit-hero::after,
+.submit-view .portal-header::after,
+.locker-builder::after,
+.submission-fields > fieldset::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: -5px;
+  background:
+    linear-gradient(#111, #111) left top / 8px 8px no-repeat,
+    linear-gradient(#111, #111) right top / 8px 8px no-repeat,
+    linear-gradient(#111, #111) left bottom / 8px 8px no-repeat,
+    linear-gradient(#111, #111) right bottom / 8px 8px no-repeat;
+  pointer-events: none;
+}
+
+#submission-form legend {
+  padding: 0 8px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+#submission-form legend span {
+  margin-right: 8px;
+  color: #2aa800;
+  font: 400 20px/1 "HY Pixel", monospace;
+}
+
+.form-grid,
+.upload-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+#submission-form label {
+  display: grid;
+  gap: 9px;
+  color: #303630;
+  font-size: 14px;
+}
+
+#submission-form label > small {
+  justify-self: end;
+  color: #737c76;
+}
+
+#submission-form input,
+#submission-form select,
+#submission-form textarea {
+  width: 100%;
+  border: 1px solid #aeb7b1;
+  border-radius: 2px;
+  background: #fff;
+  padding: 10px 11px;
+  color: #171a17;
+  font: inherit;
+}
+
+#submission-form textarea {
+  resize: vertical;
+}
+
+#submission-form input:focus,
+#submission-form select:focus,
+#submission-form textarea:focus {
+  border-color: #2aa800;
+  outline: 2px solid rgb(42 168 0 / 0.18);
+}
+
+.upload-grid {
+  margin-bottom: 20px;
+}
+
+.upload-box {
+  min-height: 112px;
+  align-content: center;
+  border: 1px dashed #829087;
+  border-radius: 0;
+  background: color-mix(in srgb, var(--submit-green) 42%, white);
+  padding: 15px;
+  cursor: pointer;
+}
+
+.upload-box span {
+  color: #69736d;
+  font-size: 12px;
+}
+
+.upload-box input {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 8px 0 0 !important;
+}
+
+.file-summary,
+.submission-status {
+  border-radius: 0;
+  background: color-mix(in srgb, var(--submit-green) 42%, white);
+  padding: 14px 16px;
+  color: #4e5952;
+  font-size: 13px;
+}
+
+.file-summary.has-error,
+.submission-status.has-error {
+  background: #ffe3df;
+  color: #a22418;
+}
+
+.submission-status:empty {
+  display: none;
+}
+
+.submission-status.is-ready {
+  background: #e1f7d9;
+  color: #246b0c;
+}
+
+#submission-form .consent {
+  display: flex;
+  grid-template-columns: auto 1fr;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 4px;
+}
+
+#submission-form .consent input {
+  width: auto;
+  margin-top: 2px;
+}
+
+.submit-button {
+  justify-self: end;
+  border: 1px solid #171a17;
+  border-radius: 2px;
+  background: #dfff21;
+  padding: 14px 28px;
+  color: #171a17;
+  font: 500 16px/1 "PingFang SC", sans-serif;
+  cursor: pointer;
+}
+
+.submit-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.about-view {
+  background: #2aa800;
+  color: #fff;
+}
+
+.about-shell {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.about-shell h1 {
+  max-width: 980px;
+  margin-top: 22px;
+}
+
+.about-shell > p:not(.intro__eyebrow) {
+  max-width: 720px;
+  margin: 42px 0 0;
+  font-size: 18px;
+  line-height: 1.8;
+}
+
+.about-note {
+  display: grid;
+  gap: 12px;
+  margin-top: 72px;
+  padding-top: 24px;
+  border-top: 1px solid rgb(255 255 255 / 0.55);
+}
+
+.about-note span {
+  color: #ffe14a;
+}
+
+.about-note strong {
+  font-size: 20px;
+  font-weight: 400;
+}
+
+@media (max-width: 720px) {
+  .portal-shell {
+    width: min(100% - 28px, 1120px);
+    padding-top: 108px;
+  }
+
+  .portal-header,
+  .form-grid,
+  .upload-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .submit-view {
+    background: #f6f7fa;
+    pointer-events: auto;
+  }
+
+  .submit-hero {
+    display: none;
+  }
+
+  .submit-cursor {
+    display: none;
+  }
+
+  .close-submit {
+    top: 70px;
+    right: 18px;
+  }
+
+  .deco-picker {
+    top: auto;
+    bottom: 18px;
+    left: 36px;
+    width: 200px;
+  }
+
+  .deco-drum {
+    height: 188px;
+  }
+
+  .submit-view .portal-shell {
+    width: min(100% - 28px, 760px);
+    margin: 0 auto;
+    padding: 108px 0 80px;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .locker-builder {
+    position: static;
+    width: 100%;
+    margin-bottom: 42px;
+  }
+
+  .locker-numbers {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 721px) and (max-width: 1100px) {
+  .submit-view .form-grid,
+  .submit-view .upload-grid {
+    grid-template-columns: 1fr;
+  }
+}
