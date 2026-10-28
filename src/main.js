@@ -7,6 +7,7 @@ import { startIntro, finishIntro } from './introMarquee.js';
 import { introCameraDistance } from './introReveal.js';
 import { hideWorks, showWorks, setWorksTransition } from './worksDiscs.js';
 import { hidePortals, showPortal } from './portal.js';
+import { initBrowse, STUDENTS } from './browse.js';
 
 const app = document.querySelector('#app');
 const scene = new THREE.Scene();
@@ -30,6 +31,7 @@ app.append(renderer.domElement);
 let sceneDirty = true;
 
 const LOCKER_COUNT = 8;
+let browseLockerCount = LOCKER_COUNT;
 // Wider than the first slim pass; height stays put.
 const LOCKER_WIDTH = 1.22;
 const LOCKER_DEPTH = 0.66;
@@ -2607,6 +2609,10 @@ function setIntroCamera(distance) {
   sceneDirty = true;
 }
 
+function fitBrowseCamera() {
+  setIntroCamera(Math.max(window.innerWidth < 600 ? 1.15 : 1, (1.3 / camera.aspect) * browseLockerCount / LOCKER_COUNT));
+}
+
 function lockerWorldX(index) {
   return -TOTAL_WIDTH / 2 + LOCKER_WIDTH / 2 + index * (LOCKER_WIDTH + GAP);
 }
@@ -2646,14 +2652,14 @@ function moveFocus(index) {
 let hoveredLocker = -1;
 let hoveredBadge = false;
 const lockerHoverCard = document.getElementById('locker-hover-card');
-const lockerNames = ['01号学生', '02号学生', '03号学生', '王文骥', '孙玉洁', '06号学生', '07号学生', '08号学生'];
+const lockerNames = STUDENTS.map((student) => student.name);
 
 function setLockerHoverCard(index, event) {
   if (!lockerHoverCard) return;
   lockerHoverCard.setAttribute('aria-hidden', String(index < 0));
   if (index < 0) return;
   lockerHoverCard.querySelector('strong').textContent = `${lockerNames[index]}的柜子`;
-  lockerHoverCard.querySelector('span').textContent = index === 4 ? '千万别点开' : '点击打开看看';
+  lockerHoverCard.querySelector('span').textContent = '查看学生简介与作品 →';
   lockerHoverCard.style.left = `${Math.min(event.clientX, window.innerWidth - 230)}px`;
   lockerHoverCard.style.top = `${Math.min(event.clientY, window.innerHeight - 120)}px`;
 }
@@ -2710,7 +2716,7 @@ function hoverLockerAt(event) {
   }
   setPointerFromEvent(event);
   raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObjects(lockerBank.children, true);
+  const hits = raycaster.intersectObjects(lockerBank.children.filter((locker) => locker.visible), true);
   hoveredBadge = hits.some((hit) => isIdBadge(hit.object));
   const index = hits.length > 0 ? doorIndexFromObject(hits[0].object) : -1;
   if (index !== hoveredLocker) {
@@ -2773,8 +2779,13 @@ renderer.domElement.addEventListener('pointerup', (event) => {
 
   setPointerFromEvent(event);
   raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObjects(lockerBank.children, true);
+  const hits = raycaster.intersectObjects(lockerBank.children.filter((locker) => locker.visible), true);
   const badgeHit = hits.find((hit) => isIdBadge(hit.object));
+  if (hits.length) {
+    const index = doorIndexFromObject(hits[0].object);
+    if (index >= 0) window.dispatchEvent(new CustomEvent('browse-student', { detail: index }));
+    return;
+  }
   if (hits.length > 0) setLockerHoverCard(-1);
   if (hits.length === 0) {
     if (focusedLocker < 0) return;
@@ -2823,7 +2834,8 @@ lockerBank.add(transitionGlow);
 
 function markNav(id) {
   document.querySelectorAll('#top-nav button').forEach((button) => {
-    button.toggleAttribute('aria-current', button.id === id);
+    if (button.id === id) button.setAttribute('aria-current', 'page');
+    else button.removeAttribute('aria-current');
   });
 }
 
@@ -2935,24 +2947,6 @@ function nearestLocker(x) {
   return best;
 }
 
-renderer.domElement.addEventListener('wheel', (event) => {
-  if (focusedLocker < 0) return;
-  event.preventDefault();
-  event.stopImmediatePropagation();
-  if (badgeFocus) {
-    doorAnims[3].open = true;
-    moveFocus(3);
-    doorAnims[3].open = true;
-  }
-  zoomAnim = null;
-  const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-  const minX = lockerWorldX(0);
-  const maxX = lockerWorldX(LOCKER_COUNT - 1);
-  controls.target.x = THREE.MathUtils.clamp(controls.target.x + delta * 0.004, minX, maxX);
-  focusedLocker = nearestLocker(controls.target.x);
-  setFocusArrows();
-}, { capture: true, passive: false });
-
 function resizeScene() {
   const width = window.innerWidth;
   const height = window.innerHeight;
@@ -2962,11 +2956,15 @@ function resizeScene() {
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(width, height);
+  if (document.body.classList.contains('browse-preview') && !document.body.classList.contains('is-submit')) {
+    fitBrowseCamera();
+  }
   sceneDirty = true;
 }
 
 function animate() {
   const dt = Math.min(clock.getDelta(), 0.05);
+  if (document.body.classList.contains('browse-content')) return;
   // The works scene has its own renderer; do not draw the fully hidden locker scene too.
   if (!switchingWorks && worksProgress === 1) return;
   if (switchingWorks) {
@@ -3069,35 +3067,41 @@ function animate() {
 window.addEventListener('resize', resizeScene);
 resizeScene();
 renderer.setAnimationLoop(animate);
-startIntro({
-  onReveal(fromEntry) {
-    if (fromEntry) {
-      setPath('/students', true);
-      markNav('nav-lockers');
-    }
-    hideWorks();
-    document.body.classList.remove('is-switching');
-    app.style.opacity = '';
-    if (focusedLocker >= 0 || zoomAnim) {
-      controls.minDistance = controls.maxDistance = introRestDistance;
-      controls.enabled = true;
-      return;
-    }
-    controls.enabled = false;
-    introArrive = { t: 0, from: INTRO_FAR, to: 1 };
-    setIntroCamera(INTRO_FAR);
-  }
+window.addEventListener('browse-grade', ({ detail: indices }) => {
+  browseLockerCount = indices.length;
+  if (hoveredLocker >= 0) paintLocker(hoveredLocker, false);
+  hoveredLocker = -1;
+  setLockerHoverCard(-1);
+  lockerBank.children.forEach((locker) => {
+    const index = locker.userData.lockerIndex;
+    if (!Number.isInteger(index)) return;
+    const order = indices.indexOf(index);
+    locker.visible = order >= 0;
+    if (order >= 0) locker.position.x = (order - (indices.length - 1) / 2) * (LOCKER_WIDTH + GAP);
+  });
+  if (document.body.classList.contains('is-lockers')) fitBrowseCamera();
+  sceneDirty = true;
 });
-
-const routeButtons = {
-  '/students': 'nav-lockers',
-  '/works': 'nav-works',
-  '/submit': 'nav-submit',
-  '/about': 'nav-about',
-};
-function openCurrentRoute() {
-  const button = document.getElementById(routeButtons[location.pathname]);
-  if (button) button.click();
-}
-window.addEventListener('popstate', openCurrentRoute);
-if (location.pathname !== '/') queueMicrotask(openCurrentRoute);
+initBrowse((mode) => {
+  hideWorks();
+  hidePortals();
+  worksTarget = worksProgress = 0;
+  switchingWorks = false;
+  setLockerHoverCard(-1);
+  document.body.classList.remove('is-switching', 'is-works', 'is-work-detail', 'is-lockers');
+  setSubmissionPreview(mode === 'submit');
+  lockerBank.position.copy(lockerRestPosition);
+  lockerBank.scale.copy(lockerRestScale);
+  app.style.opacity = '';
+  introArrive = zoomAnim = null;
+  focusedLocker = -1;
+  badgeFocus = badgeDetailOpen = false;
+  expandedBadge.visible = false;
+  doorAnims.forEach((anim) => { anim.open = false; });
+  setFocusArrows();
+  fitBrowseCamera();
+  controls.enabled = mode === 'students';
+  if (mode === 'submit' || mode === 'about') showPortal(mode);
+  else document.body.classList.add('is-lockers');
+  sceneDirty = true;
+});
