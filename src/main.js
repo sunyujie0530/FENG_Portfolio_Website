@@ -10,8 +10,8 @@ import { hidePortals, showPortal } from './portal.js';
 
 const app = document.querySelector('#app');
 const scene = new THREE.Scene();
-// Fog-white campus backdrop.
-scene.background = new THREE.Color(0xf6f7fa);
+// Clean white backdrop keeps the pastel props from looking washed out.
+scene.background = new THREE.Color(0xffffff);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -20,11 +20,11 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.VSMShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.22;
+renderer.toneMappingExposure = 1.1;
 // Soft studio env — kept low so locker matte + lime guitar stay readable.
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-scene.environmentIntensity = 0.16;
+scene.environmentIntensity = 0.2;
 pmrem.dispose();
 app.append(renderer.domElement);
 let sceneDirty = true;
@@ -72,9 +72,9 @@ const FAR_TARGET = new THREE.Vector3(0, LOCKER_CENTER_Y * 0.98, 0);
 const NEAR_ZOOM = 2.15;
 
 // Soft cool wrap light — clean, healing campus mood.
-scene.add(new THREE.AmbientLight(0xf7f9fb, 0.52));
+scene.add(new THREE.AmbientLight(0xffffff, 0.56));
 
-const hemisphere = new THREE.HemisphereLight(0xffffff, 0x8b939c, 0.36);
+const hemisphere = new THREE.HemisphereLight(0xffffff, 0x7894a8, 0.4);
 scene.add(hemisphere);
 
 const keyLight = new THREE.DirectionalLight(0xffffff, 2.85);
@@ -91,7 +91,7 @@ keyLight.shadow.bias = -0.0002;
 keyLight.shadow.normalBias = 0.04;
 scene.add(keyLight);
 
-const fillLight = new THREE.DirectionalLight(0xc5ced6, 0.12);
+const fillLight = new THREE.DirectionalLight(0xd8efff, 0.18);
 fillLight.position.set(8, 3, 1);
 scene.add(fillLight);
 
@@ -103,17 +103,17 @@ const softBounce = new THREE.PointLight(0xe7edf3, 3.5, 10, 2);
 softBounce.position.set(0, 2, 3);
 scene.add(softBounce);
 
-scene.fog = new THREE.Fog(0xf6f7fa, 32, 60);
+scene.fog = new THREE.Fog(0xffffff, 32, 60);
 
 // Matte light gray — reference cabinet, not the butter yellow.
 const soft = { roughness: 0.88, metalness: 0.06 };
 const materials = {
-  body: new THREE.MeshStandardMaterial({ color: 0x9aa3ac, ...soft }),
-  door: new THREE.MeshStandardMaterial({ color: 0xd8dde3, ...soft }),
-  frame: new THREE.MeshStandardMaterial({ color: 0xa7adb4, ...soft }),
-  recess: new THREE.MeshStandardMaterial({ color: 0x7d868f, roughness: 0.92, metalness: 0.05 }),
-  handle: new THREE.MeshStandardMaterial({ color: 0x5f686f, roughness: 0.88, metalness: 0.08 }),
-  interior: new THREE.MeshStandardMaterial({ color: 0xaeb6be, roughness: 0.92, metalness: 0.04 }),
+  body: new THREE.MeshStandardMaterial({ color: 0xb7c5cf, ...soft }),
+  door: new THREE.MeshStandardMaterial({ color: 0xf0f5f8, ...soft }),
+  frame: new THREE.MeshStandardMaterial({ color: 0xc5d0d8, ...soft }),
+  recess: new THREE.MeshStandardMaterial({ color: 0x718797, roughness: 0.92, metalness: 0.05 }),
+  handle: new THREE.MeshStandardMaterial({ color: 0x526b79, roughness: 0.88, metalness: 0.08 }),
+  interior: new THREE.MeshStandardMaterial({ color: 0xb8ccd8, roughness: 0.92, metalness: 0.04 }),
   pages: new THREE.MeshStandardMaterial({ color: 0xf4f0e6, roughness: 0.9, metalness: 0 }),
   pinkNote: new THREE.MeshStandardMaterial({ color: 0xffc4d6, roughness: 0.95, metalness: 0 }),
   yellowNote: new THREE.MeshStandardMaterial({ color: 0xfff8d0, roughness: 0.95, metalness: 0 }),
@@ -1413,7 +1413,7 @@ function createExpandedIdBadge() {
     emissiveIntensity: 0.4,
     ...extra,
   });
-  const cream = new THREE.MeshStandardMaterial({ color: 0xfff3dc, roughness: 0.78, metalness: 0 });
+  const cream = new THREE.MeshStandardMaterial({ color: 0xffedc7, roughness: 0.78, metalness: 0 });
   const clear = new THREE.MeshPhysicalMaterial({
     color: 0xffffff,
     roughness: 0.08,
@@ -1494,7 +1494,7 @@ function createExpandedIdBadge() {
   holder.add(insert);
 
   const print = coverMesh(2.4, 1.52, (ctx, w, h) => {
-    ctx.fillStyle = '#fff3dc';
+    ctx.fillStyle = '#ffedc7';
     ctx.fillRect(0, 0, w, h);
     ctx.fillStyle = '#171a1e';
     ctx.textAlign = 'left';
@@ -1659,7 +1659,7 @@ function createExpandedIdBadge() {
 
   badge.rotation.set(-0.06, -0.12, -0.035);
   badge.userData.restRotation = badge.rotation.clone();
-  const badgeKey = new THREE.PointLight(0xffd4c0, 3.1, 5.2, 1.7);
+  const badgeKey = new THREE.PointLight(0xffc7ad, 2.15, 5.2, 1.7);
   badgeKey.position.set(0.15, 0.35, 1.55);
   badge.add(badgeKey);
   setShadows(badge);
@@ -2297,6 +2297,19 @@ lockerBank.children.forEach((locker) => {
     node.userData.baseColor = mat.color.clone();
   });
 });
+
+const vividMaterials = new Set();
+[lockerBank, expandedBadge].forEach((group) => group.traverse((node) => {
+  if (!node.isMesh) return;
+  const nodeMaterials = Array.isArray(node.material) ? node.material : [node.material];
+  nodeMaterials.forEach((material) => {
+    if (!material?.color || vividMaterials.has(material)) return;
+    vividMaterials.add(material);
+    const hsl = {};
+    material.color.getHSL(hsl);
+    if (hsl.s > 0.06) material.color.setHSL(hsl.h, Math.min(1, hsl.s * 1.18 + 0.035), hsl.l);
+  });
+}));
 
 const {
   locker: submissionLocker,

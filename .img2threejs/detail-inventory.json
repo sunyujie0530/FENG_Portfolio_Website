@@ -1,0 +1,191 @@
+{
+  "sourceImage": "/Users/sunyujie/Documents/GitHub/FENG_Portfolio_Website/.img2threejs/reference.png",
+  "zonesDir": "/Users/sunyujie/Documents/GitHub/FENG_Portfolio_Website/.img2threejs/detail-inventory",
+  "detailInventory": {
+    "scanMethod": "grid-3x3",
+    "targetMinDetails": 6,
+    "details": [
+      {
+        "id": "zone-r0c0",
+        "kind": "contour",
+        "description": "red book spine rising from the mouth on the viewer's left",
+        "region": {
+          "x": 0.0,
+          "y": 0.0,
+          "width": 0.3333,
+          "height": 0.3333,
+          "units": "normalized"
+        },
+        "scale": "meso",
+        "affects": "silhouette",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "red-spine"
+        },
+        "evidenceRef": "/Users/sunyujie/Documents/GitHub/FENG_Portfolio_Website/.img2threejs/detail-inventory/zone-r0c0.png",
+        "confidence": 0.8
+      },
+      {
+        "id": "zone-r0c1",
+        "kind": "contour",
+        "description": "yellow board standing out of the open mouth",
+        "region": {
+          "x": 0.3333,
+          "y": 0.0,
+          "width": 0.3333,
+          "height": 0.3333,
+          "units": "normalized"
+        },
+        "scale": "meso",
+        "affects": "silhouette",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "yellow-board"
+        },
+        "evidenceRef": "/Users/sunyujie/Documents/GitHub/FENG_Portfolio_Website/.img2threejs/detail-inventory/zone-r0c1.png",
+        "confidence": 0.8
+      },
+      {
+        "id": "zone-r0c2",
+        "kind": "contour",
+        "description": "orange board leaning out of the mouth toward the viewer's right",
+        "region": {
+          "x": 0.6667,
+          "y": 0.0,
+          "width": 0.3333,
+          "height": 0.3333,
+          "units": "normalized"
+        },
+        "scale": "meso",
+        "affects": "silhouette",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "orange-board"
+        },
+        "evidenceRef": "/Users/sunyujie/Documents/GitHub/FENG_Portfolio_Website/.img2threejs/detail-inventory/zone-r0c2.png",
+        "confidence": 0.8
+      },
+      {
+        "id": "zone-r1c0",
+        "kind": "seam",
+        "description": "left rounded edge of the light-blue shell",
+        "region": {
+          "x": 0.0,
+          "y": 0.3333,
+          "width": 0.3333,
+          "height": 0.3333,
+          "units": "normalized"
+        },
+        "scale": "macro",
+        "affects": "silhouette",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "shell-bevel"
+        },
+        "evidenceRef": "/Users/sunyujie/Documents/GitHub/FENG_Portfolio_Website/.img2threejs/detail-inventory/zone-r1c0.png",
+        "confidence": 0.8
+      },
+      {
+        "id": "zone-r1c1",
+        "kind": "linework",
+        "description": "black zipper band across the front pocket mouth",
+        "region": {
+          "x": 0.3333,
+          "y": 0.3333,
+          "width": 0.3333,
+          "height": 0.3333,
+          "units": "normalized"
+        },
+        "scale": "meso",
+        "affects": "albedo",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "zipper"
+        },
+        "evidenceRef": "/Users/sunyujie/Documents/GitHub/FENG_Portfolio_Website/.img2threejs/detail-inventory/zone-r1c1.png",
+        "confidence": 0.8
+      },
+      {
+        "id": "zone-r1c2",
+        "kind": "contour",
+        "description": "green pen in the front pocket",
+        "region": {
+          "x": 0.6667,
+          "y": 0.3333,
+          "width": 0.3333,
+          "height": 0.3333,
+          "units": "normalized"
+        },
+        "scale": "micro",
+        "affects": "silhouette",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "pen"
+        },
+        "evidenceRef": "/Users/sunyujie/Documents/GitHub/FENG_Portfolio_Website/.img2threejs/detail-inventory/zone-r1c2.png",
+        "confidence": 0.8
+      },
+      {
+        "id": "zone-r2c0",
+        "kind": "bevel",
+        "description": "rounded lower corner of the shell",
+        "region": {
+          "x": 0.0,
+          "y": 0.6667,
+          "width": 0.3333,
+          "height": 0.3333,
+          "units": "normalized"
+        },
+        "scale": "macro",
+        "affects": "silhouette",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "shell-bevel"
+        },
+        "evidenceRef": "/Users/sunyujie/Documents/GitHub/FENG_Portfolio_Website/.img2threejs/detail-inventory/zone-r2c0.png",
+        "confidence": 0.8
+      },
+      {
+        "id": "zone-r2c1",
+        "kind": "linework",
+        "description": "black rectangular patch on the lower front pocket",
+        "region": {
+          "x": 0.3333,
+          "y": 0.6667,
+          "width": 0.3333,
+          "height": 0.3333,
+          "units": "normalized"
+        },
+        "scale": "micro",
+        "affects": "albedo",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "front-patch"
+        },
+        "evidenceRef": "/Users/sunyujie/Documents/GitHub/FENG_Portfolio_Website/.img2threejs/detail-inventory/zone-r2c1.png",
+        "confidence": 0.8
+      },
+      {
+        "id": "zone-r2c2",
+        "kind": "contour",
+        "description": "pink calculator in the front pocket",
+        "region": {
+          "x": 0.6667,
+          "y": 0.6667,
+          "width": 0.3333,
+          "height": 0.3333,
+          "units": "normalized"
+        },
+        "scale": "micro",
+        "affects": "silhouette",
+        "mapsTo": {
+          "type": "component.localFeatures",
+          "ref": "calculator"
+        },
+        "evidenceRef": "/Users/sunyujie/Documents/GitHub/FENG_Portfolio_Website/.img2threejs/detail-inventory/zone-r2c2.png",
+        "confidence": 0.8
+      }
+    ]
+  },
+  "authoringInstruction": "Open each zone crop under zonesDir and replace every detail stub's kind, description, scale, affects, mapsTo, and confidence with what is actually observed. Add more detail entries per zone if a single zone contains multiple distinct marks; do not leave stubs unfilled or unlinked (mapsTo must reference a real component.localFeatures or material.localOverrides entry)."
+}

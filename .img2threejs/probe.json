@@ -1,0 +1,13 @@
+{
+  "path": "/Users/sunyujie/Documents/GitHub/FENG_Portfolio_Website/.img2threejs/reference.png",
+  "type": "png",
+  "bytes": 94169,
+  "width": 220,
+  "height": 314,
+  "aspectRatio": 0.7006369426751592,
+  "technicalSuitability": "conditional",
+  "warnings": [
+    "low resolution; small geometry/material details may be unreliable"
+  ],
+  "note": "This is only technical image probing. Semantic object suitability still requires visual inspection."
+}
