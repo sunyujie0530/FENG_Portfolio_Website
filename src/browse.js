@@ -61,8 +61,7 @@ export function initBrowse(showScene) {
   landing.className = 'student-landing';
   landing.innerHTML = `<div class="landing-heading"><p class="eyebrow">FENG / STUDENT DIRECTORY</p><h1>八扇柜门，<br>各自成世界<span>。</span></h1><p>从一个人出发，认识一组创作。<br>选择柜子或下方姓名，直接查看简介与作品。</p><a class="text-link" href="/works">也可以从全部作品开始 ↗</a></div>
     <div class="grade-picker"><p class="eyebrow">按入学年级浏览</p><div class="kind-tabs" role="group" aria-label="学生年级筛选"><button type="button" data-grade="all" aria-pressed="true">全部</button><button type="button" data-grade="2024级" aria-pressed="false">2024级</button><button type="button" data-grade="2025级" aria-pressed="false">2025级</button></div></div>
-    <div class="landing-caption"><span id="student-count" aria-live="polite"></span><span>学生简介 · 作品 · 创作方向</span></div>
-    <div class="student-directory">${STUDENTS.map((s, i) => `<a href="/students/${i + 1}" data-student="${i}" style="--author:${s.color}"><small>${String(i + 1).padStart(2, '0')} · ${s.grade}</small><strong>${s.name}</strong><span>${s.tags}</span><em>${WORKS.filter((w) => w.authors.includes(i)).length} 件作品 ↗</em></a>`).join('')}</div>`;
+    <nav class="locker-access" aria-label="键盘选择学生">${STUDENTS.map((s, i) => `<a href="/students/${i + 1}" data-student="${i}">${String(i + 1).padStart(2, '0')} · ${s.name} · ${s.grade}</a>`).join('')}</nav>`;
   document.body.append(landing);
   let grade = 'all';
   const selectGrade = (value) => {
@@ -70,8 +69,6 @@ export function initBrowse(showScene) {
     const indices = STUDENTS.flatMap((student, index) => grade === 'all' || student.grade === grade ? [index] : []);
     landing.querySelectorAll('[data-grade]').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.grade === grade)));
     landing.querySelectorAll('[data-student]').forEach((link) => { link.hidden = !indices.includes(Number(link.dataset.student)); });
-    landing.querySelector('.student-directory').style.setProperty('--student-columns', indices.length);
-    landing.querySelector('#student-count').textContent = `${grade === 'all' ? '全部年级' : grade} / ${indices.length} 位学生 · 选择查看`;
     window.dispatchEvent(new CustomEvent('browse-grade', { detail: indices }));
   };
   landing.addEventListener('click', (event) => {
@@ -85,7 +82,6 @@ export function initBrowse(showScene) {
   let detailOrigin = '/works';
   let listScroll = 0;
   let restoreFocus = '';
-  let studentOrigin = null;
   const move = (path) => {
     if (path === location.pathname) { root.scrollTop = 0; return; }
     if (location.pathname === '/works') listScroll = root.scrollTop;
@@ -123,7 +119,6 @@ export function initBrowse(showScene) {
     });
     root.style.setProperty('--author', student?.color || (work ? colorOf(work) : '#638251'));
     if (student) {
-      studentOrigin = studentIndex;
       if (grade !== 'all' && grade !== student.grade) selectGrade(student.grade);
       const projects = WORKS.filter((w) => w.authors.includes(studentIndex));
       root.innerHTML = `${crumbs([['学生', '/students'], [student.name]])}<a class="back-link" href="/students">← 返回学生展厅</a>
@@ -153,7 +148,7 @@ export function initBrowse(showScene) {
     if (current) {
       const focusTarget = path === '/works' && restoreFocus ? root.querySelector(`a[href="${restoreFocus}"]`) : root.querySelector('h1');
       focusTarget?.focus({ preventScroll: true });
-      if (path === '/students' && studentOrigin !== null) landing.querySelector(`a[href="/students/${studentOrigin + 1}"]`)?.focus({ preventScroll: true });
+      if (path === '/students') landing.querySelector('[data-grade][aria-pressed="true"]')?.focus({ preventScroll: true });
     }
     current = path;
   };

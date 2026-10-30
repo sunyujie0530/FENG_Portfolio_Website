@@ -27,14 +27,8 @@ body.browse-preview { --ink:#252b25; --muted:#6c7369; --paper:#f7f8f4; --line:#d
 .landing-heading h1 span,.collection-heading h1 span { color:#638251; }
 .landing-heading > p:not(.eyebrow) { font-size:12px; color:var(--muted); line-height:1.9; margin:0 0 12px; }
 .text-link { pointer-events:auto; font-size:12px; border-bottom:1px solid #b8c4ac; padding-bottom:5px; }
-.landing-caption { position:absolute; left:4vw; right:4vw; bottom:166px; display:flex; justify-content:space-between; color:var(--muted); font-size:10px; letter-spacing:.06em; }
-.student-directory { position:absolute; bottom:32px; left:4vw; right:4vw; display:grid; grid-template-columns:repeat(var(--student-columns,8),minmax(0,1fr)); gap:12px; pointer-events:auto; }
-.student-directory a { display:flex; flex-direction:column; border-top:3px solid var(--author); padding:13px 5px 0; gap:7px; transition:transform .15s; }
-.student-directory a:hover { transform:translateY(-5px); }
-.student-directory small { color:var(--muted); font-size:10px; }
-.student-directory strong { font-size:17px; font-weight:600; }
-.student-directory span { font-size:10px; color:var(--muted); white-space:nowrap; }
-.student-directory em { font-size:10px; color:var(--author); font-style:normal; }
+.locker-access { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); pointer-events:auto; }
+.locker-access:focus-within { top:32px; left:4vw; width:auto; height:auto; max-width:90vw; clip-path:none; display:flex; flex-wrap:wrap; gap:16px; padding:18px; background:var(--paper); border:1px solid var(--line); border-radius:6px; font-size:12px; z-index:10; }
 .browse-preview .locker-hover-card { font:12px/1.6 inherit; }
 .browse-preview .locker-hover-card strong,.browse-preview .locker-hover-card span { color:var(--ink); background:var(--paper); border:1px solid var(--line); padding:5px 10px; font-family:"PingFang SC",sans-serif; }
 #browse { position:fixed; inset:78px 0 0; z-index:10; overflow-y:auto; overscroll-behavior:contain; background:var(--paper); padding:28px 5vw 80px; scrollbar-gutter:stable; }
@@ -112,11 +106,6 @@ body.browse-preview { --ink:#252b25; --muted:#6c7369; --paper:#f7f8f4; --line:#d
   .brand span,.edition { display:none; }
   .landing-heading { top:24px; }
   .landing-heading h1 { font-size:30px; }
-  .student-directory { grid-template-columns:repeat(min(var(--student-columns,8),4),minmax(0,1fr)); bottom:18px; gap:15px; }
-  .student-directory a { gap:4px; padding-top:7px; }
-  .student-directory span { display:none; }
-  .student-directory strong { font-size:15px; }
-  .landing-caption { bottom:210px; }
   .project-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:30px 18px; }
   .student-profile { grid-template-columns:125px 1fr; gap:24px; }
   .profile-number { height:170px; font-size:65px; }
@@ -132,10 +121,6 @@ body.browse-preview { --ink:#252b25; --muted:#6c7369; --paper:#f7f8f4; --line:#d
   .landing-heading > p:not(.eyebrow) { display:none; }
   .grade-picker { top:175px; left:4vw; right:auto; }
   .grade-picker > .eyebrow { display:none; }
-  .landing-caption { bottom:180px; font-size:9px; }
-  .landing-caption span:last-child { display:none; }
-  .student-directory em { font-size:9px; }
-  .student-directory strong { font-size:14px; }
   #browse { padding:22px 5vw 80px; }
   .collection-total { font-size:40px; }
   .collection-heading h1 { font-size:29px; }
@@ -165,4 +150,4 @@ body.browse-preview { --ink:#252b25; --muted:#6c7369; --paper:#f7f8f4; --line:#d
   .detail-copy { font-size:14px; }
   .browse-preview .portal-view { top:64px; }
 }
-@media(prefers-reduced-motion:reduce) { .project-cover img,.student-directory a { transition:none; } }
+@media(prefers-reduced-motion:reduce) { .project-cover img { transition:none; } }
