@@ -9,6 +9,7 @@ import { createStrideDetail } from './strideDetail.js';
 import { createBeakerDetail } from './beakerDetail.js';
 import { createShiDaoDetail } from './shiDaoDetail.js';
 import { createSlimeDetail } from './slimeDetail.js';
+import { mountDiscRoom } from './discRoom.js';
 
 export const STUDENTS = [
   { name: '王文睿', en: 'WANG WENRUI', color: '#6d76ac', grade: '2024级', bio: '以空间转换与双人协作为切入点，探索游戏机制和玩家之间的关系。', tags: '游戏设计 / 交互体验' },
@@ -83,6 +84,8 @@ export function initBrowse(showScene) {
   let listScroll = 0;
   let restoreFocus = '';
   let lockerReturn = null;
+  const discStates = new Map();
+  let disposeDiscRoom = () => {};
   const move = (path) => {
     if (path === location.pathname) { root.scrollTop = 0; if (path === '/students') window.dispatchEvent(new Event('browse-overview')); return; }
     if (location.pathname === '/works') listScroll = root.scrollTop;
@@ -101,9 +104,13 @@ export function initBrowse(showScene) {
     root.querySelectorAll('[data-kind]').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.kind === filter)));
   };
   const render = () => {
+    disposeDiscRoom();
+    disposeDiscRoom = () => {};
     root.querySelectorAll('video').forEach((video) => video.pause());
     const path = location.pathname;
     const studentMatch = path.match(/^\/students\/(\d+)$/);
+    const discMatch = path.match(/^\/students\/([1-8])\/discs$/);
+    const discStudentIndex = discMatch ? Number(discMatch[1]) - 1 : -1;
     const work = WORKS.find((w) => path === `/works/${w.id}`);
     const studentIndex = studentMatch ? Number(studentMatch[1]) - 1 : -1;
     const student = STUDENTS[studentIndex];
@@ -113,13 +120,18 @@ export function initBrowse(showScene) {
     landing.hidden = mode !== 'students';
     root.hidden = mode !== 'content';
     document.querySelector('#stage').setAttribute('aria-hidden', String(mode === 'content'));
-    const activeNav = mode === 'submit' ? 'nav-submit' : mode === 'about' ? 'nav-about' : (student || mode === 'students') ? 'nav-lockers' : 'nav-works';
+    const activeNav = mode === 'submit' ? 'nav-submit' : mode === 'about' ? 'nav-about' : (student || discMatch || mode === 'students') ? 'nav-lockers' : 'nav-works';
     nav.querySelectorAll('button').forEach((button) => {
       if (button.id === activeNav) button.setAttribute('aria-current', 'page');
       else button.removeAttribute('aria-current');
     });
     root.style.setProperty('--author', student?.color || (work ? colorOf(work) : '#638251'));
-    if (student) {
+    if (discMatch) {
+      root.innerHTML = '';
+      lockerReturn = discStudentIndex;
+      if (!discStates.has(discStudentIndex)) discStates.set(discStudentIndex, {});
+      disposeDiscRoom = mountDiscRoom({ host: root, student: STUDENTS[discStudentIndex], studentIndex: discStudentIndex, students: STUDENTS, works: WORKS, state: discStates.get(discStudentIndex), onOpen: (selected) => move(`/works/${selected.id}`), onBack: () => move('/students') });
+    } else if (student) {
       if (grade !== 'all' && grade !== student.grade) selectGrade(student.grade);
       const projects = WORKS.filter((w) => w.authors.includes(studentIndex));
       root.innerHTML = `${crumbs([['学生', '/students'], [student.name]])}<a class="back-link" href="/students">← 返回学生展厅</a>
@@ -127,7 +139,7 @@ export function initBrowse(showScene) {
         <div class="section-heading"><h2>作品 <small>SELECTED WORKS</small></h2><a href="/works">浏览全部作品 ↗</a></div><div class="project-grid">${projects.length ? projects.map(card).join('') : '<p class="empty">作品正在整理中，可先浏览其他同学的创作。</p>'}</div><p class="editorial-note">创作方向简介根据已收录作品整理。</p>`;
     } else if (work) {
       const back = detailOrigin.startsWith('/students/') ? detailOrigin : '/works';
-      const backLabel = back === '/works' ? '全部作品' : `${STUDENTS[Number(back.split('/')[2]) - 1].name}的主页`;
+      const backLabel = back === '/works' ? '全部作品' : `${STUDENTS[Number(back.split('/')[2]) - 1].name}的${back.endsWith('/discs') ? '光盘库' : '主页'}`;
       const source = work.factory(() => {});
       const copy = source.querySelector('.work-detail__copy');
       const media = source.querySelector('.bcw-media') || source.querySelector('.work-detail__body');
@@ -144,7 +156,7 @@ export function initBrowse(showScene) {
       root.querySelector('#project-search').value = search;
       renderResults();
     }
-    document.title = `${student?.name || work?.title || (mode === 'students' ? '学生展厅' : mode === 'about' ? '关于' : mode === 'submit' ? '作品投稿' : '全部作品')} · FENG`;
+    document.title = `${discMatch ? `${STUDENTS[discStudentIndex].name}的作品光盘库` : student?.name || work?.title || (mode === 'students' ? '学生展厅' : mode === 'about' ? '关于' : mode === 'submit' ? '作品投稿' : '全部作品')} · FENG`;
     root.scrollTop = path === '/works' ? listScroll : 0;
     if (current) {
       const focusTarget = path === '/works' && restoreFocus ? root.querySelector(`a[href="${restoreFocus}"]`) : root.querySelector('h1');
@@ -195,12 +207,17 @@ export function initBrowse(showScene) {
     lockerReturn = detail;
     move(`/students/${detail + 1}`);
   });
+  window.addEventListener('browse-discs', ({ detail }) => {
+    lockerReturn = detail;
+    move(`/students/${detail + 1}/discs`);
+  });
   window.addEventListener('popstate', render);
   window.addEventListener('keydown', (event) => {
+    if (document.body.classList.contains('is-disc-room')) return;
     if (event.key !== 'Escape' || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
     if (location.pathname.startsWith('/works/')) move(detailOrigin);
     else if (location.pathname.startsWith('/students/')) move('/students');
   });
-  if (!/^\/(students(\/[1-8])?|works(\/[^/]+)?|submit|about)$/.test(location.pathname)) history.replaceState({}, '', '/students');
+  if (!/^\/(students(\/[1-8](\/discs)?)?|works(\/[^/]+)?|submit|about)$/.test(location.pathname)) history.replaceState({}, '', '/students');
   render();
 }
