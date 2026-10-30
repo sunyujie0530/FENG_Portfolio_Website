@@ -8,6 +8,7 @@ import { introCameraDistance } from './introReveal.js';
 import { hideWorks, showWorks, setWorksTransition } from './worksDiscs.js';
 import { hidePortals, showPortal } from './portal.js';
 import { initBrowse, STUDENTS } from './browse.js';
+import { createCdPlayer, updateCdPlayer } from './cdPlayer.js';
 
 const app = document.querySelector('#app');
 const scene = new THREE.Scene();
@@ -203,7 +204,7 @@ const doorAnims = [];
 function setShadows(root) {
   root.traverse((node) => {
     if (node.isMesh) {
-      node.castShadow = true;
+      node.castShadow = !node.userData.noShadow;
       node.receiveShadow = true;
     }
   });
@@ -1977,125 +1978,22 @@ function createBinderStack() {
   return stack;
 }
 
+const cdPlayers = [];
+let hoveredCdPlayer = null;
+
 function createOfficePile() {
   const pile = new THREE.Group();
   pile.name = 'office-pile';
-  const black = popMat(0x1c1e22);
-  const paper = popMat(0xe7e2d6);
-  const mugMat = popMat(0xf4f1ea);
-  const orange = popMat(0xe07a32);
-
-  const caseBox = roundedMesh(0.44, 0.1, 0.3, 0.02, black, 2);
-  caseBox.position.y = -0.12;
-  pile.add(caseBox);
-  const grip = boxMesh(0.12, 0.02, 0.02, popMat(0x9aa3ac));
-  grip.position.set(0, -0.15, 0.16);
-  pile.add(grip);
-
-  for (let i = 0; i < 6; i += 1) {
-    const sheet = boxMesh(0.4, 0.012, 0.28, i % 2 ? paper : popMat(0xf6f1e6));
-    sheet.position.set((i - 2) * 0.012, 0.12 + i * 0.016, 0);
-    sheet.rotation.z = (i - 3) * 0.025;
-    pile.add(sheet);
-  }
-
-  const printer = createPrinter();
-  printer.position.y = 0.2;
-  pile.add(printer);
-
-  const mug = cylinder(0.032, 0.03, 0.05, mugMat, 10);
-  mug.position.set(-0.16, 0.36, 0.02);
-  pile.add(mug);
-  const mugHandle = new THREE.Mesh(new THREE.TorusGeometry(0.016, 0.004, 6, 8), mugMat);
-  mugHandle.rotation.y = Math.PI / 2;
-  mugHandle.position.set(-0.192, 0.36, 0.02);
-  pile.add(mugHandle);
-
-  const glasses = new THREE.Group();
-  [-1, 1].forEach((side) => {
-    const lens = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.003, 6, 8), orange);
-    lens.position.x = side * 0.022;
-    glasses.add(lens);
+  [
+    { number: '01', accent: '#754158', title: 'CHARACTER STUDIES', y: 0.22 },
+    { number: '02', accent: '#3d6760', title: 'GAME & NARRATIVE', y: -0.39 }
+  ].forEach(({ y, ...options }) => {
+    const player = createCdPlayer(options);
+    player.position.set(0, y, 0.1);
+    pile.add(player);
+    cdPlayers.push(player);
   });
-  glasses.position.set(0.14, 0.38, 0.02);
-  glasses.rotation.set(-0.7, 0.2, 0.4);
-  pile.add(glasses);
   return pile;
-}
-
-function createPrinter() {
-  const printer = new THREE.Group();
-  printer.name = 'printer';
-  const cream = new THREE.MeshStandardMaterial({ color: 0xe6d9c4, roughness: 0.52, metalness: 0.05 });
-  const creamDark = new THREE.MeshStandardMaterial({ color: 0xd2c4ae, roughness: 0.58, metalness: 0.04 });
-  const cavity = new THREE.MeshStandardMaterial({ color: 0x2a2826, roughness: 0.88, metalness: 0 });
-  const lcd = new THREE.MeshStandardMaterial({
-    color: 0x314034,
-    roughness: 0.32,
-    metalness: 0.08,
-    emissive: new THREE.Color(0x1c2a18),
-    emissiveIntensity: 0.25
-  });
-
-  const body = roundedMesh(0.42, 0.15, 0.28, 0.018, cream, 2);
-  body.position.y = 0.09;
-  printer.add(body);
-
-  const lid = roundedMesh(0.4, 0.055, 0.26, 0.016, cream, 2);
-  lid.position.y = 0.188;
-  printer.add(lid);
-
-  const inlet = boxMesh(0.22, 0.008, 0.12, creamDark);
-  inlet.position.set(0, 0.214, -0.01);
-  printer.add(inlet);
-
-  const slot = boxMesh(0.22, 0.042, 0.05, cavity);
-  slot.position.set(0, 0.1, 0.125);
-  printer.add(slot);
-
-  const outTray = roundedMesh(0.24, 0.012, 0.14, 0.008, creamDark, 1);
-  outTray.position.set(0, 0.062, 0.2);
-  printer.add(outTray);
-
-  const drawer = roundedMesh(0.38, 0.042, 0.26, 0.012, cream, 1);
-  drawer.position.set(0, 0.02, 0.008);
-  printer.add(drawer);
-
-  [-1, 1].forEach((side) => {
-    for (let i = 0; i < 6; i += 1) {
-      const vent = boxMesh(0.008, 0.016, 0.036, creamDark);
-      vent.position.set(side * 0.208, 0.1, -0.04 + i * 0.02);
-      printer.add(vent);
-    }
-  });
-
-  const screen = boxMesh(0.07, 0.012, 0.004, lcd);
-  screen.position.set(-0.05, 0.175, 0.13);
-  printer.add(screen);
-  for (let i = 0; i < 3; i += 1) {
-    const btn = cylinder(0.006, 0.006, 0.006, creamDark, 8);
-    btn.rotation.x = Math.PI / 2;
-    btn.position.set(0.03 + i * 0.018, 0.175, 0.132);
-    printer.add(btn);
-  }
-  const knob = cylinder(0.01, 0.01, 0.008, creamDark, 10);
-  knob.rotation.x = Math.PI / 2;
-  knob.position.set(0.1, 0.175, 0.132);
-  printer.add(knob);
-
-  const page = coverMesh(0.16, 0.28, (ctx, w, h) => {
-    ctx.fillStyle = '#f7f4ee';
-    ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = '#2f4a32';
-    ctx.textAlign = 'center';
-    ctx.font = '300 48px "PingFang SC", sans-serif';
-    ctx.fillText('校园', w / 2, h * 0.38);
-    ctx.fillText('笔记', w / 2, h * 0.52);
-  });
-  page.rotation.x = -Math.PI / 2;
-  page.position.set(0, 0.078, 0.26);
-  printer.add(page);
-  return printer;
 }
 
 function createRedFolder() {
@@ -2260,9 +2158,10 @@ function createLocker(index, { empty = false } = {}) {
     locker.add(binders);
 
     const folder = createRedFolder();
-    folder.scale.setScalar(1.45);
-    folder.position.set(0.02, 0.88, -0.08);
-    folder.rotation.set(0.1, -0.15, -0.08);
+    // Lay the loose stationery flat below the taller CD players, not through their discs.
+    folder.scale.setScalar(0.55);
+    folder.position.set(0.02, 0.12, -0.08);
+    folder.rotation.set(-Math.PI / 2, 0, 0);
     locker.add(folder);
   }
 
@@ -2530,6 +2429,13 @@ function isWorkPlayer(object) {
   return false;
 }
 
+function cdPlayerFromObject(object) {
+  for (let node = object; node; node = node.parent) {
+    if (node.userData.isCdPlayer) return node;
+  }
+  return null;
+}
+
 function restoreOrbitLimits() {
   controls.minAzimuthAngle = -0.08;
   controls.maxAzimuthAngle = 0.08;
@@ -2778,12 +2684,14 @@ function hoverLockerAt(event) {
   }
   const profileHover = hoveredBadge && focusedLocker === 3 && doorAnims[3].progress > 0.6;
   const discHover = focusedLocker === 3 && doorAnims[3].progress > 0.6 && isWorkPlayer(hits[0]?.object);
+  hoveredCdPlayer = discHover ? cdPlayerFromObject(hits[0]?.object) : null;
   setLockerHoverCard(discHover || profileHover ? 3 : doorAnims[hoveredLocker]?.open ? -1 : hoveredLocker, event, profileHover, discHover);
   renderer.domElement.style.cursor = hoveredBadge || hoveredLocker >= 0 ? 'pointer' : '';
 }
 
 renderer.domElement.addEventListener('pointermove', hoverLockerAt);
 renderer.domElement.addEventListener('pointerleave', () => {
+  hoveredCdPlayer = null;
   if (hoveredLocker >= 0) paintLocker(hoveredLocker, false);
   hoveredLocker = -1;
   hoveredBadge = false;
@@ -3056,6 +2964,10 @@ function animate() {
     );
     doorPivots[index].rotation.y = DOOR_OPEN_ANGLE * easeInOutCubic(anim.progress);
     if (anim.progress !== previous) sceneDirty = true;
+  });
+  cdPlayers.forEach(player => {
+    const hovered = player === hoveredCdPlayer && lockersInteractive() && focusedLocker === 3 && doorAnims[3].progress > 0.6;
+    if (updateCdPlayer(player, hovered, dt, reducedTransitionMotion.matches)) sceneDirty = true;
   });
   if (submissionPreviewActive) {
     const previous = submissionDoorAnim.progress;
