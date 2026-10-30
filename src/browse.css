@@ -100,7 +100,14 @@ body.browse-preview { --ink:#252b25; --muted:#6c7369; --paper:#f7f8f4; --line:#d
 .detail-gallery img { width:100%; height:auto; display:block; border-radius:4px; }
 .detail-content video { display:block; width:100%; margin-top:28px; background:#171b17; border-radius:4px; }
 .browse-preview .portal-view { top:78px; }
-.browse-preview #cam-prev,.browse-preview #cam-next { display:none; }
+.browse-preview #cam-prev,.browse-preview #cam-next { z-index:12; width:48px; height:60px; display:grid; place-items:center; border:1px solid var(--line); border-radius:99px; background:rgba(247,248,244,.95); font-size:42px; color:var(--ink); }
+.is-locker-focused .landing-heading { display:none; }
+#locker-context { position:fixed; left:4vw; bottom:30px; z-index:12; display:flex; align-items:center; gap:24px; padding:16px 22px; border:1px solid var(--line); border-radius:8px; background:rgba(247,248,244,.96); }
+#locker-context p { margin:0; display:flex; align-items:baseline; gap:10px; }
+#locker-context strong { font-size:17px; font-weight:600; }
+#locker-context span { color:var(--muted); font-size:11px; }
+#locker-context a,#locker-context button { font-size:12px; }
+#locker-context button { border:0; padding:0; background:none; color:var(--muted); cursor:pointer; }
 @media(max-width:900px) {
   .browse-preview #top-nav { gap:22px; }
   .brand span,.edition { display:none; }
@@ -113,6 +120,11 @@ body.browse-preview { --ink:#252b25; --muted:#6c7369; --paper:#f7f8f4; --line:#d
   .detail-content { grid-template-columns:160px minmax(0,1fr); gap:30px; }
 }
 @media(max-width:600px) {
+  #locker-context { left:4vw; right:4vw; bottom:72px; flex-wrap:wrap; justify-content:space-between; gap:14px; padding:14px; }
+  #locker-context p { order:-1; flex-basis:100%; }
+  .browse-preview #cam-prev { left:8px; }
+  .browse-preview #cam-next { right:8px; }
+  .browse-preview #cam-prev,.browse-preview #cam-next { width:36px; height:50px; font-size:32px; }
   .browse-preview #top-nav { height:64px; gap:20px; padding-inline:5vw; overflow:visible; }
   .browse-preview .brand { font-size:25px; }
   .browse-preview #top-nav button { font-size:12px; }
@@ -120,6 +132,7 @@ body.browse-preview { --ink:#252b25; --muted:#6c7369; --paper:#f7f8f4; --line:#d
   .landing-heading h1 { font-size:28px; }
   .landing-heading > p:not(.eyebrow) { display:none; }
   .grade-picker { top:175px; left:4vw; right:auto; }
+  .is-locker-focused .grade-picker { top:16px; }
   .grade-picker > .eyebrow { display:none; }
   #browse { padding:22px 5vw 80px; }
   .collection-total { font-size:40px; }

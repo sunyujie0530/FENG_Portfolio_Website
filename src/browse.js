@@ -59,7 +59,7 @@ export function initBrowse(showScene) {
   document.body.append(root);
   const landing = document.createElement('section');
   landing.className = 'student-landing';
-  landing.innerHTML = `<div class="landing-heading"><p class="eyebrow">FENG / STUDENT DIRECTORY</p><h1>八扇柜门，<br>各自成世界<span>。</span></h1><p>从一个人出发，认识一组创作。<br>选择柜子或下方姓名，直接查看简介与作品。</p><a class="text-link" href="/works">也可以从全部作品开始 ↗</a></div>
+  landing.innerHTML = `<div class="landing-heading"><p class="eyebrow">FENG / STUDENT DIRECTORY</p><h1>八扇柜门，<br>各自成世界<span>。</span></h1><p>从一个人出发，认识一组创作。<br>点击柜子打开柜门，使用左右箭头切换浏览。</p><a class="text-link" href="/works">也可以从全部作品开始 ↗</a></div>
     <div class="grade-picker"><p class="eyebrow">按入学年级浏览</p><div class="kind-tabs" role="group" aria-label="学生年级筛选"><button type="button" data-grade="all" aria-pressed="true">全部</button><button type="button" data-grade="2024级" aria-pressed="false">2024级</button><button type="button" data-grade="2025级" aria-pressed="false">2025级</button></div></div>
     <nav class="locker-access" aria-label="键盘选择学生">${STUDENTS.map((s, i) => `<a href="/students/${i + 1}" data-student="${i}">${String(i + 1).padStart(2, '0')} · ${s.name} · ${s.grade}</a>`).join('')}</nav>`;
   document.body.append(landing);
@@ -83,7 +83,7 @@ export function initBrowse(showScene) {
   let listScroll = 0;
   let restoreFocus = '';
   const move = (path) => {
-    if (path === location.pathname) { root.scrollTop = 0; return; }
+    if (path === location.pathname) { root.scrollTop = 0; if (path === '/students') window.dispatchEvent(new Event('browse-overview')); return; }
     if (location.pathname === '/works') listScroll = root.scrollTop;
     if (path.startsWith('/works/')) {
       detailOrigin = location.pathname.startsWith('/students/') ? location.pathname : '/works';
@@ -172,6 +172,10 @@ export function initBrowse(showScene) {
     }
     if (!/^\/(students|works)(\/|$)/.test(url.pathname)) return;
     event.preventDefault();
+    if (link.closest('.locker-access')) {
+      window.dispatchEvent(new CustomEvent('browse-open-locker', { detail: Number(link.dataset.student) }));
+      return;
+    }
     move(url.pathname);
   });
   root.addEventListener('click', (event) => {

@@ -28,6 +28,8 @@ scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 scene.environmentIntensity = 0.2;
 pmrem.dispose();
 app.append(renderer.domElement);
+renderer.domElement.tabIndex = 0;
+renderer.domElement.setAttribute('aria-label', '学生柜子展厅：选择柜子打开柜门，左右方向键切换，Escape 返回全部柜子');
 let sceneDirty = true;
 
 const LOCKER_COUNT = 8;
@@ -2609,8 +2611,12 @@ function setIntroCamera(distance) {
   sceneDirty = true;
 }
 
+function browseCameraDistance() {
+  return Math.max(window.innerWidth < 600 ? 1.15 : 1, (1.3 / camera.aspect) * browseLockerCount / LOCKER_COUNT);
+}
+
 function fitBrowseCamera() {
-  setIntroCamera(Math.max(window.innerWidth < 600 ? 1.15 : 1, (1.3 / camera.aspect) * browseLockerCount / LOCKER_COUNT));
+  setIntroCamera(browseCameraDistance());
 }
 
 function lockerWorldX(index) {
@@ -2620,9 +2626,46 @@ function lockerWorldX(index) {
 function setFocusArrows() {
   const prev = document.getElementById('cam-prev');
   const next = document.getElementById('cam-next');
-  const near = focusedLocker >= 0 && !badgeFocus;
-  prev.hidden = !near || focusedLocker === 0;
-  next.hidden = !near || focusedLocker === LOCKER_COUNT - 1;
+  const visible = visibleLockerIndices();
+  const position = visible.indexOf(focusedLocker);
+  const near = position >= 0 && !submissionPreviewActive;
+  prev.hidden = !near || position === 0;
+  next.hidden = !near || position === visible.length - 1;
+  if (!prev.hidden) prev.setAttribute('aria-label', `上一个柜子：${STUDENTS[visible[position - 1]].name}`);
+  if (!next.hidden) next.setAttribute('aria-label', `下一个柜子：${STUDENTS[visible[position + 1]].name}`);
+  document.body.classList.toggle('is-locker-focused', near);
+  const context = document.getElementById('locker-context');
+  context.hidden = !near;
+  if (near) {
+    document.getElementById('locker-student-name').textContent = STUDENTS[focusedLocker].name;
+    document.getElementById('locker-student-grade').textContent = STUDENTS[focusedLocker].grade;
+    document.getElementById('locker-student-link').href = `/students/${focusedLocker + 1}`;
+  }
+}
+
+function visibleLockerIndices() {
+  return lockerBank.children.filter((locker) => locker.visible && Number.isInteger(locker.userData.lockerIndex))
+    .map((locker) => locker.userData.lockerIndex);
+}
+
+function openLocker(index) {
+  if (!visibleLockerIndices().includes(index)) return;
+  if (focusedLocker >= 0 && focusedLocker !== index) doorAnims[focusedLocker].open = false;
+  moveFocus(index);
+  doorAnims[index].open = true;
+  setLockerHoverCard(-1);
+}
+
+function returnToLockers() {
+  if (focusedLocker >= 0) doorAnims[focusedLocker].open = false;
+  moveFocus(-1);
+}
+
+function stepLocker(direction) {
+  if (!lockersInteractive() || focusedLocker < 0) return;
+  const visible = visibleLockerIndices();
+  const next = visible[visible.indexOf(focusedLocker) + direction];
+  if (next !== undefined) openLocker(next);
 }
 
 function moveFocus(index) {
@@ -2633,15 +2676,17 @@ function moveFocus(index) {
   lockerBank.visible = !submissionPreviewActive;
   restoreOrbitLimits();
   controls.enabled = true;
+  const distance = index < 0 ? browseCameraDistance() : 1;
+  const focusTarget = index < 0 ? FAR_TARGET.clone()
+    : new THREE.Vector3(lockerBank.children[index].position.x, FAR_TARGET.y, 0);
+  controls.minDistance = controls.maxDistance = introRestDistance * distance;
   zoomAnim = {
     fromZoom: camera.zoom,
     toZoom: index < 0 ? 1 : NEAR_ZOOM,
     from: controls.target.clone(),
-    to: index < 0 ? FAR_TARGET.clone() : new THREE.Vector3(lockerWorldX(index), FAR_TARGET.y, 0),
+    to: focusTarget,
     fromPos: camera.position.clone(),
-    toPos: (index < 0 ? FAR_TARGET : new THREE.Vector3(lockerWorldX(index), FAR_TARGET.y, 0))
-      .clone()
-      .addScaledVector(introCameraOffset, 1),
+    toPos: focusTarget.clone().addScaledVector(introCameraOffset, distance),
     t: 0,
     followBadge: false,
   };
@@ -2659,7 +2704,7 @@ function setLockerHoverCard(index, event) {
   lockerHoverCard.setAttribute('aria-hidden', String(index < 0));
   if (index < 0) return;
   lockerHoverCard.querySelector('strong').textContent = `${lockerNames[index]}的柜子`;
-  lockerHoverCard.querySelector('span').textContent = '查看学生简介与作品 →';
+  lockerHoverCard.querySelector('span').textContent = '点击打开柜门 →';
   lockerHoverCard.style.left = `${Math.min(event.clientX, window.innerWidth - 230)}px`;
   lockerHoverCard.style.top = `${Math.min(event.clientY, window.innerHeight - 120)}px`;
 }
@@ -2780,40 +2825,16 @@ renderer.domElement.addEventListener('pointerup', (event) => {
   setPointerFromEvent(event);
   raycaster.setFromCamera(pointer, camera);
   const hits = raycaster.intersectObjects(lockerBank.children.filter((locker) => locker.visible), true);
-  const badgeHit = hits.find((hit) => isIdBadge(hit.object));
-  if (hits.length) {
-    const index = doorIndexFromObject(hits[0].object);
-    if (index >= 0) window.dispatchEvent(new CustomEvent('browse-student', { detail: index }));
-    return;
-  }
   if (hits.length > 0) setLockerHoverCard(-1);
   if (hits.length === 0) {
     if (focusedLocker < 0) return;
-    doorAnims[focusedLocker].open = false;
-    moveFocus(-1);
-    return;
-  }
-  if (badgeHit) {
-    if (badgeFocus) {
-      openBadgeDetail();
-      return;
-    }
-    if (focusedLocker >= 0 && focusedLocker !== 3) doorAnims[focusedLocker].open = false;
-    focusBadge();
+    returnToLockers();
     return;
   }
   const index = doorIndexFromObject(hits[0].object);
   if (index < 0) return;
-  if (badgeFocus && index === 3) {
-    doorAnims[3].open = true;
-    moveFocus(3);
-    doorAnims[3].open = true;
-    return;
-  }
   if (focusedLocker !== index) {
-    if (focusedLocker >= 0) doorAnims[focusedLocker].open = false;
-    moveFocus(index);
-    doorAnims[index].open = true;
+    openLocker(index);
     return;
   }
   toggleDoor(index);
@@ -2926,12 +2947,26 @@ document.getElementById('nav-about').addEventListener('click', () => {
 });
 
 document.getElementById('cam-prev').addEventListener('click', () => {
-  if (!lockersInteractive() || focusedLocker <= 0) return;
-  moveFocus(focusedLocker - 1);
+  stepLocker(-1);
 });
 document.getElementById('cam-next').addEventListener('click', () => {
-  if (!lockersInteractive() || focusedLocker < 0 || focusedLocker >= LOCKER_COUNT - 1) return;
-  moveFocus(focusedLocker + 1);
+  stepLocker(1);
+});
+document.getElementById('locker-overview').addEventListener('click', returnToLockers);
+window.addEventListener('browse-overview', () => { if (focusedLocker >= 0) returnToLockers(); });
+window.addEventListener('browse-open-locker', ({ detail }) => {
+  if (!lockersInteractive() || document.body.classList.contains('browse-content')) return;
+  openLocker(detail);
+  renderer.domElement.focus({ preventScroll: true });
+});
+window.addEventListener('keydown', (event) => {
+  if (focusedLocker < 0 || !document.body.classList.contains('is-locker-focused') || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    event.preventDefault();
+    stepLocker(event.key === 'ArrowLeft' ? -1 : 1);
+  } else if (event.key === 'Escape') {
+    returnToLockers();
+  }
 });
 
 function nearestLocker(x) {
@@ -2957,7 +2992,8 @@ function resizeScene() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(width, height);
   if (document.body.classList.contains('browse-preview') && !document.body.classList.contains('is-submit')) {
-    fitBrowseCamera();
+    if (focusedLocker >= 0) moveFocus(focusedLocker);
+    else fitBrowseCamera();
   }
   sceneDirty = true;
 }
@@ -3068,6 +3104,12 @@ window.addEventListener('resize', resizeScene);
 resizeScene();
 renderer.setAnimationLoop(animate);
 window.addEventListener('browse-grade', ({ detail: indices }) => {
+  doorAnims.forEach((anim) => { anim.open = false; });
+  focusedLocker = -1;
+  badgeFocus = badgeDetailOpen = false;
+  expandedBadge.visible = false;
+  lockerBank.visible = !submissionPreviewActive;
+  zoomAnim = null;
   browseLockerCount = indices.length;
   if (hoveredLocker >= 0) paintLocker(hoveredLocker, false);
   hoveredLocker = -1;
@@ -3079,6 +3121,7 @@ window.addEventListener('browse-grade', ({ detail: indices }) => {
     locker.visible = order >= 0;
     if (order >= 0) locker.position.x = (order - (indices.length - 1) / 2) * (LOCKER_WIDTH + GAP);
   });
+  setFocusArrows();
   if (document.body.classList.contains('is-lockers')) fitBrowseCamera();
   sceneDirty = true;
 });
