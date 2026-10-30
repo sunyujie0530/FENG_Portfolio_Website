@@ -2699,12 +2699,12 @@ let hoveredBadge = false;
 const lockerHoverCard = document.getElementById('locker-hover-card');
 const lockerNames = STUDENTS.map((student) => student.name);
 
-function setLockerHoverCard(index, event) {
+function setLockerHoverCard(index, event, profile = false) {
   if (!lockerHoverCard) return;
   lockerHoverCard.setAttribute('aria-hidden', String(index < 0));
   if (index < 0) return;
-  lockerHoverCard.querySelector('strong').textContent = `${lockerNames[index]}的柜子`;
-  lockerHoverCard.querySelector('span').textContent = '点击打开柜门 →';
+  lockerHoverCard.querySelector('strong').textContent = profile ? `${lockerNames[index]} · 学生卡` : `${lockerNames[index]}的柜子`;
+  lockerHoverCard.querySelector('span').textContent = profile ? '点击查看个人介绍与作品 →' : '点击打开柜门 →';
   lockerHoverCard.style.left = `${Math.min(event.clientX, window.innerWidth - 230)}px`;
   lockerHoverCard.style.top = `${Math.min(event.clientY, window.innerHeight - 120)}px`;
 }
@@ -2769,7 +2769,8 @@ function hoverLockerAt(event) {
     hoveredLocker = index;
     if (hoveredLocker >= 0) paintLocker(hoveredLocker, true);
   }
-  setLockerHoverCard(doorAnims[hoveredLocker]?.open ? -1 : hoveredLocker, event);
+  const profileHover = hoveredBadge && focusedLocker === 3 && doorAnims[3].progress > 0.6;
+  setLockerHoverCard(profileHover ? 3 : doorAnims[hoveredLocker]?.open ? -1 : hoveredLocker, event, profileHover);
   renderer.domElement.style.cursor = hoveredBadge || hoveredLocker >= 0 ? 'pointer' : '';
 }
 
@@ -2829,6 +2830,10 @@ renderer.domElement.addEventListener('pointerup', (event) => {
   if (hits.length === 0) {
     if (focusedLocker < 0) return;
     returnToLockers();
+    return;
+  }
+  if (focusedLocker === 3 && doorAnims[3].progress > 0.6 && hits.some((hit) => isIdBadge(hit.object))) {
+    window.dispatchEvent(new CustomEvent('browse-student', { detail: 3 }));
     return;
   }
   const index = doorIndexFromObject(hits[0].object);

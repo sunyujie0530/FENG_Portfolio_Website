@@ -82,6 +82,7 @@ export function initBrowse(showScene) {
   let detailOrigin = '/works';
   let listScroll = 0;
   let restoreFocus = '';
+  let lockerReturn = null;
   const move = (path) => {
     if (path === location.pathname) { root.scrollTop = 0; if (path === '/students') window.dispatchEvent(new Event('browse-overview')); return; }
     if (location.pathname === '/works') listScroll = root.scrollTop;
@@ -151,6 +152,11 @@ export function initBrowse(showScene) {
       if (path === '/students') landing.querySelector('[data-grade][aria-pressed="true"]')?.focus({ preventScroll: true });
     }
     current = path;
+    if (mode === 'students' && lockerReturn !== null) {
+      const index = lockerReturn;
+      lockerReturn = null;
+      window.dispatchEvent(new CustomEvent('browse-open-locker', { detail: index }));
+    }
   };
   nav.addEventListener('click', (event) => {
     const paths = { 'nav-lockers': '/students', 'nav-works': '/works', 'nav-submit': '/submit', 'nav-about': '/about' };
@@ -176,6 +182,7 @@ export function initBrowse(showScene) {
       window.dispatchEvent(new CustomEvent('browse-open-locker', { detail: Number(link.dataset.student) }));
       return;
     }
+    if (link.id === 'locker-student-link') lockerReturn = Number(url.pathname.split('/')[2]) - 1;
     move(url.pathname);
   });
   root.addEventListener('click', (event) => {
@@ -184,7 +191,10 @@ export function initBrowse(showScene) {
     if (event.target.closest('#clear-filters')) { filter = 'all'; search = ''; root.querySelector('#project-search').value = ''; renderResults(); }
   });
   root.addEventListener('input', (event) => { if (event.target.id === 'project-search') { search = event.target.value.trim(); renderResults(); } });
-  window.addEventListener('browse-student', ({ detail }) => move(`/students/${detail + 1}`));
+  window.addEventListener('browse-student', ({ detail }) => {
+    lockerReturn = detail;
+    move(`/students/${detail + 1}`);
+  });
   window.addEventListener('popstate', render);
   window.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape' || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
