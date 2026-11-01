@@ -1,7 +1,8 @@
 import './discRoom.css';
 import { discInsideTray, clampDisc } from './discDrop.js';
 
-const palettes = ['#335bc5', '#c8b65c', '#a05c66', '#548b78', '#7864a4'];
+// A small print palette, not a color wash over every material.
+const palettes = ['#263fa6', '#a94745', '#b39543', '#56515f', '#626265'];
 
 export function mountDiscRoom({ host, student, studentIndex, students, works, state, onOpen, onBack }) {
   let pool = [];
@@ -18,12 +19,13 @@ export function mountDiscRoom({ host, student, studentIndex, students, works, st
   room.innerHTML = `
     <header class="cd-room-header">
       <button type="button" class="cd-room-back">← 返回打开的柜子</button>
-      <p class="eyebrow">FENG / PERSONAL ARCHIVE</p>
+      <p class="eyebrow">FENG® / DIGITAL ARCHIVE</p>
       <h1 tabindex="-1">${student.name}的<br>作品光盘库<span>。</span></h1>
-      <p class="cd-room-lead">选一张光盘，放入上方 CD 盒。<br>让一段创作，开始播放。</p>
+      <p class="cd-room-lead">一张光盘，一段创作。<br>选择并拖入光驱，打开作品。</p>
     </header>
     <div class="cd-library"><label for="cd-library-select">切换光盘库</label><select id="cd-library-select"><option value="student">${student.name}的作品</option><option value="all">全部作品</option></select><span id="cd-library-count"></span></div>
     <div class="cd-board" aria-label="拖动光盘到上方CD盒">
+      <div class="cd-archive-stamp" aria-hidden="true"><span>PERSONAL COLLECTION</span><b>F / ${String(studentIndex + 1).padStart(2, '0')}</b><small>OPTICAL MEDIA · EST. 2024</small></div>
       <div class="cd-drive" aria-label="CD盒">
         <div class="cd-tray-shell"><div class="cd-tray">
           <div class="cd-tray-rail cd-tray-rail--left"></div><div class="cd-tray-rail cd-tray-rail--right"></div>
@@ -32,9 +34,9 @@ export function mountDiscRoom({ host, student, studentIndex, students, works, st
           <div class="cd-drop-zone" aria-label="把光盘拖到这里放入CD盒"></div>
           <div class="cd-tray-lip"><span>FENG / OPTICAL ARCHIVE</span></div>
         </div></div>
-        <div class="cd-drive-face"><i class="cd-screw"></i><i class="cd-screw"></i><i class="cd-screw"></i><i class="cd-screw"></i><span>FENG</span><small>CD · R / RW</small><b class="cd-drive-led"></b><div class="cd-drive-slot"></div></div>
+        <div class="cd-drive-face"><i class="cd-screw"></i><i class="cd-screw"></i><i class="cd-screw"></i><i class="cd-screw"></i><span>FENG</span><small>COMPACT DISC · CD-R / RW</small><b class="cd-drive-led"></b><div class="cd-drive-slot"></div><span class="cd-drive-eject" aria-hidden="true">⏏</span></div>
       </div>
-      <p class="cd-drop-hint">将光盘放在托盘上 <span>↖</span></p>
+      <p class="cd-drop-hint"><i></i> 将光盘放在托盘上 <span>↖</span></p>
       <div class="cd-discs"></div>
       <div class="cd-loading" hidden><span class="cd-loading-disc"></span><p>正在打开作品…</p><div></div></div>
     </div>
@@ -72,8 +74,8 @@ export function mountDiscRoom({ host, student, studentIndex, students, works, st
         x: pool.length <= 3 ? 50 + (index - (pool.length - 1) / 2) * 16 : 50 + Math.cos(index * 2.4) * (12 + index * 1.25),
         y: pool.length <= 3 ? 67 + index * 3 : 65 + Math.sin(index * 2.4) * 9,
       };
-      return `<button type="button" class="archive-disc" data-work-id="${work.id}" aria-label="选择光盘：${work.title}" aria-pressed="false" style="left:${position.x}%;top:${position.y}%;--disc-color:${palettes[index % palettes.length]};--disc-ink:${index % palettes.length === 1 ? '#39412f' : '#f8f7ec'};--tilt:${(index % 2 ? 1 : -1) * (8 + index * 3)}deg;z-index:${index + 10}">
-        <span class="cd-art" style="background-image:url('${work.cover}')"></span><span class="cd-label-band"></span><span class="cd-label-top">FENG RECORDS <em>NO. ${String(index + 1).padStart(2, '0')}</em></span><strong class="cd-label-title">${work.title}</strong><span class="cd-label-bottom">${authorsOf(work)} / SELECTED WORK<br>CD-R &nbsp; 700 MB &nbsp; 80 MIN</span><span class="cd-hub"></span>
+      return `<button type="button" class="archive-disc cd-print-${index % 3}" data-work-id="${work.id}" aria-label="选择光盘：${work.title}" aria-pressed="false" style="left:${position.x}%;top:${position.y}%;--disc-color:${palettes[index % palettes.length]};--disc-ink:#29292b;--tilt:${(index % 2 ? 1 : -1) * (8 + index * 3)}deg;z-index:${index + 10}">
+        <span class="cd-art" style="background-image:url('${work.cover}')"></span><span class="cd-label-band"></span><span class="cd-label-top">FENG® ARCHIVE <em>NO. ${String(index + 1).padStart(2, '0')}</em></span><strong class="cd-label-title">${work.title}</strong><span class="cd-label-bottom">${authorsOf(work)} / SELECTED WORK<br>CD-R &nbsp; 700 MB &nbsp; 80 MIN</span><span class="cd-disc-spec" aria-hidden="true">COMPACT<br><b>disc</b><br>DIGITAL ARCHIVE</span><span class="cd-hub"></span>
       </button>`;
     }).join('');
     if (pool.length) select(selectedWork());

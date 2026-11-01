@@ -8,7 +8,7 @@ import { introCameraDistance } from './introReveal.js';
 import { hideWorks, showWorks, setWorksTransition } from './worksDiscs.js';
 import { hidePortals, showPortal } from './portal.js';
 import { initBrowse, STUDENTS } from './browse.js';
-import { createCdPlayer, updateCdPlayer } from './cdPlayer.js';
+import { createCdArchive, updateCdArchive, cdArchiveHit } from './cdArchive.js';
 
 const app = document.querySelector('#app');
 const scene = new THREE.Scene();
@@ -1980,19 +1980,15 @@ function createBinderStack() {
 
 const cdPlayers = [];
 let hoveredCdPlayer = null;
+let hoveredCdPart = null;
 
 function createOfficePile() {
   const pile = new THREE.Group();
   pile.name = 'office-pile';
-  [
-    { number: '01', accent: '#754158', title: 'CHARACTER STUDIES', y: 0.22 },
-    { number: '02', accent: '#3d6760', title: 'GAME & NARRATIVE', y: -0.39 }
-  ].forEach(({ y, ...options }) => {
-    const player = createCdPlayer(options);
-    player.position.set(0, y, 0.1);
-    pile.add(player);
-    cdPlayers.push(player);
-  });
+  const archive = createCdArchive();
+  archive.position.z = 0.1;
+  pile.add(archive);
+  cdPlayers.push(archive);
   return pile;
 }
 
@@ -2429,13 +2425,6 @@ function isWorkPlayer(object) {
   return false;
 }
 
-function cdPlayerFromObject(object) {
-  for (let node = object; node; node = node.parent) {
-    if (node.userData.isCdPlayer) return node;
-  }
-  return null;
-}
-
 function restoreOrbitLimits() {
   controls.minAzimuthAngle = -0.08;
   controls.maxAzimuthAngle = 0.08;
@@ -2684,7 +2673,9 @@ function hoverLockerAt(event) {
   }
   const profileHover = hoveredBadge && focusedLocker === 3 && doorAnims[3].progress > 0.6;
   const discHover = focusedLocker === 3 && doorAnims[3].progress > 0.6 && isWorkPlayer(hits[0]?.object);
-  hoveredCdPlayer = discHover ? cdPlayerFromObject(hits[0]?.object) : null;
+  const archiveHit = discHover ? cdArchiveHit(hits[0]?.object) : null;
+  hoveredCdPlayer = archiveHit?.archive || null;
+  hoveredCdPart = archiveHit?.part || null;
   setLockerHoverCard(discHover || profileHover ? 3 : doorAnims[hoveredLocker]?.open ? -1 : hoveredLocker, event, profileHover, discHover);
   renderer.domElement.style.cursor = hoveredBadge || hoveredLocker >= 0 ? 'pointer' : '';
 }
@@ -2692,6 +2683,7 @@ function hoverLockerAt(event) {
 renderer.domElement.addEventListener('pointermove', hoverLockerAt);
 renderer.domElement.addEventListener('pointerleave', () => {
   hoveredCdPlayer = null;
+  hoveredCdPart = null;
   if (hoveredLocker >= 0) paintLocker(hoveredLocker, false);
   hoveredLocker = -1;
   hoveredBadge = false;
@@ -2967,7 +2959,7 @@ function animate() {
   });
   cdPlayers.forEach(player => {
     const hovered = player === hoveredCdPlayer && lockersInteractive() && focusedLocker === 3 && doorAnims[3].progress > 0.6;
-    if (updateCdPlayer(player, hovered, dt, reducedTransitionMotion.matches)) sceneDirty = true;
+    if (updateCdArchive(player, hovered ? hoveredCdPart : null, dt, reducedTransitionMotion.matches)) sceneDirty = true;
   });
   if (submissionPreviewActive) {
     const previous = submissionDoorAnim.progress;

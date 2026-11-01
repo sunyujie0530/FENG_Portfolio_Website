@@ -4,7 +4,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 // Reference-inspired proportions in pile-local units; +Z is the front.
 export const CD_PLAYER = Object.freeze({ width: 0.44, height: 0.55, depth: 0.12, ejectY: 0.075, ejectZ: 0.045 });
 
-function canvasMap(paint, color = true) {
+export function canvasMap(paint, color = true) {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 1024;
   paint(canvas.getContext('2d'), 1024);
@@ -34,12 +34,12 @@ function materials() {
     }
   }, false);
   finishes = {
-    silver: new THREE.MeshStandardMaterial({ color: 0xbec2bb, metalness: 0.78, roughness: 0.32, bumpMap: brushed, bumpScale: 0.00018 }),
+    silver: new THREE.MeshStandardMaterial({ color: 0xc5c3c3, metalness: 0.78, roughness: 0.29, bumpMap: brushed, bumpScale: 0.00018 }),
     wood: new THREE.MeshPhysicalMaterial({ map: grain, roughness: 0.43, clearcoat: 0.25, clearcoatRoughness: 0.35 }),
-    dark: new THREE.MeshStandardMaterial({ color: 0x252b29, metalness: 0.2, roughness: 0.48 }),
+    dark: new THREE.MeshStandardMaterial({ color: 0x29282c, metalness: 0.2, roughness: 0.48 }),
     blue: new THREE.MeshStandardMaterial({ color: 0x183a9c, metalness: 0.55, roughness: 0.25 }),
-    glass: new THREE.MeshPhysicalMaterial({ color: 0xc6d8cd, transparent: true, opacity: 0.13, roughness: 0.12, metalness: 0.08, depthWrite: false, side: THREE.DoubleSide }),
-    led: new THREE.MeshStandardMaterial({ color: 0x91cfb4, emissive: 0x80c9ab, emissiveIntensity: 0.3, roughness: 0.35 }),
+    glass: new THREE.MeshPhysicalMaterial({ color: 0xefedf1, transparent: true, opacity: 0.09, roughness: 0.11, metalness: 0.03, depthWrite: false, side: THREE.DoubleSide }),
+    led: new THREE.MeshStandardMaterial({ color: 0xe5b777, emissive: 0xc78d39, emissiveIntensity: 0.3, roughness: 0.35 }),
   };
   return finishes;
 }
@@ -76,13 +76,13 @@ export function createCdPlayer({ number = '01', accent = '#754158', title = 'FEN
   [-1, 1].forEach(side => box(carrier, `carrier-guide-${side}`, 0.008, 0.38, 0.014, mat.silver, side * 0.179, 0, 0));
   const label = canvasMap((ctx, s) => {
     const gradient = ctx.createLinearGradient(0, 0, s, s);
-    gradient.addColorStop(0, '#e9e8df'); gradient.addColorStop(0.35, '#9baea6');
-    gradient.addColorStop(0.6, '#dae1d9'); gradient.addColorStop(1, '#7c8e88');
+    gradient.addColorStop(0, '#efede9'); gradient.addColorStop(0.35, '#b6b4bc');
+    gradient.addColorStop(0.6, '#eeece9'); gradient.addColorStop(1, '#a09ca6');
     ctx.fillStyle = gradient; ctx.fillRect(0, 0, s, s);
     ctx.fillStyle = accent; ctx.fillRect(0, s * 0.19, s, s * 0.23);
     ctx.fillStyle = '#f8f5e9'; ctx.font = '600 72px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('FENG / RECORDS', s / 2, s * 0.32);
-    ctx.fillStyle = '#263b37'; ctx.font = '500 38px sans-serif';
+    ctx.fillStyle = '#39363b'; ctx.font = '500 38px sans-serif';
     ctx.fillText(title, s / 2, s * 0.76); ctx.fillText(`VOL. ${number}  ·  CD-R / 700 MB`, s / 2, s * 0.82);
   });
   const discMat = new THREE.MeshStandardMaterial({ map: label, metalness: 0.52, roughness: 0.24, side: THREE.DoubleSide });
@@ -104,8 +104,8 @@ export function createCdPlayer({ number = '01', accent = '#754158', title = 'FEN
   box(root, 'control-panel', 0.383, 0.128, 0.018, mat.silver, 0, -0.207, 0.057);
   box(root, 'display', 0.326, 0.031, 0.008, mat.dark, 0, -0.15, 0.068);
   const textMap = canvasMap((ctx, s) => {
-    ctx.fillStyle = '#26332b'; ctx.fillRect(0, 0, s, s);
-    ctx.fillStyle = '#cee6c5'; ctx.font = '120px monospace'; ctx.textAlign = 'center';
+    ctx.fillStyle = '#29252b'; ctx.fillRect(0, 0, s, s);
+    ctx.fillStyle = '#e7d1a8'; ctx.font = '120px monospace'; ctx.textAlign = 'center';
     ctx.fillText(`${number}    02:23`, s / 2, s / 2 + 40);
   });
   const readout = new THREE.MeshBasicMaterial({ map: textMap });
