@@ -2676,8 +2676,9 @@ function hoverLockerAt(event) {
   const archiveHit = discHover ? cdArchiveHit(hits[0]?.object) : null;
   hoveredCdPlayer = archiveHit?.archive || null;
   hoveredCdPart = archiveHit?.part || null;
-  setLockerHoverCard(discHover || profileHover ? 3 : doorAnims[hoveredLocker]?.open ? -1 : hoveredLocker, event, profileHover, discHover);
-  renderer.domElement.style.cursor = hoveredBadge || hoveredLocker >= 0 ? 'pointer' : '';
+  const accessoriesHover = hoveredCdPart === 'accessories';
+  setLockerHoverCard(accessoriesHover ? -1 : discHover || profileHover ? 3 : doorAnims[hoveredLocker]?.open ? -1 : hoveredLocker, event, profileHover, discHover);
+  renderer.domElement.style.cursor = !accessoriesHover && (hoveredBadge || hoveredLocker >= 0) ? 'pointer' : '';
 }
 
 renderer.domElement.addEventListener('pointermove', hoverLockerAt);
@@ -2741,7 +2742,9 @@ renderer.domElement.addEventListener('pointerup', (event) => {
     return;
   }
   if (focusedLocker === 3 && doorAnims[3].progress > 0.6 && isWorkPlayer(hits[0]?.object)) {
-    window.dispatchEvent(new CustomEvent('browse-discs', { detail: 3 }));
+    if (cdArchiveHit(hits[0]?.object)?.opensLibrary) {
+      window.dispatchEvent(new CustomEvent('browse-discs', { detail: 3 }));
+    }
     return;
   }
   if (focusedLocker === 3 && doorAnims[3].progress > 0.6 && hits.some((hit) => isIdBadge(hit.object))) {

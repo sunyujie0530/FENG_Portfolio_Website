@@ -124,7 +124,7 @@ export function cdArchiveHit(object) {
   let part=null;
   for(let node=object;node;node=node.parent) {
     part ||= node.userData.archiveInteraction;
-    if(node.userData.isCdPlayer) return {archive:node,part};
+    if(node.userData.isCdPlayer) return {archive:node,part,opensLibrary:part==='player'};
   }
   return null;
 }
