@@ -42,6 +42,8 @@ assert.equal(panel.updateLayout, undefined);
 assert.equal(panel.className, 'work-detail');
 assert.equal(heading.className, '');
 const down = intro.childNodes.at(-1);
+assert.equal(down.className, 'work-detail__down scroll-more');
+assert.equal(down.textContent, '滑动查看更多');
 assert.equal(down.href, '#work-content-3');
 down.events.click({ preventDefault() {} });
 assert.deepEqual(panel.lastScroll, { top: 720, behavior: 'instant' });

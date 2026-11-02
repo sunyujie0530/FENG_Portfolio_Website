@@ -23,9 +23,9 @@ export function standardWorkLayout(panel, index) {
   heading.classList.remove('bcw-section');
   const introCopy = copy.cloneNode(true);
   const down = document.createElement('a');
-  down.className = 'work-detail__down';
+  down.className = 'work-detail__down scroll-more';
   down.href = `#${content.id}`;
-  down.textContent = '向下探索作品 ↓';
+  down.textContent = '滑动查看更多';
   down.addEventListener('click', event => {
     event.preventDefault();
     panel.scrollTo({ top: panel.clientHeight, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });

@@ -18,6 +18,7 @@ body.is-work-detail #works-scene { position: absolute; inset: 0; z-index: 2; poi
 }
 .work-detail__hero { min-height: 100dvh; display: flex; align-items: center; padding: 10vh 10vw; }
 .work-detail__intro { width: 49%; }
+body.browse-preview .work-detail h1:focus { outline:none; }
 @font-face {
   font-family: NicoMoji;
   src: url('/fonts/NicoMoji-Regular.ttf') format('truetype');

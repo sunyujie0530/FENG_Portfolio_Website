@@ -2,18 +2,33 @@ export function landingFrame(width, height, scroll) {
   const progress = Math.min(1, Math.max(0, scroll / Math.max(1, height)));
   const compact = width < 700;
   const mix = (a, b) => a + (b - a) * progress;
+  const directoryTitle = compact ? 28 : width <= 900 ? 36 : 48;
+  const directoryTitleY = compact ? 102 : height * .14;
   return {
     progress,
-    fontSize: mix(compact ? 32 : Math.min(84, width * .041), compact ? 26 : Math.min(58, width * .029)),
-    titleY: mix(compact ? height * .22 : height * .23, compact ? 102 : height * .14),
-    subtitleY: mix(compact ? height * .36 : height * .345, compact ? 190 : height * .30),
-    subtitleSize: mix(compact ? 13 : Math.min(28, width * .016), compact ? 12 : Math.min(18, width * .01)),
-    cabinetY: mix(height * (compact ? .08 : .17), height * .01),
+    fontSize: mix(compact ? 32 : Math.min(80, Math.max(40, width * .05)), directoryTitle),
+    titleY: mix(compact ? height * .22 : height * .23, directoryTitleY),
+    subtitleY: mix(compact ? height * .36 : height * .345, Math.max(compact ? 190 : height * .30, directoryTitleY + directoryTitle * 2.7 + 20)),
+    subtitleSize: mix(compact ? 16 : width <= 900 ? 18 : 22, compact ? 15 : 16),
+    cabinetY: mix(height * (compact ? .08 : .17), height * (compact ? .01 : .09)),
     compact,
   };
 }
 
 export const showWorksEntry = (started, progress) => started && progress >= .9;
+
+export const HOME_SECTION_GAP = 150;
+export function homeSections(height, scroll, aboutHeight) {
+  const cdStart = height + HOME_SECTION_GAP;
+  const aboutStart = height * 2 + HOME_SECTION_GAP * 2;
+  return {
+    aboutStart,
+    cdY: cdStart - scroll,
+    aboutY: aboutStart - scroll,
+    aboutClip: Math.max(0, aboutStart - height + aboutHeight - scroll),
+    uploadY: Math.min(0, aboutStart - height - scroll),
+  };
+}
 
 export const CD_ORBIT_DIAMETER = .19844;
 export const CD_ORBIT_PERSPECTIVE = 1.2;
@@ -41,6 +56,20 @@ export function cdIntroMarkup(works) {
   </section>`;
 }
 
+export function homeAboutMarkup(students) {
+  const published = students.filter(student => student.tags !== '资料待补充');
+  const grades = [...new Set(published.map(student => student.grade.replace('级', '')))].sort();
+  return `<section class="home-about" id="home-about" aria-labelledby="home-about-title" inert>
+    <div class="home-about-grid">
+      <div class="home-about-name"><p class="home-about-guide">网站介绍</p><p>About</p><h2 id="home-about-title">枫门</h2></div>
+      <div class="home-about-mentor"><h3>朱小枫老师</h3><p>北京师范大学 艺术与传媒学院</p></div>
+      <div class="home-about-cohort"><h3>${published.length}位学生</h3><p>${grades.join('–')}<span>级</span></p></div>
+      <div class="home-about-copy"><h3>每一扇柜门背后，是一位创作者；每一张光盘里，是一件作品。</h3><p>你可以从学生出发，了解他们的创作与个性，也可以直接浏览全部作品，发现不同方向的探索与表达。</p></div>
+    </div>
+    <footer class="home-footer"><a class="home-footer-brand" href="/" aria-label="FENG 首页">FENG<span>学生作品集</span></a><p>持续收录，让创作被看见。</p><div><span>© 2026 FENG</span><button id="home-back-top" type="button">返回顶部 ↑</button></div></footer>
+  </section>`;
+}
+
 export function initStudentLanding(landing) {
   const title = [...landing.querySelectorAll('h1 span')];
   const subtitle = [...landing.querySelectorAll('.landing-summary span')];
@@ -48,6 +77,8 @@ export function initStudentLanding(landing) {
   const heading = landing.querySelector('.landing-heading');
   const worksLink = landing.querySelector('.landing-works-link');
   const cdIntro = landing.querySelector('.home-cd-intro');
+  const about = landing.querySelector('.home-about');
+  const upload = document.querySelector('#nav-submit');
   const orbitLinks = [...cdIntro.querySelectorAll('.cd-orbit-link')];
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   let active = false;
@@ -92,14 +123,22 @@ export function initStudentLanding(landing) {
     if (!active || document.body.classList.contains('is-locker-focused')) return;
     document.body.classList.toggle('is-student-directory', previewStarted);
     savedScroll = previewStarted ? 0 : window.scrollY;
-    const scrollProgress = landingFrame(innerWidth, innerHeight, savedScroll).progress;
+    const scrollProgress = landingFrame(innerWidth, innerHeight, savedScroll - HOME_SECTION_GAP).progress;
+    const sections = homeSections(innerHeight, savedScroll, about.offsetHeight);
     // Scrolling explores the CD introduction; only the button enters the directory.
     const f = landingFrame(innerWidth, innerHeight, previewStarted ? innerHeight : 0);
     landing.dataset.directory = String(previewStarted);
     landing.style.setProperty('--home-hero-y', `${previewStarted ? 0 : -savedScroll}px`);
-    landing.style.setProperty('--home-cd-y', `${(1 - scrollProgress) * innerHeight}px`);
+    landing.style.setProperty('--home-cd-y', `${sections.cdY}px`);
+    about.hidden = previewStarted;
+    about.inert = previewStarted || savedScroll < sections.aboutStart - innerHeight;
+    landing.style.setProperty('--home-about-y', `${sections.aboutY}px`);
+    landing.style.setProperty('--home-about-clip', `${sections.aboutClip}px`);
+    document.body.style.setProperty('--home-upload-y', `${previewStarted ? 0 : sections.uploadY}px`);
+    upload.inert = !previewStarted && innerHeight - 16 + sections.uploadY <= (innerWidth < 600 ? 64 : 78);
+    document.body.style.setProperty('--home-about-height', `${about.offsetHeight}px`);
     cdIntro.hidden = previewStarted;
-    cdIntro.inert = previewStarted || scrollProgress < .8;
+    cdIntro.inert = previewStarted || scrollProgress < .8 || savedScroll >= sections.aboutStart - HOME_SECTION_GAP - (innerWidth < 600 ? 64 : 78);
     heading.inert = !previewStarted && scrollProgress > .2;
     syncOrbit();
     landing.querySelector('.locker-access').inert = !previewStarted && scrollProgress > .1;
@@ -163,6 +202,15 @@ export function initStudentLanding(landing) {
     start.focus({ preventScroll: true });
   };
   window.addEventListener('browse-home', returnHome);
+  window.addEventListener('browse-about', () => {
+    if (!active || previewStarted) return;
+    window.scrollTo({ top: homeSections(innerHeight, 0, about.offsetHeight).aboutStart, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+  });
+  landing.querySelector('#home-back-top').addEventListener('click', () => {
+    if (location.hash === '#about') history.replaceState({ ...history.state }, '', '/');
+    window.scrollTo({ top: 0, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+    start.focus({ preventScroll: true });
+  });
   return (enabled) => {
     active = enabled;
     if (enabled) {
@@ -174,6 +222,7 @@ export function initStudentLanding(landing) {
     }
     if (!enabled) focusPreview = false;
     if (!enabled) stopOrbit();
+    if (!enabled) upload.inert = false;
     document.body.classList.toggle('is-student-home', enabled);
     document.body.classList.toggle('is-student-directory', enabled && previewStarted);
     if (!enabled) document.body.classList.remove('is-home-cd');

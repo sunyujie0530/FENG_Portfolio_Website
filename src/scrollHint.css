@@ -1,0 +1,15 @@
+/* Shared light-weight scroll cue: no button frame. */
+body.browse-preview .scroll-more {
+  display:inline-flex; align-items:center; gap:10px;
+  color:#151815; font:var(--type-light) var(--type-control)/1.5 var(--ui-font);
+  text-decoration:none;
+}
+body.browse-preview .work-detail__down.scroll-more {
+  border:0; border-radius:0; background:transparent; box-shadow:none; padding:0;
+}
+body.browse-preview .scroll-more::before {
+  content:""; display:block; flex:none; width:22px; height:34px;
+  background:center/contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='38' viewBox='0 0 24 38'%3E%3Cpath d='M12 1v27M1 17l11 11 11-11' fill='none' stroke='%23151815' stroke-width='1.2'/%3E%3Ccircle cx='12' cy='35' r='1.7' fill='%23151815'/%3E%3C/svg%3E");
+}
+body.browse-preview .home-scroll-more { position:fixed; left:4vw; bottom:16px; margin:0; translate:0 var(--home-upload-y,0px); pointer-events:none; }
+body.browse-preview.is-student-directory .home-scroll-more { display:none; }

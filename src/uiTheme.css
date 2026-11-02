@@ -98,7 +98,7 @@ body.browse-preview :where(:disabled,[aria-disabled="true"]) {
 body.browse-preview :is(
   .kind-tabs button,#nav-submit,#cam-prev,#cam-next,#locker-overview,#locker-student-link,
   .primary-link,.empty button,.text-link,.back-link,.cd-room-back,.cd-insert,
-  .confirm-locker,.submit-button,.close-submit,.work-detail__back,.work-detail__down,.intro__enter
+  .confirm-locker,.submit-button,.close-submit,.work-detail__back,.intro__enter
 ) {
   border:1px solid var(--control-border);
   border-radius:var(--ui-control-radius,var(--ui-radius));

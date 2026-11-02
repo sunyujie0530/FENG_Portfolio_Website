@@ -19,7 +19,7 @@ export function createWorkDetail(onBack) {
         <h1 tabindex="-1">CHENJIAWEI</h1>
         <h2>陈嘉伟 2025级硕士</h2>
         <div class="work-detail__copy">${copy}</div>
-        <a class="work-detail__down" href="#clay-content">向下探索作品 ↓</a>
+        <a class="work-detail__down scroll-more" href="#clay-content">滑动查看更多</a>
       </div>
     </section>
     <section class="work-detail__content" id="clay-content">
