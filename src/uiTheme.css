@@ -61,7 +61,7 @@ body.browse-preview :is(
   .confirm-locker,.submit-button,.close-submit,.work-detail__back,.work-detail__down,.intro__enter
 ) {
   border:1px solid var(--control-border);
-  border-radius:var(--ui-radius);
+  border-radius:var(--ui-control-radius,var(--ui-radius));
   background:var(--control-bg);
   color:var(--control-text);
   box-shadow:var(--control-shadow);
@@ -157,7 +157,34 @@ body.browse-preview :is(.landing-heading>.eyebrow,.collection-heading .eyebrow,.
 }
 body.browse-preview :is(.landing-heading h1,.collection-heading h1,.student-profile h1,.detail-heading h1) { color:var(--ui-ink); }
 body.browse-preview :is(.landing-heading h1 span,.collection-heading h1 span) { color:var(--ui-ink); }
-body.browse-preview .grade-picker .kind-tabs { border-color:var(--ui-line); border-radius:var(--ui-radius); background:var(--ui-white); }
+/* Grade filters use the reference's raised / recessed soft capsules. */
+body.browse-preview .grade-picker .kind-tabs {
+  border:0;
+  padding:5px;
+  gap:12px;
+  border-radius:0;
+  background:transparent;
+}
+body.browse-preview .grade-picker .kind-tabs button {
+  --ui-control-radius:999px;
+  --ui-control-size:14px;
+  --ui-control-padding:11px 22px;
+  --control-bg:linear-gradient(150deg,#fff,#f3f3f2);
+  --control-border:#f9f9f8;
+  --control-text:#252725;
+  --control-shadow:3px 4px 6px #20252026,-3px -3px 7px #fff,inset 0 1px 1px #fff,inset 0 -2px 2px #b8bab866;
+  min-width:90px;
+  min-height:44px;
+}
+body.browse-preview .grade-picker .kind-tabs button:hover {
+  --control-bg:linear-gradient(150deg,#fff,#eaecea);
+  --control-shadow:3px 5px 8px #20252030,-3px -3px 7px #fff,inset 0 1px 1px #fff;
+}
+body.browse-preview .grade-picker .kind-tabs button:is([aria-pressed="true"],:active) {
+  --control-bg:linear-gradient(145deg,#dedfdd,#eeeFec);
+  --control-border:#f5f6f3;
+  --control-shadow:inset 3px 4px 7px #333a332e,inset -3px -3px 6px #fff,0 1px 1px #fff;
+}
 body.browse-preview #locker-context { border-color:var(--ui-line); border-radius:var(--ui-radius); background:var(--ui-white); }
 body.browse-preview .locker-access:focus-within { border:1px solid var(--ui-ink); border-radius:var(--ui-radius); }
 body.browse-preview .locker-hover-card strong { color:var(--ui-ink); background:var(--ui-accent); border-color:var(--ui-ink); }
@@ -213,6 +240,8 @@ body.browse-preview .cd-room-footer { border-color:var(--ui-line); }
   body.browse-preview :is(.kind-tabs button,.cd-room-back,.cd-insert) { --ui-control-size:10px; --ui-control-padding:7px 10px; }
   body.browse-preview :is(#cam-prev,#cam-next) { --ui-control-size:28px; --ui-control-padding:0; }
   body.browse-preview #locker-context { gap:10px; }
+  body.browse-preview .grade-picker .kind-tabs { gap:8px; }
+  body.browse-preview .grade-picker .kind-tabs button { --ui-control-size:11px; --ui-control-padding:8px 14px; min-width:68px; min-height:36px; }
 }
 @media(prefers-reduced-motion:reduce) {
   body.browse-preview :is(button,a,input,select,textarea) { transition:none; }
