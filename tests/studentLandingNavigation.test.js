@@ -54,6 +54,7 @@ assert.equal(nodes.get('.home-about').hidden, false);
 assert.equal(nodes.get('.home-about').inert, false);
 assert.equal(landing.style['--home-cd-y'], '-720px');
 assert.equal(landing.style['--home-about-y'], '0px');
+assert.equal(landing.style['--home-about-clip'], '0px');
 nodes.get('#home-back-top').click(); flush();
 expectHome();
 start.click(); flush();

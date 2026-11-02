@@ -46,6 +46,7 @@ export function homeAboutMarkup(students) {
   const grades = [...new Set(published.map(student => student.grade.replace('级', '')))].sort();
   return `<section class="home-about" id="home-about" aria-labelledby="home-about-title" inert>
     <div class="home-about-grid">
+      <p class="home-about-guide">网站介绍</p>
       <div class="home-about-name"><p>About</p><h2 id="home-about-title">枫门</h2></div>
       <div class="home-about-mentor"><h3>朱小枫老师</h3><p>北京师范大学 艺术与传媒学院</p></div>
       <div class="home-about-cohort"><h3>${published.length}位学生</h3><p>${grades.join('–')}<span>级</span></p></div>
@@ -116,6 +117,7 @@ export function initStudentLanding(landing) {
     about.hidden = previewStarted;
     about.inert = previewStarted || savedScroll < innerHeight;
     landing.style.setProperty('--home-about-y', `${innerHeight * 2 - savedScroll}px`);
+    landing.style.setProperty('--home-about-clip', `${Math.max(0, innerHeight + about.offsetHeight - savedScroll)}px`);
     document.body.style.setProperty('--home-about-height', `${about.offsetHeight}px`);
     cdIntro.hidden = previewStarted;
     cdIntro.inert = previewStarted || scrollProgress < .8 || savedScroll >= innerHeight * 2 - (innerWidth < 600 ? 64 : 78);
