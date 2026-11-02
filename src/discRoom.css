@@ -2,7 +2,6 @@ body.browse-preview.is-disc-room { --paper:#f1f1ef; --ink:#272729; --muted:#7b79
 .is-disc-room #browse { padding:0; overflow:hidden; }
 body.browse-preview.is-disc-room #top-nav { background:#f1f1ef; color:#272729; }
 body.browse-preview.is-disc-room #top-nav button[aria-current="page"]::after { background:#777075; }
-.browse-preview.is-disc-room .edition { color:#777075; border-color:#d3cecb; }
 .is-disc-room #nav-submit { display:none; }
 .cd-room { position:relative; width:100%; height:100%; min-height:640px; overflow:hidden; color:var(--ink); background:radial-gradient(ellipse at 49% 35%,#ffffff 0,#f5f5f3 36%,#ececea 100%); isolation:isolate; }
 .cd-room::after { content:""; position:absolute; inset:0; z-index:102; opacity:.035; pointer-events:none; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23000' filter='url(%23n)' opacity='.6' d='M0 0h180v180H0z'/%3E%3C/svg%3E"); }

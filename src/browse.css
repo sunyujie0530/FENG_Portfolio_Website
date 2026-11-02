@@ -13,7 +13,6 @@ body.browse-preview { --ink:#252b25; --muted:#6c7369; --paper:#f7f8f4; --line:#d
 .browse-preview #top-nav button[aria-current="page"]::after { content:""; position:absolute; height:3px; background:#638251; bottom:0; left:0; right:0; }
 .browse-preview #top-nav #nav-submit { order:5; position:fixed; bottom:20px; right:24px; height:auto; padding:11px 18px; border:1px solid var(--line); border-radius:99px; background:var(--paper); box-shadow:0 3px 15px #252b2510; font-size:12px; z-index:35; }
 .browse-preview #nav-submit::after { display:none; }
-.edition { font-size:10px; letter-spacing:.12em; padding:6px 8px; border:1px solid #cfd7c7; color:#607451; }
 .browse-preview .stage { background:var(--paper); }
 .browse-preview #app { top:clamp(35px,7vh,70px); }
 .browse-content #stage { visibility:hidden; pointer-events:none; }
@@ -110,7 +109,7 @@ body.browse-preview { --ink:#252b25; --muted:#6c7369; --paper:#f7f8f4; --line:#d
 #locker-context button { border:0; padding:0; background:none; color:var(--muted); cursor:pointer; }
 @media(max-width:900px) {
   .browse-preview #top-nav { gap:22px; }
-  .brand span,.edition { display:none; }
+  .brand span { display:none; }
   .landing-heading { top:24px; }
   .landing-heading h1 { font-size:30px; }
   .project-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:30px 18px; }

@@ -86,9 +86,10 @@ body.browse-preview .close-submit { --ui-control-size:26px; --ui-control-padding
 
 /* Main navigation: the same selected/hover state, with compact navigation geometry. */
 body.browse-preview #top-nav {
-  background:var(--ui-paper);
+  background:var(--ui-white);
   border-bottom-color:var(--ui-line);
 }
+body.browse-preview:is(.browse-content,.is-about) #top-nav { background:var(--ui-paper); }
 body.browse-preview #top-nav button:not(#nav-submit) {
   align-self:center;
   height:auto;
@@ -116,7 +117,6 @@ body.browse-preview #top-nav #nav-submit {
   color:var(--control-text);
   box-shadow:var(--control-shadow);
 }
-body.browse-preview .edition { border-color:var(--ui-line); border-radius:var(--ui-radius); color:var(--ui-muted); font-family:var(--ui-mono); }
 
 /* One keyboard focus treatment; native controls retain their semantics. */
 body.browse-preview :is(button,a,input,select,textarea):focus-visible {

@@ -52,7 +52,6 @@ export function initBrowse(showScene) {
   document.body.classList.add('browse-preview');
   const nav = document.querySelector('#top-nav');
   nav.insertAdjacentHTML('afterbegin', '<a class="brand" href="/students" aria-label="FENG 首页">FENG<span>学生作品集</span></a>');
-  nav.insertAdjacentHTML('beforeend', '<span class="edition">PREVIEW 01</span>');
   document.querySelector('#nav-submit').textContent = '作品投稿 ↗';
   const root = document.createElement('main');
   root.id = 'browse';
