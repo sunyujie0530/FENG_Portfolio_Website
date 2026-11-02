@@ -12,6 +12,7 @@ import { createSlimeDetail } from './slimeDetail.js';
 import { mountDiscRoom } from './discRoom.js';
 import { initStudentLanding, cdIntroMarkup } from './studentLanding.js';
 import { showWorkDisc } from './worksDiscs.js';
+import { navigationGuide } from './navigationGuide.js';
 
 export const STUDENTS = [
   { name: '王文睿', en: 'WANG WENRUI', color: '#6d76ac', grade: '2024级', bio: '以空间转换与双人协作为切入点，探索游戏机制和玩家之间的关系。', tags: '游戏设计 / 交互体验' },
@@ -99,6 +100,7 @@ export function initBrowse(showScene) {
   let listScroll = 0;
   let restoreFocus = '';
   let lockerReturn = null;
+  let lockerContext = { studentIndex: null, card: false };
   let extractingRecord = false;
   const discStates = new Map();
   let disposeDiscRoom = () => {};
@@ -107,10 +109,11 @@ export function initBrowse(showScene) {
     if (location.pathname === '/works') listScroll = root.scrollTop;
     if (path === '/submit') submitOrigin = location.pathname;
     if (path.startsWith('/works/')) {
-      detailOrigin = location.pathname.startsWith('/students/') ? location.pathname : '/works';
+      if (location.pathname.startsWith('/students/')) detailOrigin = location.pathname;
+      else if (location.pathname === '/works' || location.pathname === '/') detailOrigin = '/works';
       restoreFocus = path;
     }
-    history.pushState({}, '', path);
+    history.pushState(path.startsWith('/works/') ? { detailOrigin } : {}, '', path);
     render();
   };
   const crumbs = (parts) => `<nav class="breadcrumbs" aria-label="当前位置"><a href="/">首页</a>${parts.map(([label, href]) => `<span>/</span>${href ? `<a href="${href}">${label}</a>` : `<span aria-current="page">${label}</span>`}`).join('')}</nav>`;
@@ -121,7 +124,7 @@ export function initBrowse(showScene) {
       : path === '/about' ? document.querySelector('#about-view .page-guide')
       : path.startsWith('/works/') ? document.querySelector('.work-detail:not([hidden]) .page-guide')
       : root.querySelector('.page-guide');
-    pageGuide.textContent = path === '/' ? '' : source?.textContent || '';
+    pageGuide.textContent = navigationGuide({ path, origin: detailOrigin, ...lockerContext }, STUDENTS, WORKS) ?? source?.textContent ?? '';
     pageGuide.hidden = !pageGuide.textContent;
   };
   const syncLandingNav = () => {
@@ -135,6 +138,10 @@ export function initBrowse(showScene) {
     syncPageGuide();
   };
   window.addEventListener('browse-landing-change', syncLandingNav);
+  window.addEventListener('browse-locker-context', ({ detail }) => {
+    lockerContext = { studentIndex: detail.index, card: detail.card };
+    syncPageGuide();
+  });
   const renderResults = () => {
     const found = WORKS.filter((work) => (filter === 'all' || work.kind === filter) && `${work.title} ${authorText(work)} ${work.summary}`.toLowerCase().includes(search.toLowerCase()));
     root.querySelector('#result-count').textContent = `${found.length} 件作品`;
@@ -177,6 +184,7 @@ export function initBrowse(showScene) {
         <header class="student-profile"><div class="profile-number">${String(studentIndex + 1).padStart(2, '0')}<span>FENG STUDENT</span></div><div><p class="eyebrow page-guide">学生 / ${student.name}的个人主页</p><h1 tabindex="-1">${student.name}</h1><p class="profile-grade">${student.grade || 'FENG 创作者'}</p><p class="profile-bio">${student.bio}</p><span class="profile-tag">${student.tags}</span></div><div class="profile-stat"><strong>${projects.length.toString().padStart(2, '0')}</strong><span>已收录作品</span></div></header>
         <div class="section-heading"><h2>作品 <small>SELECTED WORKS</small></h2><a href="/works">浏览全部作品 ↗</a></div><div class="project-grid">${projects.length ? projects.map(card).join('') : '<p class="empty">作品正在整理中，可先浏览其他同学的创作。</p>'}</div><p class="editorial-note">创作方向简介根据已收录作品整理。</p>`;
     } else if (work) {
+      detailOrigin = history.state?.detailOrigin || detailOrigin;
       const back = detailOrigin.startsWith('/students/') ? detailOrigin : '/works';
       const backLabel = back === '/works' ? '全部作品' : `${STUDENTS[Number(back.split('/')[2]) - 1].name}的${back.endsWith('/discs') ? '光盘库' : '主页'}`;
       root.innerHTML = '';

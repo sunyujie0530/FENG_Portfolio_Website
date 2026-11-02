@@ -1988,7 +1988,7 @@ function createOfficePile() {
   const pile = new THREE.Group();
   pile.name = 'office-pile';
   const archive = createCdArchive();
-  archive.position.z = 0.1;
+  archive.position.z = 0.04;
   pile.add(archive);
   cdPlayers.push(archive);
   return pile;
@@ -2541,6 +2541,7 @@ function setFocusArrows() {
   const context = document.getElementById('locker-context');
   context.hidden = !near;
   document.getElementById('locker-overview').textContent = badgeDetailOpen ? '← 返回打开的柜子' : '← 返回全部柜子';
+  window.dispatchEvent(new CustomEvent('browse-locker-context', { detail: { index: near ? focusedLocker : null, card: badgeDetailOpen } }));
 }
 
 function visibleLockerIndices() {
