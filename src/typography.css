@@ -1,0 +1,117 @@
+/* Public UI typography only. Artwork, disc printing and 3D textures stay intact. */
+@font-face {
+  font-family:Montserrat;
+  src:url('/fonts/Montserrat-LatinExt.woff2') format('woff2');
+  font-style:normal;
+  font-weight:100 900;
+  font-display:swap;
+  unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+@font-face {
+  font-family:Montserrat;
+  src:url('/fonts/Montserrat-Latin.woff2') format('woff2');
+  font-style:normal;
+  font-weight:100 900;
+  font-display:swap;
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+:root {
+  --ui-font:"Montserrat","PingFang SC","Hiragino Sans GB",sans-serif;
+  --type-light:300;
+  --type-regular:400;
+  --type-bold:600;
+  --type-display:clamp(40px,5vw,80px);
+  --type-title:48px;
+  --type-section:28px;
+  --type-card:22px;
+  --type-lead:22px;
+  --type-body:16px;
+  --type-meta:13px;
+  --type-control:14px;
+  --type-label:12px;
+}
+body.browse-preview { font-family:var(--ui-font); font-weight:var(--type-regular); }
+body.browse-preview :is(.landing-heading h1 span,.cd-orbit-copy h2) {
+  font-family:var(--ui-font); font-size:var(--type-display); font-weight:var(--type-bold); line-height:1.2;
+}
+body.browse-preview.is-student-home .landing-heading h1 span { font-weight:var(--type-bold); }
+@media(min-width:700px) {
+  body.browse-preview.is-student-directory .grade-picker { bottom:6vh; }
+}
+body.browse-preview .landing-summary span { font-family:var(--ui-font); font-weight:var(--type-light); line-height:1.7; }
+body.browse-preview .cd-orbit-copy p { font:var(--type-light) var(--type-lead)/1.7 var(--ui-font); }
+body.browse-preview :is(.collection-heading h1,.student-profile h1,.detail-heading h1) {
+  font:var(--type-bold) var(--type-title)/1.2 var(--ui-font); letter-spacing:-.03em;
+}
+body.browse-preview :is(.collection-heading p:not(.eyebrow),.profile-bio,.detail-summary,.detail-copy) {
+  font:var(--type-regular) var(--type-body)/1.7 var(--ui-font); letter-spacing:normal;
+}
+body.browse-preview :is(.project-card h2,.section-heading h2),body.browse-preview #project-results h2 {
+  font:var(--type-bold) var(--type-card)/1.3 var(--ui-font); letter-spacing:-.02em;
+}
+body.browse-preview :is(.project-meta,.project-authors,.profile-grade,.profile-tag,.section-heading a,.editorial-note,.collection-total small,.profile-stat span,.search-field) {
+  font:var(--type-regular) var(--type-meta)/1.5 var(--ui-font); letter-spacing:normal;
+}
+body.browse-preview :is(.collection-total,.profile-number,.profile-stat strong) { font-family:var(--ui-font); font-weight:var(--type-light); }
+body.browse-preview :is(.page-guide,#page-location,.home-about-guide,.breadcrumbs) {
+  font:var(--type-regular) var(--type-label)/1.5 var(--ui-font); letter-spacing:normal;
+}
+body.browse-preview #browse #project-search { font:var(--type-regular) var(--type-control)/1.5 var(--ui-font); }
+body.browse-preview :is(.kind-tabs button,.text-link,.primary-link,.empty button,.confirm-locker,.submit-button,.work-detail__down,.cd-insert,#student-start,.cd-intro-cta) {
+  font:var(--type-regular) var(--type-control)/1.5 var(--ui-font);
+}
+body.browse-preview .kind-tabs button { white-space:nowrap; }
+body.browse-preview #top-nav button:not(#nav-submit) { font:var(--type-regular) var(--type-control)/1.5 var(--ui-font); }
+body.browse-preview :is(.kind-tabs button[aria-pressed="true"],#top-nav button[aria-current],.deco-scroller button.is-on) { font-weight:var(--type-bold); }
+body.browse-preview :is(#locker-overview,.work-detail__back,.submit-back,.cd-room-back,#browse > .back-link) {
+  font:var(--type-regular) var(--type-label)/1.5 var(--ui-font);
+}
+body.browse-preview #top-nav #nav-submit { font:var(--type-regular) var(--type-label)/1.5 var(--ui-font); }
+
+/* The same author / title / paragraph hierarchy in every work detail. */
+body.browse-preview :is(.work-detail h1,.work-detail__content header h2) {
+  font:var(--type-bold) var(--type-title)/1.2 var(--ui-font); letter-spacing:-.03em; overflow-wrap:anywhere;
+}
+body.browse-preview :is(.work-detail__intro h2,.work-detail h3) {
+  font:var(--type-bold) var(--type-section)/1.3 var(--ui-font); letter-spacing:normal;
+}
+body.browse-preview .work-detail__content header p { font:var(--type-light) var(--type-lead)/1.5 var(--ui-font); }
+body.browse-preview .work-detail__copy { font:var(--type-regular) var(--type-body)/1.7 var(--ui-font); }
+body.browse-preview .bcw-roles { font:var(--type-regular) var(--type-meta)/1.7 var(--ui-font); }
+@media(min-width:700px) { body.browse-preview .work-detail__hero { padding-top:180px; } }
+
+body.browse-preview .cd-room-header h1 { font:var(--type-bold) var(--type-section)/1.25 var(--ui-font); letter-spacing:-.03em; }
+body.browse-preview .cd-room-footer h2 { font:var(--type-bold) var(--type-card)/1.3 var(--ui-font); letter-spacing:-.02em; }
+body.browse-preview :is(.cd-room-lead,.cd-current-meta,.cd-current-summary,.cd-library,#cd-status) {
+  font:var(--type-regular) var(--type-meta)/1.7 var(--ui-font);
+}
+body.browse-preview .cd-library select { font:var(--type-regular) var(--type-control)/1.5 var(--ui-font); }
+
+/* Submission is public UI too, rather than a separate pixel-font system. */
+body.browse-preview .submit-hero p { font-family:var(--ui-font); font-size:var(--type-display); font-weight:var(--type-bold); line-height:1.15; }
+body.browse-preview .submit-view .portal-header h1 { font:var(--type-bold) var(--type-section)/1.25 var(--ui-font); }
+body.browse-preview .submit-view .portal-header > span { font:var(--type-regular) var(--type-body)/1.7 var(--ui-font); }
+body.browse-preview :is(.locker-builder h2,.deco-picker strong) { font:var(--type-bold) var(--type-card)/1.3 var(--ui-font); }
+body.browse-preview :is(.locker-builder > p,.locker-identity small,.deco-picker > p,.deco-scroller small) { font:var(--type-regular) var(--type-label)/1.5 var(--ui-font); letter-spacing:normal; }
+body.browse-preview .locker-choice-number { font:var(--type-light) var(--type-title)/1.2 var(--ui-font); }
+body.browse-preview :is(.deco-scroller button,.locker-numbers span) { font:var(--type-regular) var(--type-control)/1.5 var(--ui-font); }
+body.browse-preview .deco-scroller button.is-on { font-weight:var(--type-bold); }
+body.browse-preview #submission-form :is(label,legend,input,select,textarea) { font-family:var(--ui-font); font-size:var(--type-control); font-weight:var(--type-regular); line-height:1.5; }
+body.browse-preview #submission-form legend { font-weight:var(--type-bold); }
+body.browse-preview #submission-form legend span { font:var(--type-light) var(--type-card)/1.5 var(--ui-font); }
+body.browse-preview #submission-form :is(small,.field-hint,.form-status,.file-meta),body.browse-preview .locker-builder-hint { font:var(--type-regular) var(--type-label)/1.7 var(--ui-font); }
+
+body.browse-preview .home-about-name > p:not(.home-about-guide) { font:var(--type-light) var(--type-section)/1.2 var(--ui-font); }
+body.browse-preview .home-about-name h2 { font:var(--type-bold) var(--type-title)/1.2 var(--ui-font); }
+body.browse-preview :is(.home-about-mentor h3,.home-about-cohort h3) { font:var(--type-bold) var(--type-section)/1.3 var(--ui-font); }
+body.browse-preview .home-about-cohort p { font:var(--type-light) var(--type-title)/1.3 var(--ui-font); }
+body.browse-preview .home-about-cohort p span { font-size:var(--type-meta); }
+body.browse-preview .home-about-copy h3 { font:var(--type-bold) var(--type-card)/1.4 var(--ui-font); }
+body.browse-preview :is(.home-about-copy p,.home-about-mentor p) { font:var(--type-regular) var(--type-body)/1.7 var(--ui-font); }
+body.browse-preview .home-footer { font:var(--type-regular) var(--type-label)/1.5 var(--ui-font); }
+body.browse-preview :is(.home-footer-brand span,#home-back-top) { font:var(--type-regular) var(--type-label)/1.5 var(--ui-font); }
+
+@media(max-width:900px) and (min-width:700px) { :root { --type-title:36px; --type-section:24px; --type-lead:18px; } }
+@media(max-width:699px) {
+  :root { --type-display:32px; --type-title:28px; --type-section:22px; --type-card:20px; --type-lead:16px; --type-body:15px; --type-meta:12px; --type-control:13px; }
+}

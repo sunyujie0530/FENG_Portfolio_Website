@@ -11,6 +11,7 @@ import { initBrowse, STUDENTS } from './browse.js';
 import { createCdArchive, updateCdArchive, cdArchiveHit } from './cdArchive.js';
 import './uiTheme.css';
 import './studentLanding.css';
+import './typography.css';
 
 const app = document.querySelector('#app');
 const scene = new THREE.Scene();

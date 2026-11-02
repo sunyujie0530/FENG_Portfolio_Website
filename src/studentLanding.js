@@ -2,13 +2,15 @@ export function landingFrame(width, height, scroll) {
   const progress = Math.min(1, Math.max(0, scroll / Math.max(1, height)));
   const compact = width < 700;
   const mix = (a, b) => a + (b - a) * progress;
+  const directoryTitle = compact ? 28 : width <= 900 ? 36 : 48;
+  const directoryTitleY = compact ? 102 : height * .14;
   return {
     progress,
-    fontSize: mix(compact ? 32 : Math.min(84, width * .041), compact ? 26 : Math.min(58, width * .029)),
-    titleY: mix(compact ? height * .22 : height * .23, compact ? 102 : height * .14),
-    subtitleY: mix(compact ? height * .36 : height * .345, compact ? 190 : height * .30),
-    subtitleSize: mix(compact ? 13 : Math.min(28, width * .016), compact ? 12 : Math.min(18, width * .01)),
-    cabinetY: mix(height * (compact ? .08 : .17), height * .01),
+    fontSize: mix(compact ? 32 : Math.min(80, Math.max(40, width * .05)), directoryTitle),
+    titleY: mix(compact ? height * .22 : height * .23, directoryTitleY),
+    subtitleY: mix(compact ? height * .36 : height * .345, Math.max(compact ? 190 : height * .30, directoryTitleY + directoryTitle * 2.7 + 20)),
+    subtitleSize: mix(compact ? 16 : width <= 900 ? 18 : 22, compact ? 15 : 16),
+    cabinetY: mix(height * (compact ? .08 : .17), height * (compact ? .01 : .09)),
     compact,
   };
 }
