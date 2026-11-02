@@ -19,12 +19,12 @@ nodes.get('.home-cd-intro').querySelectorAll = () => [];
 const landing = { ...element(), querySelector: key => nodes.get(key), querySelectorAll: () => [element(), element()] };
 globalThis.innerWidth = 1280;
 globalThis.innerHeight = 720;
-globalThis.location = { href: 'http://localhost/students' };
-const entries = [{}];
+globalThis.location = { href: 'http://localhost/', pathname: '/' };
+const entries = [{ state: {}, path: '/' }];
 let index = 0;
 globalThis.history = {
-  get state() { return entries[index]; },
-  pushState(state) { entries.splice(++index); entries.push(state); },
+  get state() { return entries[index].state; },
+  pushState(state, _, path) { entries.splice(++index); entries.push({ state, path }); location.pathname = path; },
 };
 globalThis.document = { hidden: false, body: { classList: { contains: () => false, toggle() {}, remove() {} }, style: { setProperty() {} } }, addEventListener() {} };
 globalThis.window = {
@@ -40,6 +40,7 @@ const flush = () => { for (const [id, fn] of frames) { frames.delete(id); fn(); 
 const active = initStudentLanding(landing);
 const expectHome = () => {
   assert.equal(landing.dataset.directory, 'false');
+  assert.equal(location.pathname, '/');
   assert.equal(window.scrollY, 0);
   assert.equal(start.dataset.started, 'false');
   assert.equal(home.hidden, true);
@@ -49,21 +50,27 @@ active(true);
 expectHome();
 start.click(); flush();
 assert.equal(entries.length, 2);
+assert.equal(location.pathname, '/students');
 assert.equal(landing.dataset.directory, 'true');
 assert.equal(home.hidden, false);
 assert.equal(start.hidden, true);
-index--; active(true); flush(); // Browser Back.
+index--; location.pathname = entries[index].path; active(true); flush(); // Browser Back.
 expectHome();
-index++; active(true); flush(); // Browser Forward.
+index++; location.pathname = entries[index].path; active(true); flush(); // Browser Forward.
 assert.equal(landing.dataset.directory, 'true');
 home.click(); flush();
 expectHome();
 start.click(); flush();
-window.dispatchEvent(new Event('browse-home')); flush(); // FENG / Students navigation.
+window.dispatchEvent(new Event('browse-home')); flush(); // FENG / Home navigation.
 expectHome();
 start.click(); flush();
 active(false); // Work detail and then browser Back to the directory entry.
 active(true); flush();
+assert.equal(landing.dataset.directory, 'true');
+assert.equal(window.scrollY, 720);
+location.pathname = '/'; active(true); flush(); // Home tab from another route.
+expectHome();
+location.pathname = '/students'; active(true); flush(); // Direct Student URL / Student tab.
 assert.equal(landing.dataset.directory, 'true');
 assert.equal(window.scrollY, 720);
 console.log('Preview navigation: Back, Forward, home exits, repeated entry and route return passed.');

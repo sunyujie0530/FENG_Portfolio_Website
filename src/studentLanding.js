@@ -143,16 +143,17 @@ export function initStudentLanding(landing) {
   document.addEventListener('visibilitychange', syncOrbit);
   reducedMotion.addEventListener('change', syncOrbit);
   start.addEventListener('click', () => {
-    if (!previewStarted) history.pushState({ ...history.state, fengDirectory: true }, '', location.href);
+    if (!previewStarted) history.pushState({ ...history.state, fengDirectory: true }, '', '/students');
     previewStarted = true;
     start.dataset.started = 'true';
     focusPreview = true;
     paint();
+    window.dispatchEvent(new Event('browse-landing-change'));
     window.scrollTo({ top: innerHeight, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
   });
   const returnHome = () => {
     if (!active) return;
-    if (previewStarted) history.pushState({ ...history.state, fengDirectory: false }, '', location.href);
+    if (previewStarted) history.pushState({ ...history.state, fengDirectory: false }, '', '/');
     previewStarted = false;
     focusPreview = false;
     start.dataset.started = 'false';
@@ -160,6 +161,7 @@ export function initStudentLanding(landing) {
     window.dispatchEvent(new Event('browse-overview'));
     window.scrollTo({ top: 0, behavior: 'instant' });
     paint();
+    window.dispatchEvent(new Event('browse-landing-change'));
     start.focus({ preventScroll: true });
   };
   homeBack.addEventListener('click', returnHome);
@@ -167,7 +169,7 @@ export function initStudentLanding(landing) {
   return (enabled) => {
     active = enabled;
     if (enabled) {
-      const directory = history.state?.fengDirectory === true;
+      const directory = location.pathname === '/students';
       if (directory !== previewStarted) savedScroll = directory ? innerHeight : 0;
       previewStarted = directory;
       start.dataset.started = String(directory);

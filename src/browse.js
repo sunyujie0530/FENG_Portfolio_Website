@@ -52,7 +52,7 @@ function card(work) {
 export function initBrowse(showScene) {
   document.body.classList.add('browse-preview');
   const nav = document.querySelector('#top-nav');
-  nav.insertAdjacentHTML('afterbegin', '<a class="brand" href="/students" aria-label="FENG 首页">FENG<span>学生作品集</span></a>');
+  nav.insertAdjacentHTML('afterbegin', '<a class="brand" href="/" aria-label="FENG 首页">FENG<span>学生作品集</span></a><button type="button" id="nav-home">首页</button>');
   document.querySelector('#nav-submit').textContent = '作品投稿 ↗';
   const root = document.createElement('main');
   root.id = 'browse';
@@ -91,7 +91,7 @@ export function initBrowse(showScene) {
   const discStates = new Map();
   let disposeDiscRoom = () => {};
   const move = (path) => {
-    if (path === location.pathname) { root.scrollTop = 0; if (path === '/students') window.dispatchEvent(new Event('browse-home')); return; }
+    if (path === location.pathname) { root.scrollTop = 0; if (path === '/') window.dispatchEvent(new Event('browse-home')); else if (path === '/students') window.dispatchEvent(new Event('browse-overview')); return; }
     if (location.pathname === '/works') listScroll = root.scrollTop;
     if (path.startsWith('/works/')) {
       detailOrigin = location.pathname.startsWith('/students/') ? location.pathname : '/works';
@@ -100,7 +100,16 @@ export function initBrowse(showScene) {
     history.pushState({}, '', path);
     render();
   };
-  const crumbs = (parts) => `<nav class="breadcrumbs" aria-label="当前位置"><a href="/students">首页</a>${parts.map(([label, href]) => `<span>/</span>${href ? `<a href="${href}">${label}</a>` : `<span aria-current="page">${label}</span>`}`).join('')}</nav>`;
+  const crumbs = (parts) => `<nav class="breadcrumbs" aria-label="当前位置"><a href="/">首页</a>${parts.map(([label, href]) => `<span>/</span>${href ? `<a href="${href}">${label}</a>` : `<span aria-current="page">${label}</span>`}`).join('')}</nav>`;
+  const syncLandingNav = () => {
+    const home = location.pathname === '/';
+    nav.querySelectorAll('button').forEach(button => {
+      if (button.id === (home ? 'nav-home' : 'nav-lockers')) button.setAttribute('aria-current', 'page');
+      else button.removeAttribute('aria-current');
+    });
+    document.title = `${home ? '首页' : '学生展厅'} · FENG`;
+  };
+  window.addEventListener('browse-landing-change', syncLandingNav);
   const renderResults = () => {
     const found = WORKS.filter((work) => (filter === 'all' || work.kind === filter) && `${work.title} ${authorText(work)} ${work.summary}`.toLowerCase().includes(search.toLowerCase()));
     root.querySelector('#result-count').textContent = `${found.length} 件作品`;
@@ -118,14 +127,14 @@ export function initBrowse(showScene) {
     const work = WORKS.find((w) => path === `/works/${w.id}`);
     const studentIndex = studentMatch ? Number(studentMatch[1]) - 1 : -1;
     const student = STUDENTS[studentIndex];
-    const mode = path === '/submit' ? 'submit' : path === '/about' ? 'about' : path === '/students' ? 'students' : 'content';
+    const mode = path === '/submit' ? 'submit' : path === '/about' ? 'about' : (path === '/' || path === '/students') ? 'students' : 'content';
     showScene(mode);
     document.body.classList.toggle('browse-content', mode === 'content');
     setLandingActive(mode === 'students');
     landing.hidden = mode !== 'students';
     root.hidden = mode !== 'content';
     document.querySelector('#stage').setAttribute('aria-hidden', String(mode === 'content'));
-    const activeNav = mode === 'submit' ? 'nav-submit' : mode === 'about' ? 'nav-about' : (student || discMatch || mode === 'students') ? 'nav-lockers' : 'nav-works';
+    const activeNav = path === '/' ? 'nav-home' : mode === 'submit' ? 'nav-submit' : mode === 'about' ? 'nav-about' : (student || discMatch || mode === 'students') ? 'nav-lockers' : 'nav-works';
     nav.querySelectorAll('button').forEach((button) => {
       if (button.id === activeNav) button.setAttribute('aria-current', 'page');
       else button.removeAttribute('aria-current');
@@ -162,11 +171,12 @@ export function initBrowse(showScene) {
       renderResults();
     }
     document.title = `${discMatch ? `${STUDENTS[discStudentIndex].name}的作品光盘库` : student?.name || work?.title || (mode === 'students' ? '学生展厅' : mode === 'about' ? '关于' : mode === 'submit' ? '作品投稿' : '全部作品')} · FENG`;
+    if (mode === 'students') syncLandingNav();
     root.scrollTop = path === '/works' ? listScroll : 0;
     if (current) {
       const focusTarget = path === '/works' && restoreFocus ? root.querySelector(`a[href="${restoreFocus}"]`) : root.querySelector('h1');
       focusTarget?.focus({ preventScroll: true });
-      if (path === '/students') landing.querySelector(landing.dataset.directory === 'true' ? '[data-grade][aria-pressed="true"]' : '#student-start')?.focus({ preventScroll: true });
+      if (mode === 'students') landing.querySelector(landing.dataset.directory === 'true' ? '[data-grade][aria-pressed="true"]' : '#student-start')?.focus({ preventScroll: true });
     }
     current = path;
     if (mode === 'students' && lockerReturn !== null) {
@@ -176,7 +186,7 @@ export function initBrowse(showScene) {
     }
   };
   nav.addEventListener('click', (event) => {
-    const paths = { 'nav-lockers': '/students', 'nav-works': '/works', 'nav-submit': '/submit', 'nav-about': '/about' };
+    const paths = { 'nav-home': '/', 'nav-lockers': '/students', 'nav-works': '/works', 'nav-submit': '/submit', 'nav-about': '/about' };
     const path = paths[event.target.closest('button')?.id];
     if (!path) return;
     event.preventDefault();
@@ -193,7 +203,7 @@ export function initBrowse(showScene) {
       if (url.pathname === location.pathname) { event.preventDefault(); root.querySelector(url.hash)?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); }
       return;
     }
-    if (!/^\/(students|works)(\/|$)/.test(url.pathname)) return;
+    if (url.pathname !== '/' && !/^\/(students|works)(\/|$)/.test(url.pathname)) return;
     event.preventDefault();
     if (link.closest('.locker-access')) {
       window.dispatchEvent(new CustomEvent('browse-open-locker', { detail: Number(link.dataset.student) }));
@@ -223,6 +233,6 @@ export function initBrowse(showScene) {
     if (location.pathname.startsWith('/works/')) move(detailOrigin);
     else if (location.pathname.startsWith('/students/')) move('/students');
   });
-  if (!/^\/(students(\/[1-8](\/discs)?)?|works(\/[^/]+)?|submit|about)$/.test(location.pathname)) history.replaceState({}, '', '/students');
+  if (!/^\/(students(\/[1-8](\/discs)?)?|works(\/[^/]+)?|submit|about)?$/.test(location.pathname)) history.replaceState({}, '', '/');
   render();
 }
