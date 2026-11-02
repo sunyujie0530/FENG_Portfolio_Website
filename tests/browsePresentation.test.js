@@ -18,6 +18,7 @@ assert.ok(markup.includes('作品名'));
 assert.ok(markup.includes('作者名'));
 assert.ok(markup.includes('游戏设计'));
 assert.ok(markup.includes('href="/works/demo"'));
+assert.ok(markup.includes('class="record-disc" aria-hidden="true"'));
 assert.ok(!markup.includes('查看作品 ↗'));
 assert.ok(!markup.includes('不应显示的简介'));
 assert.ok(!markup.includes('<p>'));

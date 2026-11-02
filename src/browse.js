@@ -44,7 +44,7 @@ const authorLinks = (work) => work.authors.map((i) => `<a class="author-link" st
 
 function card(work) {
   return `<article class="project-card" style="--author:${colorOf(work)}">
-    <a class="project-cover" href="/works/${work.id}" aria-label="查看${work.title}作品详情"><img src="${work.cover}" alt="${work.title}封面" loading="lazy"></a>
+    <a class="project-cover" href="/works/${work.id}" aria-label="查看${work.title}作品详情"><i class="record-disc" aria-hidden="true"></i><img src="${work.cover}" alt="${work.title}封面" loading="lazy"></a>
     <div class="project-meta"><span>${kinds[work.kind]}</span></div>
     <h2><a href="/works/${work.id}">${work.title}</a></h2><div class="project-authors">${authorLinks(work)}</div>
   </article>`;

@@ -168,3 +168,40 @@ body.browse-preview.is-work-detail .work-detail__back { top:90px; }
   .browse-preview .portal-view { top:64px; }
 }
 @media(prefers-reduced-motion:reduce) { .project-cover img { transition:none; } }
+
+/* The collection is a record shelf; profile cards keep their original layout. */
+.record-disc { display:none; }
+#browse:has(#project-results) .collection-heading { margin-bottom:18px; }
+#browse:has(#project-results) .collection-total small { white-space:nowrap; }
+#browse:has(#project-results) .result-count { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); margin:0; }
+#project-results { --shelf-gap:26px; column-gap:var(--shelf-gap); row-gap:24px; margin-top:24px; }
+#project-results .project-card { position:relative; }
+#project-results .project-cover { aspect-ratio:1.75; overflow:visible; background:transparent; border:0; border-radius:0; isolation:isolate; }
+#project-results .project-cover:hover { outline:none; }
+#project-results .project-cover img { position:absolute; width:56%; height:auto; aspect-ratio:1; left:20%; bottom:8px; object-fit:cover; border-radius:2px; box-shadow:0 0 0 1px #00000012, -4px 5px 13px #00000016; z-index:2; transition:transform .3s; }
+#project-results .project-cover:hover img { transform:translateY(-3px); }
+#project-results .record-disc { display:block; position:absolute; width:54%; aspect-ratio:1; right:3%; bottom:8px; padding:0; border-radius:50%; background:repeating-radial-gradient(circle,transparent 0 2px,#ffffff13 2.5px,transparent 3.2px),conic-gradient(from 25deg,#101010,#393939 12%,#090909 24%,#292929 40%,#080808 54%,#424242 66%,#0a0a0a 80%,#222 94%,#101010); border:1px solid #272727; box-shadow:2px 3px 7px #0003,inset 0 0 0 4px #111; transition:transform .35s; z-index:1; }
+#project-results .record-disc::before { content:""; position:absolute; inset:34%; border-radius:50%; background:conic-gradient(#b7b8b4,#f5f5f1,#a7a9a6,#e8e8e4,#b7b8b4); box-shadow:0 0 0 1px #777,inset 0 0 0 5px #ffffff30; }
+#project-results .record-disc::after { content:""; position:absolute; inset:47%; border-radius:50%; background:#333; box-shadow:inset 1px 1px 2px #000,0 0 0 1px #ddd; }
+#project-results .project-cover:hover .record-disc { transform:translateX(5px) rotate(8deg); }
+#project-results .project-cover::before,#project-results .project-cover::after { content:""; position:absolute; left:calc(var(--shelf-gap) / -2); right:calc(var(--shelf-gap) / -2); pointer-events:none; }
+#project-results .project-cover::before { bottom:8px; height:32px; background:linear-gradient(#e3e3e5,#d4d4d6); z-index:0; }
+#project-results .project-cover::after { bottom:0; height:9px; background:linear-gradient(#fafafa 0%,#e7e7e7 60%,#bcbcbc 100%); box-shadow:0 9px 10px #0003,0 19px 24px #00000012; z-index:3; }
+#project-results .project-meta { margin:16px 0 4px; }
+#project-results .project-meta,#project-results h2,#project-results .project-authors { padding-inline:12%; }
+#project-results h2 { margin-bottom:5px; font-size:20px; }
+#browse:has(#project-results) .search-field { position:relative; }
+body.browse-preview #browse #project-search { padding:9px 34px 9px 12px; width:190px; border:1px solid #bfc3c4; border-radius:2px; background:white; font-size:11px; }
+#browse:has(#project-results) .search-field::before { content:""; position:absolute; right:13px; width:11px; height:11px; border:1.5px solid #252b25; border-radius:50%; pointer-events:none; }
+#browse:has(#project-results) .search-field::after { content:""; position:absolute; right:9px; width:7px; height:1.5px; background:#252b25; transform:translateY(6px) rotate(45deg); pointer-events:none; }
+#project-search::-webkit-search-cancel-button { margin-right:14px; }
+@media(max-width:900px) { #project-results { --shelf-gap:18px; } }
+@media(max-width:600px) {
+  #project-results { --shelf-gap:0px; row-gap:26px; margin-top:24px; }
+  #project-results .project-cover { aspect-ratio:1.55; }
+  #project-results .project-cover img { width:62%; left:13%; }
+  #project-results .record-disc { width:60%; right:3%; }
+  #project-results .project-meta,#project-results h2,#project-results .project-authors { padding-inline:6%; }
+  body.browse-preview #browse #project-search { min-width:0; width:auto; }
+}
+@media(prefers-reduced-motion:reduce) { #project-results .record-disc,#project-results .project-cover img { transition:none; } }
