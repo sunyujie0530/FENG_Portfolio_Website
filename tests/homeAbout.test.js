@@ -19,5 +19,7 @@ assert.ok(browse.includes("if (path === '/about') path = '/#about'"));
 assert.ok(browse.includes("if (path === '/' && location.hash === '#about')"));
 const css = readFileSync(new URL('../src/studentLanding.css', import.meta.url), 'utf8');
 assert.ok(css.includes('clip-path:inset(var(--home-about-clip,100%) 0 0 0)'));
-assert.ok(css.includes('.home-about-guide { grid-column:2 / 4; grid-row:1;'));
+assert.ok(markup.includes('<div class="home-about-name"><p class="home-about-guide">网站介绍</p><p>About</p>'));
+assert.ok(css.includes('.home-about-mentor { grid-column:2; grid-row:1; }'));
+assert.ok(css.includes('.home-about-mentor h3,.home-about-cohort h3 { margin-top:0; }'));
 assert.ok(!css.includes('min-height:calc(100dvh - 78px)'));

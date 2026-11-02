@@ -89,18 +89,19 @@ body.browse-preview.is-student-home.is-locker-focused .grade-picker { display:no
 
 .home-about { position:absolute; inset:auto 0 0; display:flex; flex-direction:column; clip-path:inset(var(--home-about-clip,100%) 0 0 0); background:linear-gradient(#efefef,#fff 88%); color:#151815; padding:32px 4vw 22px; pointer-events:auto; }
 .home-about-grid { display:grid; grid-template-columns:30% 38% 32%; gap:0; padding:0 1vw; }
-.home-about-guide { grid-column:2 / 4; grid-row:1; justify-self:start; margin:0 0 18px; padding:4px 7px; background:var(--ui-accent); color:var(--ui-ink); font:400 11px/1.5 var(--ui-font); letter-spacing:.08em; }
-.home-about-name { grid-column:1; grid-row:2; }
-.home-about-mentor { grid-column:2; grid-row:2; }
-.home-about-cohort { grid-column:3; grid-row:2; }
-.home-about-name > p { font-size:26px; font-weight:300; margin:0 0 12px; }
+.home-about-guide { width:fit-content; margin:0 0 18px; padding:4px 7px; background:var(--ui-accent); color:var(--ui-ink); font:400 11px/1.5 var(--ui-font); letter-spacing:.08em; }
+.home-about-name { grid-column:1; grid-row:1; }
+.home-about-mentor { grid-column:2; grid-row:1; }
+.home-about-cohort { grid-column:3; grid-row:1; }
+.home-about-name > p:not(.home-about-guide) { font-size:26px; font-weight:300; margin:0 0 12px; }
 .home-about-name h2 { font-size:56px; font-weight:650; line-height:1.1; letter-spacing:-.04em; margin:0; }
 .home-about h3 { font-size:26px; font-weight:550; line-height:1.5; margin:38px 0 4px; }
+.home-about-mentor h3,.home-about-cohort h3 { margin-top:0; }
 .home-about-mentor p { font-size:18px; font-weight:300; line-height:1.7; margin:0; }
 .home-about-cohort { padding-left:4vw; }
 .home-about-cohort p { font-size:42px; font-weight:300; line-height:1.4; letter-spacing:-.04em; margin:4px 0 0; }
 .home-about-cohort p span { font-size:16px; letter-spacing:0; margin-left:8px; }
-.home-about-copy { grid-column:2 / 4; grid-row:3; margin:30px 0 34px; max-width:780px; }
+.home-about-copy { grid-column:2 / 4; grid-row:2; margin:30px 0 34px; max-width:780px; }
 .home-about-copy h3 { font-size:22px; font-weight:600; margin:0 0 18px; }
 .home-about-copy p { font-size:18px; font-weight:300; line-height:1.7; margin:0; max-width:680px; }
 .home-footer { display:grid; grid-template-columns:1fr 1fr 1fr; align-items:center; gap:24px; padding-top:20px; font-size:11px; color:#707570; }
@@ -122,16 +123,15 @@ body.browse-preview #home-back-top:hover { color:#171b17; text-decoration:underl
 @media(max-width:600px) {
   .home-about { padding:28px 5vw 90px; }
   .home-about-grid { grid-template-columns:1fr 1fr; padding:0; gap:28px 14px; }
-  .home-about-guide { grid-column:1 / -1; margin-bottom:0; }
-  .home-about-name { grid-column:1 / -1; grid-row:2; }
-  .home-about-mentor { grid-column:1; grid-row:3; }
-  .home-about-cohort { grid-column:2; grid-row:3; }
-  .home-about-name > p { font-size:20px; margin-bottom:8px; }
+  .home-about-name { grid-column:1 / -1; grid-row:1; }
+  .home-about-mentor { grid-column:1; grid-row:2; }
+  .home-about-cohort { grid-column:2; grid-row:2; }
+  .home-about-name > p:not(.home-about-guide) { font-size:20px; margin-bottom:8px; }
   .home-about-name h2 { font-size:44px; }
   .home-about h3 { font-size:19px; margin-top:0; }
   .home-about-cohort { padding-left:0; }
   .home-about-cohort p { font-size:28px; }
-  .home-about-copy { grid-column:1 / -1; grid-row:4; margin:0 0 12px; }
+  .home-about-copy { grid-column:1 / -1; grid-row:3; margin:0 0 12px; }
   .home-about-copy h3 { font-size:20px; margin-bottom:14px; }
   .home-footer { grid-template-columns:1fr; gap:20px; }
   .home-footer > p { text-align:left; }
