@@ -45,7 +45,7 @@ body.browse-preview.is-work-detail .work-detail__back { top:90px; }
 .collection-heading p:not(.eyebrow) { color:var(--muted); font-size:13px; line-height:1.8; margin:0; }
 .collection-total { display:flex; flex-direction:column; font-size:64px; font-weight:300; letter-spacing:-.06em; line-height:1; text-align:right; padding-left:28px; }
 .collection-total small { font-size:10px; color:var(--muted); letter-spacing:.08em; margin-top:14px; }
-.collection-tools { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:18px; border-block:1px solid var(--line); padding:17px 0; }
+.collection-tools { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:18px; padding:0; }
 .kind-tabs { display:flex; gap:8px; flex-wrap:wrap; }
 .kind-tabs button { border:1px solid transparent; color:var(--muted); background:transparent; font-size:12px; padding:8px 15px; border-radius:99px; cursor:pointer; }
 .kind-tabs button[aria-pressed="true"] { color:#fff; background:#33452c; }

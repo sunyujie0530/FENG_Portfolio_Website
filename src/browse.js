@@ -44,9 +44,9 @@ const authorLinks = (work) => work.authors.map((i) => `<a class="author-link" st
 
 function card(work) {
   return `<article class="project-card" style="--author:${colorOf(work)}">
-    <a class="project-cover" href="/works/${work.id}" aria-label="查看${work.title}作品详情"><img src="${work.cover}" alt="${work.title}封面" loading="lazy"><span>查看作品 ↗</span></a>
-    <div class="project-meta"><span>${kinds[work.kind]}</span><span>${String(WORKS.indexOf(work) + 1).padStart(2, '0')}</span></div>
-    <h2><a href="/works/${work.id}">${work.title}</a></h2><div class="project-authors">${authorLinks(work)}</div><p>${work.summary}</p>
+    <a class="project-cover" href="/works/${work.id}" aria-label="查看${work.title}作品详情"><img src="${work.cover}" alt="${work.title}封面" loading="lazy"></a>
+    <div class="project-meta"><span>${kinds[work.kind]}</span></div>
+    <h2><a href="/works/${work.id}">${work.title}</a></h2><div class="project-authors">${authorLinks(work)}</div>
   </article>`;
 }
 
@@ -131,8 +131,8 @@ export function initBrowse(showScene) {
     const mode = path === '/submit' ? 'submit' : path === '/about' ? 'about' : (path === '/' || path === '/students') ? 'students' : 'content';
     showScene(mode);
     document.body.classList.toggle('browse-content', mode === 'content' && !work);
-    setLandingActive(mode === 'students');
     landing.hidden = mode !== 'students';
+    setLandingActive(mode === 'students');
     root.hidden = mode !== 'content' || Boolean(work);
     document.querySelector('#stage').setAttribute('aria-hidden', String(mode === 'content' && !work));
     const activeNav = path === '/' ? 'nav-home' : mode === 'submit' ? 'nav-submit' : mode === 'about' ? 'nav-about' : (student || discMatch || mode === 'students') ? 'nav-lockers' : 'nav-works';

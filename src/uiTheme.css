@@ -163,6 +163,20 @@ body.browse-preview :is(.landing-heading>.eyebrow,.collection-heading .eyebrow,.
 body.browse-preview :is(.landing-heading h1,.collection-heading h1,.student-profile h1,.detail-heading h1) { color:var(--ui-ink); }
 body.browse-preview :is(.landing-heading h1 span,.collection-heading h1 span) { color:var(--ui-ink); }
 /* Grade filters use the reference's raised / recessed soft capsules. */
+body.browse-preview .collection-tools .kind-tabs {
+  flex-wrap:nowrap; max-width:100%; overflow-x:auto; gap:6px; padding:5px;
+  border:1px solid #e2e4e2; border-radius:999px; background:#fff;
+}
+body.browse-preview .collection-tools .kind-tabs button {
+  flex:none; --ui-control-radius:999px; --ui-control-padding:9px 18px;
+  --control-bg:transparent; --control-border:transparent; --control-shadow:none; --control-text:#252725;
+}
+body.browse-preview .collection-tools .kind-tabs button:hover {
+  --control-bg:var(--ui-pill-raised-bg); --control-shadow:var(--ui-pill-raised-shadow);
+}
+body.browse-preview .collection-tools .kind-tabs button:is([aria-pressed="true"],:active) {
+  --control-bg:var(--ui-pill-inset-bg); --control-border:#f5f6f3; --control-shadow:var(--ui-pill-inset-shadow);
+}
 body.browse-preview .grade-picker .kind-tabs {
   border:0;
   padding:5px;
