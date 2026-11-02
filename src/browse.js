@@ -10,7 +10,7 @@ import { createBeakerDetail } from './beakerDetail.js';
 import { createShiDaoDetail } from './shiDaoDetail.js';
 import { createSlimeDetail } from './slimeDetail.js';
 import { mountDiscRoom } from './discRoom.js';
-import { initStudentLanding } from './studentLanding.js';
+import { initStudentLanding, cdIntroMarkup } from './studentLanding.js';
 
 export const STUDENTS = [
   { name: '王文睿', en: 'WANG WENRUI', color: '#6d76ac', grade: '2024级', bio: '以空间转换与双人协作为切入点，探索游戏机制和玩家之间的关系。', tags: '游戏设计 / 交互体验' },
@@ -62,7 +62,10 @@ export function initBrowse(showScene) {
   landing.className = 'student-landing';
   landing.innerHTML = `<div class="landing-heading"><h1><span>每一扇柜门，</span><span>都是一位创作者。</span></h1><p class="landing-summary"><span>从一个人出发，认识一组创作。</span><span>点击柜门，探索他们的作品与创作故事。</span></p><button type="button" id="student-start">开始预览</button><a class="text-link landing-works-link" href="/works" hidden>从全部作品开始 ↗</a></div>
     <div class="grade-picker"><p class="eyebrow">按入学年级浏览</p><div class="kind-tabs" role="group" aria-label="学生年级筛选"><button type="button" data-grade="all" aria-pressed="true">全部</button><button type="button" data-grade="2024级" aria-pressed="false">2024级</button><button type="button" data-grade="2025级" aria-pressed="false">2025级</button></div></div>
-    <nav class="locker-access" aria-label="键盘选择学生">${STUDENTS.map((s, i) => `<a href="/students/${i + 1}" data-student="${i}">${String(i + 1).padStart(2, '0')} · ${s.name} · ${s.grade}</a>`).join('')}</nav>`;
+    <nav class="locker-access" aria-label="键盘选择学生">${STUDENTS.map((s, i) => `<a href="/students/${i + 1}" data-student="${i}">${String(i + 1).padStart(2, '0')} · ${s.name} · ${s.grade}</a>`).join('')}</nav>${cdIntroMarkup([...WORKS,
+      {...WORKS[0], cover:'/assets/works/wrong-plane/scene-1.png'},
+      {...WORKS[1], cover:'/assets/works/clay-doll/visual-2.png'},
+    ])}`;
   document.body.append(landing);
   const setLandingActive = initStudentLanding(landing);
   let grade = 'all';

@@ -2922,7 +2922,7 @@ function resizeScene() {
 
 function animate() {
   const dt = Math.min(clock.getDelta(), 0.05);
-  if (document.body.classList.contains('browse-content')) return;
+  if (document.body.classList.contains('browse-content') || document.body.classList.contains('is-home-cd')) return;
   // The works scene has its own renderer; do not draw the fully hidden locker scene too.
   if (!switchingWorks && worksProgress === 1) return;
   if (switchingWorks) {
