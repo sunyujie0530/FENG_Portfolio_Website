@@ -93,7 +93,8 @@ body.browse-preview #top-nav {
   background:var(--ui-white);
   border-bottom-color:var(--ui-line);
 }
-body.browse-preview:is(.browse-content,.is-about) #top-nav { background:var(--ui-paper); }
+body.browse-preview:is(.browse-content,.is-about) { --paper:#fff; --ui-paper:#fff; background:#fff; }
+body.browse-preview:is(.browse-content,.is-about) #top-nav { background:#fff; }
 body.browse-preview #top-nav button:not(#nav-submit) {
   align-self:center;
   height:auto;

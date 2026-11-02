@@ -13,6 +13,7 @@ import { BEAKER_FRONT, createBeakerDetail } from './beakerDetail.js';
 import { PANTHEON_BACK, createPantheonDetail } from './pantheonDetail.js';
 import { SHI_BACK, SHI_FRONT, createShiDaoDetail } from './shiDaoDetail.js';
 import { detailPhases, pageProgress } from './workDetailMotion.js';
+import { standardWorkLayout } from './standardWorkLayout.js';
 
 let renderer;
 let camera;
@@ -60,7 +61,7 @@ function closeDetail() {
 const DIRECT_DETAIL = new Set([2, 7]);
 
 function bindPageSnap(panel, index) {
-  if (!DIRECT_DETAIL.has(index) || panel.dataset.pageSnap) return;
+  if (!panel.classList.contains('bcw-detail') || !DIRECT_DETAIL.has(index) || panel.dataset.pageSnap) return;
   panel.dataset.pageSnap = '1';
   let snapping = false;
   panel.addEventListener('wheel', (event) => {
@@ -235,7 +236,7 @@ export function initWorks(background = 0xf6f7fa) {
     const factory = detailFactories[index];
     if (!factory) return null;
     if (!detailPanels.has(index)) {
-      const panel = factory(closeDetail);
+      const panel = standardWorkLayout(factory(closeDetail), index);
       panel.addEventListener('scroll', () => panel.updateLayout?.(), { passive: true });
       detailPanels.set(index, panel);
     }
@@ -400,7 +401,7 @@ export function initWorks(background = 0xf6f7fa) {
     if (detail) {
       const p = detail.progress;
       const { gather, flip, move, text } = detailPhases(p);
-      const direct = DIRECT_DETAIL.has(detail.disc.userData.index);
+      const direct = detailPanel.classList.contains('bcw-detail') && DIRECT_DETAIL.has(detail.disc.userData.index);
       const scroll = direct
         ? pageProgress(detailPanel.scrollTop, innerHeight)
         : smooth(0, innerHeight, detailPanel.scrollTop);
