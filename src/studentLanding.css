@@ -1,6 +1,7 @@
 /* Native intro-to-CD scrolling, with a separate opt-in cabinet directory. */
 body.browse-preview #top-nav { border-bottom:0; }
-body.browse-preview.is-student-home { height:calc(200vh + var(--home-about-height,560px)); overflow-x:hidden; overflow-y:auto; background:#fff; }
+body.browse-preview.is-student-home { height:calc(200vh + 300px + var(--home-about-height,560px)); overflow-x:hidden; overflow-y:auto; background:#fff; }
+body.browse-preview.is-student-home:not(.is-student-directory) #top-nav #nav-submit { translate:0 var(--home-upload-y,0px); }
 body.browse-preview.is-student-home.is-student-directory { height:100dvh; overflow:hidden; overscroll-behavior:none; }
 body.browse-preview.is-student-home.is-locker-focused { overflow-y:hidden; }
 body.browse-preview.is-student-home .student-landing { inset:0; }

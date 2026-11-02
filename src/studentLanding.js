@@ -17,6 +17,19 @@ export function landingFrame(width, height, scroll) {
 
 export const showWorksEntry = (started, progress) => started && progress >= .9;
 
+export const HOME_SECTION_GAP = 150;
+export function homeSections(height, scroll, aboutHeight) {
+  const cdStart = height + HOME_SECTION_GAP;
+  const aboutStart = height * 2 + HOME_SECTION_GAP * 2;
+  return {
+    aboutStart,
+    cdY: cdStart - scroll,
+    aboutY: aboutStart - scroll,
+    aboutClip: Math.max(0, aboutStart - height + aboutHeight - scroll),
+    uploadY: Math.min(0, aboutStart - height - scroll),
+  };
+}
+
 export const CD_ORBIT_DIAMETER = .19844;
 export const CD_ORBIT_PERSPECTIVE = 1.2;
 export const CD_ORBIT_ELEVATION = 50;
@@ -65,6 +78,7 @@ export function initStudentLanding(landing) {
   const worksLink = landing.querySelector('.landing-works-link');
   const cdIntro = landing.querySelector('.home-cd-intro');
   const about = landing.querySelector('.home-about');
+  const upload = document.querySelector('#nav-submit');
   const orbitLinks = [...cdIntro.querySelectorAll('.cd-orbit-link')];
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   let active = false;
@@ -109,19 +123,22 @@ export function initStudentLanding(landing) {
     if (!active || document.body.classList.contains('is-locker-focused')) return;
     document.body.classList.toggle('is-student-directory', previewStarted);
     savedScroll = previewStarted ? 0 : window.scrollY;
-    const scrollProgress = landingFrame(innerWidth, innerHeight, savedScroll).progress;
+    const scrollProgress = landingFrame(innerWidth, innerHeight, savedScroll - HOME_SECTION_GAP).progress;
+    const sections = homeSections(innerHeight, savedScroll, about.offsetHeight);
     // Scrolling explores the CD introduction; only the button enters the directory.
     const f = landingFrame(innerWidth, innerHeight, previewStarted ? innerHeight : 0);
     landing.dataset.directory = String(previewStarted);
     landing.style.setProperty('--home-hero-y', `${previewStarted ? 0 : -savedScroll}px`);
-    landing.style.setProperty('--home-cd-y', `${innerHeight - savedScroll}px`);
+    landing.style.setProperty('--home-cd-y', `${sections.cdY}px`);
     about.hidden = previewStarted;
-    about.inert = previewStarted || savedScroll < innerHeight;
-    landing.style.setProperty('--home-about-y', `${innerHeight * 2 - savedScroll}px`);
-    landing.style.setProperty('--home-about-clip', `${Math.max(0, innerHeight + about.offsetHeight - savedScroll)}px`);
+    about.inert = previewStarted || savedScroll < sections.aboutStart - innerHeight;
+    landing.style.setProperty('--home-about-y', `${sections.aboutY}px`);
+    landing.style.setProperty('--home-about-clip', `${sections.aboutClip}px`);
+    document.body.style.setProperty('--home-upload-y', `${previewStarted ? 0 : sections.uploadY}px`);
+    upload.inert = !previewStarted && innerHeight - 16 + sections.uploadY <= (innerWidth < 600 ? 64 : 78);
     document.body.style.setProperty('--home-about-height', `${about.offsetHeight}px`);
     cdIntro.hidden = previewStarted;
-    cdIntro.inert = previewStarted || scrollProgress < .8 || savedScroll >= innerHeight * 2 - (innerWidth < 600 ? 64 : 78);
+    cdIntro.inert = previewStarted || scrollProgress < .8 || savedScroll >= sections.aboutStart - HOME_SECTION_GAP - (innerWidth < 600 ? 64 : 78);
     heading.inert = !previewStarted && scrollProgress > .2;
     syncOrbit();
     landing.querySelector('.locker-access').inert = !previewStarted && scrollProgress > .1;
@@ -187,7 +204,7 @@ export function initStudentLanding(landing) {
   window.addEventListener('browse-home', returnHome);
   window.addEventListener('browse-about', () => {
     if (!active || previewStarted) return;
-    window.scrollTo({ top: innerHeight * 2, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+    window.scrollTo({ top: homeSections(innerHeight, 0, about.offsetHeight).aboutStart, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
   });
   landing.querySelector('#home-back-top').addEventListener('click', () => {
     if (location.hash === '#about') history.replaceState({ ...history.state }, '', '/');
@@ -205,6 +222,7 @@ export function initStudentLanding(landing) {
     }
     if (!enabled) focusPreview = false;
     if (!enabled) stopOrbit();
+    if (!enabled) upload.inert = false;
     document.body.classList.toggle('is-student-home', enabled);
     document.body.classList.toggle('is-student-directory', enabled && previewStarted);
     if (!enabled) document.body.classList.remove('is-home-cd');

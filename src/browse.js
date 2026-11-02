@@ -79,6 +79,7 @@ export function initBrowse(showScene) {
     ])}${homeAboutMarkup(STUDENTS)}`;
   document.body.append(landing);
   landing.querySelector('.landing-heading').insertAdjacentHTML('afterbegin', '<p class="eyebrow page-guide landing-page-guide" hidden>学生 / 柜子展厅</p>');
+  landing.insertAdjacentHTML('beforeend', '<p class="scroll-more home-scroll-more">滑动查看更多</p>');
   const setLandingActive = initStudentLanding(landing);
   let grade = 'all';
   const selectGrade = (value) => {

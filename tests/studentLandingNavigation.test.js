@@ -33,6 +33,8 @@ globalThis.window = {
   dispatchEvent(event) { listeners.get(event.type)?.(); },
   scrollTo({ top }) { this.scrollY = top; listeners.get('scroll')?.(); },
 };
+const upload = element();
+document.querySelector = () => upload;
 globalThis.matchMedia = () => ({ matches: true, addEventListener() {} });
 globalThis.requestAnimationFrame = fn => { frames.set(++frameId, fn); return frameId; };
 globalThis.cancelAnimationFrame = id => frames.delete(id);
@@ -49,14 +51,16 @@ const expectHome = () => {
 active(true);
 expectHome();
 window.dispatchEvent(new Event('browse-about')); flush();
-assert.equal(window.scrollY, innerHeight * 2);
+assert.equal(window.scrollY, innerHeight * 2 + 300);
 assert.equal(nodes.get('.home-about').hidden, false);
 assert.equal(nodes.get('.home-about').inert, false);
-assert.equal(landing.style['--home-cd-y'], '-720px');
+assert.equal(landing.style['--home-cd-y'], '-870px');
+assert.equal(upload.inert, true);
 assert.equal(landing.style['--home-about-y'], '0px');
 assert.equal(landing.style['--home-about-clip'], '0px');
 nodes.get('#home-back-top').click(); flush();
 expectHome();
+assert.equal(upload.inert, false);
 start.click(); flush();
 assert.equal(entries.length, 2);
 assert.equal(location.pathname, '/students');

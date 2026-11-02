@@ -1,9 +1,6 @@
 import './discRoom.css';
 import { discInsideTray, clampDisc } from './discDrop.js';
 
-// A small print palette, not a color wash over every material.
-const palettes = ['#263fa6', '#a94745', '#b39543', '#56515f', '#626265'];
-
 export function mountDiscRoom({ host, student, studentIndex, students, works, state, onOpen, onBack }) {
   let pool = [];
   let active = null;
@@ -12,7 +9,6 @@ export function mountDiscRoom({ host, student, studentIndex, students, works, st
   let frame = 0;
   const timers = [];
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const authorsOf = (work) => work.authors.map((index) => students[index].name).join(' / ') || '作者待补充';
   const room = document.createElement('section');
   room.className = 'cd-room';
   room.setAttribute('aria-label', `${student.name}的作品光盘库`);
@@ -21,11 +17,9 @@ export function mountDiscRoom({ host, student, studentIndex, students, works, st
       <button type="button" class="cd-room-back">← 返回打开的柜子</button>
       <p class="eyebrow page-guide">学生 / ${student.name}的作品光盘库</p>
       <h1 tabindex="-1">${student.name}的<br>作品光盘库<span>。</span></h1>
-      <p class="cd-room-lead">一张光盘，一段创作。<br>选择并拖入光驱，打开作品。</p>
     </header>
     <div class="cd-library"><label for="cd-library-select">切换光盘库</label><select id="cd-library-select"><option value="student">${student.name}的作品</option><option value="all">全部作品</option></select><span id="cd-library-count"></span></div>
     <div class="cd-board" aria-label="拖动光盘到上方CD盒">
-      <div class="cd-archive-stamp" aria-hidden="true"><span>PERSONAL COLLECTION</span><b>F / ${String(studentIndex + 1).padStart(2, '0')}</b><small>OPTICAL MEDIA · EST. 2024</small></div>
       <div class="cd-drive" aria-label="CD盒">
         <div class="cd-tray-shell"><div class="cd-tray">
           <div class="cd-tray-rail cd-tray-rail--left"></div><div class="cd-tray-rail cd-tray-rail--right"></div>
@@ -36,11 +30,11 @@ export function mountDiscRoom({ host, student, studentIndex, students, works, st
         </div></div>
         <div class="cd-drive-face"><i class="cd-screw"></i><i class="cd-screw"></i><i class="cd-screw"></i><i class="cd-screw"></i><span>FENG</span><small>COMPACT DISC · CD-R / RW</small><b class="cd-drive-led"></b><div class="cd-drive-slot"></div><span class="cd-drive-eject" aria-hidden="true">⏏</span></div>
       </div>
-      <p class="cd-drop-hint"><i></i> 将光盘放在托盘上 <span>↖</span></p>
+      <p class="cd-drop-hint">将光盘放在托盘上 <span>↖</span></p>
       <div class="cd-discs"></div>
       <div class="cd-loading" hidden><span class="cd-loading-disc"></span><p>正在打开作品…</p><div></div></div>
     </div>
-    <footer class="cd-room-footer"><div><p class="eyebrow" id="cd-current-number"></p><h2 id="cd-current-title"></h2><p class="cd-current-meta" id="cd-current-meta"></p><p class="cd-current-summary" id="cd-current-summary"></p></div>
+    <footer class="cd-room-footer">
       <div class="cd-footer-actions"><button type="button" class="cd-insert">放入所选光盘 ↗</button><p id="cd-status" role="status" aria-live="polite">拖动光盘到上方托盘，或点击按钮放入。</p></div></footer>`;
   host.append(room);
   document.body.classList.add('is-disc-room');
@@ -58,10 +52,6 @@ export function mountDiscRoom({ host, student, studentIndex, students, works, st
   const select = (work) => {
     state.selectedId = work.id;
     discs.querySelectorAll('button').forEach((disc) => disc.setAttribute('aria-pressed', String(disc.dataset.workId === work.id)));
-    room.querySelector('#cd-current-number').textContent = `当前光盘 / ${String(pool.indexOf(work) + 1).padStart(2, '0')} — 共 ${String(pool.length).padStart(2, '0')} 张`;
-    room.querySelector('#cd-current-title').textContent = work.title;
-    room.querySelector('#cd-current-meta').textContent = `${authorsOf(work)} · ${{ game: '游戏设计', model: '角色建模', scene: '数字场景', video: '动画影像' }[work.kind]}`;
-    room.querySelector('#cd-current-summary').textContent = work.summary;
   };
   const setPosition = (element, x, y) => { element.style.left = `${x}%`; element.style.top = `${y}%`; };
   const renderDiscs = () => {
@@ -74,13 +64,12 @@ export function mountDiscRoom({ host, student, studentIndex, students, works, st
         x: pool.length <= 3 ? 50 + (index - (pool.length - 1) / 2) * 16 : 50 + Math.cos(index * 2.4) * (12 + index * 1.25),
         y: pool.length <= 3 ? 67 + index * 3 : 65 + Math.sin(index * 2.4) * 9,
       };
-      return `<button type="button" class="archive-disc cd-print-${index % 3}" data-work-id="${work.id}" aria-label="选择光盘：${work.title}" aria-pressed="false" style="left:${position.x}%;top:${position.y}%;--disc-color:${palettes[index % palettes.length]};--disc-ink:#29292b;--tilt:${(index % 2 ? 1 : -1) * (8 + index * 3)}deg;z-index:${index + 10}">
-        <span class="cd-art" style="background-image:url('${work.cover}')"></span><span class="cd-label-band"></span><span class="cd-label-top">FENG® ARCHIVE <em>NO. ${String(index + 1).padStart(2, '0')}</em></span><strong class="cd-label-title">${work.title}</strong><span class="cd-label-bottom">${authorsOf(work)} / SELECTED WORK<br>CD-R &nbsp; 700 MB &nbsp; 80 MIN</span><span class="cd-disc-spec" aria-hidden="true">COMPACT<br><b>disc</b><br>DIGITAL ARCHIVE</span><span class="cd-hub"></span>
+      return `<button type="button" class="archive-disc" data-work-id="${work.id}" aria-label="选择光盘：${work.title}" aria-pressed="false" style="left:${position.x}%;top:${position.y}%;--tilt:${(index % 2 ? 1 : -1) * (8 + index * 3)}deg;z-index:${index + 10}">
+        <span class="cd-art" style="background-image:url('${work.cover}')"></span><span class="cd-hub"></span>
       </button>`;
     }).join('');
     if (pool.length) select(selectedWork());
     else {
-      room.querySelector('#cd-current-title').textContent = '作品光盘正在整理中';
       status.textContent = '可切换到全部作品光盘库继续浏览。';
     }
   };

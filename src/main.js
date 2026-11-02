@@ -12,6 +12,7 @@ import { createCdArchive, updateCdArchive, cdArchiveHit } from './cdArchive.js';
 import './uiTheme.css';
 import './studentLanding.css';
 import './typography.css';
+import './scrollHint.css';
 
 const app = document.querySelector('#app');
 const scene = new THREE.Scene();

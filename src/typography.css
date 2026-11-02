@@ -57,7 +57,7 @@ body.browse-preview :is(.page-guide,#page-location,.home-about-guide,.breadcrumb
   font:var(--type-regular) var(--type-label)/1.5 var(--ui-font); letter-spacing:normal;
 }
 body.browse-preview #browse #project-search { font:var(--type-regular) var(--type-control)/1.5 var(--ui-font); }
-body.browse-preview :is(.kind-tabs button,.text-link,.primary-link,.empty button,.confirm-locker,.submit-button,.work-detail__down,.cd-insert,#student-start,.cd-intro-cta) {
+body.browse-preview :is(.kind-tabs button,.text-link,.primary-link,.empty button,.confirm-locker,.submit-button,.cd-insert,#student-start,.cd-intro-cta) {
   font:var(--type-regular) var(--type-control)/1.5 var(--ui-font);
 }
 body.browse-preview .kind-tabs button { white-space:nowrap; }
