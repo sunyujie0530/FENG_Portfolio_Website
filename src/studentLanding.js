@@ -67,6 +67,7 @@ export function initStudentLanding(landing) {
   window.addEventListener('resize', schedule);
   start.addEventListener('click', () => {
     previewStarted = true;
+    start.dataset.started = 'true';
     focusPreview = true;
     window.scrollTo({ top: innerHeight, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
   });

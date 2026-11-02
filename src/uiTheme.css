@@ -9,6 +9,8 @@
   --ui-paper:#f6f7fa;
   --ui-white:#fff;
   --ui-radius:2px;
+  --ui-pill-raised-bg:linear-gradient(150deg,#fff,#f3f3f2);
+  --ui-pill-raised-shadow:3px 4px 6px #20252026,-3px -3px 7px #fff,inset 0 1px 1px #fff,inset 0 -2px 2px #b8bab866;
   --ui-pill-inset-bg:linear-gradient(145deg,#dedfdd,#eeefec);
   --ui-pill-inset-shadow:inset 3px 4px 7px #333a332e,inset -3px -3px 6px #fff,0 1px 1px #fff;
   --ui-font:"PingFang SC","Hiragino Sans GB",sans-serif;
@@ -171,10 +173,10 @@ body.browse-preview .grade-picker .kind-tabs button {
   --ui-control-radius:999px;
   --ui-control-size:14px;
   --ui-control-padding:11px 22px;
-  --control-bg:linear-gradient(150deg,#fff,#f3f3f2);
+  --control-bg:var(--ui-pill-raised-bg);
   --control-border:#f9f9f8;
   --control-text:#252725;
-  --control-shadow:3px 4px 6px #20252026,-3px -3px 7px #fff,inset 0 1px 1px #fff,inset 0 -2px 2px #b8bab866;
+  --control-shadow:var(--ui-pill-raised-shadow);
   min-width:90px;
   min-height:44px;
 }
