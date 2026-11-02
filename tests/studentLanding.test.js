@@ -20,7 +20,7 @@ const top = cdOrbitPosition(0, 10);
 assert.ok(top.x < 0 && top.z < 0);
 const positions = Array.from({ length:10 }, (_, i) => cdOrbitPosition(i, 10));
 assert.equal(new Set(positions.map(p => `${p.x},${p.z}`)).size, 10);
-assert.ok(positions.every(p => Math.abs(Math.hypot(p.x, p.z) - .42) < 1e-12));
+assert.ok(positions.every(p => Math.abs(Math.hypot(p.x, p.z) - .455) < 1e-12));
 const markup = cdIntroMarkup([{id:'clay-doll', title:'泥人张', cover:'/assets/works/clay-doll.jpg'}]);
 assert.ok(markup.includes('src="/assets/works/clay-doll.jpg"'));
 assert.ok(markup.includes('href="/works/clay-doll"'));

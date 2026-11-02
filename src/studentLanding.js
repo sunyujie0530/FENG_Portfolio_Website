@@ -15,7 +15,7 @@ export function landingFrame(width, height, scroll) {
 
 export const showWorksEntry = (started, progress) => started && progress >= .9;
 
-export const CD_ORBIT_DIAMETER = .164;
+export const CD_ORBIT_DIAMETER = .1804;
 export const CD_ORBIT_PERSPECTIVE = 1.2;
 export const CD_ORBIT_ELEVATION = 50;
 export const CD_ORBIT_VERTICAL_SCALE = .86;
@@ -24,8 +24,8 @@ export function cdOrbitPosition(index, count, phase = 0) {
   // Half-step phase puts a pair of discs at the front and another pair at the back.
   const angle = -Math.PI / 2 - Math.PI / Math.max(1, count) + index * Math.PI * 2 / Math.max(1, count) + phase;
   const yaw = -90 - angle * 180 / Math.PI;
-  const x = .42 * Math.cos(angle);
-  const z = .42 * Math.sin(angle);
+  const x = .455 * Math.cos(angle);
+  const z = .455 * Math.sin(angle);
   // Continuous radial lean avoids a plane/texture flip at either side of the ring.
   return { x, z, yaw, lean:25 * Math.cos(yaw * Math.PI / 180) };
 }

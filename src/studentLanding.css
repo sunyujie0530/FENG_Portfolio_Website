@@ -74,7 +74,7 @@ body.browse-preview.is-student-home.is-locker-focused .grade-picker { display:no
 .cd-orbit-copy { position:absolute; top:55%; left:50%; transform:translate(-50%,-50%); width:62%; text-align:center; pointer-events:none; }
 .cd-orbit-copy h2 { margin:0 0 20px; color:#101310; font-size:clamp(24px,3vw,48px); font-weight:650; letter-spacing:-.04em; line-height:1.3; }
 .cd-orbit-copy p { margin:0; font-size:clamp(12px,1vw,16px); color:#535c55; line-height:1.8; }
-.cd-intro-cta { position:absolute; bottom:7vh; left:50%; transform:translateX(-50%); white-space:nowrap; }
+.cd-intro-cta { position:absolute; bottom:4.5vh; left:50%; transform:translateX(-50%); white-space:nowrap; }
 @media(max-width:699px) {
   body.browse-preview #student-start { top:45vh; font-size:14px; padding:9px 26px; }
   body.browse-preview.is-student-home .grade-picker { bottom:17vh; }
