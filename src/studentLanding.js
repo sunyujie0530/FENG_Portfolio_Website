@@ -46,6 +46,7 @@ export function initStudentLanding(landing) {
   const title = [...landing.querySelectorAll('h1 span')];
   const subtitle = [...landing.querySelectorAll('.landing-summary span')];
   const start = landing.querySelector('#student-start');
+  const homeBack = landing.querySelector('#student-home-back');
   const heading = landing.querySelector('.landing-heading');
   const worksLink = landing.querySelector('.landing-works-link');
   const cdIntro = landing.querySelector('.home-cd-intro');
@@ -128,6 +129,7 @@ export function initStudentLanding(landing) {
     const picker = landing.querySelector('.grade-picker');
     picker.inert = f.progress < .9;
     start.hidden = f.progress > .98;
+    homeBack.hidden = !previewStarted;
     start.tabIndex = f.progress > .35 ? -1 : 0;
     start.style.pointerEvents = f.progress > .35 ? 'none' : 'auto';
     if (focusPreview && start.hidden) {
@@ -141,14 +143,36 @@ export function initStudentLanding(landing) {
   document.addEventListener('visibilitychange', syncOrbit);
   reducedMotion.addEventListener('change', syncOrbit);
   start.addEventListener('click', () => {
+    if (!previewStarted) history.pushState({ ...history.state, fengDirectory: true }, '', location.href);
     previewStarted = true;
     start.dataset.started = 'true';
     focusPreview = true;
     paint();
     window.scrollTo({ top: innerHeight, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
   });
+  const returnHome = () => {
+    if (!active) return;
+    if (previewStarted) history.pushState({ ...history.state, fengDirectory: false }, '', location.href);
+    previewStarted = false;
+    focusPreview = false;
+    start.dataset.started = 'false';
+    savedScroll = 0;
+    window.dispatchEvent(new Event('browse-overview'));
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    paint();
+    start.focus({ preventScroll: true });
+  };
+  homeBack.addEventListener('click', returnHome);
+  window.addEventListener('browse-home', returnHome);
   return (enabled) => {
     active = enabled;
+    if (enabled) {
+      const directory = history.state?.fengDirectory === true;
+      if (directory !== previewStarted) savedScroll = directory ? innerHeight : 0;
+      previewStarted = directory;
+      start.dataset.started = String(directory);
+      if (!directory) window.dispatchEvent(new Event('browse-overview'));
+    }
     if (!enabled) focusPreview = false;
     if (!enabled) stopOrbit();
     document.body.classList.toggle('is-student-home', enabled);

@@ -61,7 +61,7 @@ export function initBrowse(showScene) {
   const landing = document.createElement('section');
   landing.className = 'student-landing';
   landing.innerHTML = `<div class="landing-heading"><h1><span>每一扇柜门，</span><span>都是一位创作者。</span></h1><p class="landing-summary"><span>从一个人出发，认识一组创作。</span><span>点击柜门，探索他们的作品与创作故事。</span></p><button type="button" id="student-start">开始预览</button><a class="text-link landing-works-link" href="/works" hidden>从全部作品开始 ↗</a></div>
-    <div class="grade-picker"><p class="eyebrow">按入学年级浏览</p><div class="kind-tabs" role="group" aria-label="学生年级筛选"><button type="button" data-grade="all" aria-pressed="true">全部</button><button type="button" data-grade="2024级" aria-pressed="false">2024级</button><button type="button" data-grade="2025级" aria-pressed="false">2025级</button></div></div>
+    <button type="button" id="student-home-back" hidden>← 返回首页</button><div class="grade-picker"><p class="eyebrow">按入学年级浏览</p><div class="kind-tabs" role="group" aria-label="学生年级筛选"><button type="button" data-grade="all" aria-pressed="true">全部</button><button type="button" data-grade="2024级" aria-pressed="false">2024级</button><button type="button" data-grade="2025级" aria-pressed="false">2025级</button></div></div>
     <nav class="locker-access" aria-label="键盘选择学生">${STUDENTS.map((s, i) => `<a href="/students/${i + 1}" data-student="${i}">${String(i + 1).padStart(2, '0')} · ${s.name} · ${s.grade}</a>`).join('')}</nav>${cdIntroMarkup([...WORKS,
       {...WORKS[0], cover:'/assets/works/wrong-plane/scene-1.png'},
       {...WORKS[1], cover:'/assets/works/clay-doll/visual-2.png'},
@@ -91,7 +91,7 @@ export function initBrowse(showScene) {
   const discStates = new Map();
   let disposeDiscRoom = () => {};
   const move = (path) => {
-    if (path === location.pathname) { root.scrollTop = 0; if (path === '/students') window.dispatchEvent(new Event('browse-overview')); return; }
+    if (path === location.pathname) { root.scrollTop = 0; if (path === '/students') window.dispatchEvent(new Event('browse-home')); return; }
     if (location.pathname === '/works') listScroll = root.scrollTop;
     if (path.startsWith('/works/')) {
       detailOrigin = location.pathname.startsWith('/students/') ? location.pathname : '/works';
@@ -166,7 +166,7 @@ export function initBrowse(showScene) {
     if (current) {
       const focusTarget = path === '/works' && restoreFocus ? root.querySelector(`a[href="${restoreFocus}"]`) : root.querySelector('h1');
       focusTarget?.focus({ preventScroll: true });
-      if (path === '/students') landing.querySelector('[data-grade][aria-pressed="true"]')?.focus({ preventScroll: true });
+      if (path === '/students') landing.querySelector(landing.dataset.directory === 'true' ? '[data-grade][aria-pressed="true"]' : '#student-start')?.focus({ preventScroll: true });
     }
     current = path;
     if (mode === 'students' && lockerReturn !== null) {

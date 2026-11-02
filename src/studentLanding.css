@@ -42,6 +42,8 @@ body.browse-preview.is-student-home .grade-picker {
   opacity:clamp(0,calc((var(--landing-progress,0) - .65) / .35),1);
 }
 body.browse-preview.is-student-home .grade-picker > .eyebrow { display:none; }
+body.browse-preview #student-home-back { position:absolute; left:4vw; bottom:12vh; pointer-events:auto; border:1px solid var(--control-border); background:var(--control-bg); box-shadow:var(--control-shadow); color:var(--ui-ink); padding:7px 10px; font:400 11px/1.5 var(--ui-font); cursor:pointer; }
+body.browse-preview.is-locker-focused #student-home-back { display:none; }
 body.browse-preview.is-student-home .grade-picker .kind-tabs { flex-wrap:nowrap; }
 body.browse-preview.is-student-home.is-locker-focused .grade-picker { display:none; }
 .home-cd-intro {
