@@ -16,6 +16,11 @@ body.browse-preview { --ink:#252b25; --muted:#6c7369; --paper:#f7f8f4; --line:#d
 .browse-preview .stage { background:var(--paper); }
 .browse-preview #app { top:clamp(35px,7vh,70px); }
 .browse-content #stage { visibility:hidden; pointer-events:none; }
+body.browse-preview.is-work-detail #top-nav { visibility:visible; pointer-events:auto; }
+body.browse-preview.is-work-detail .work-detail__back { top:90px; }
+@media(max-width:700px) {
+  body.browse-preview.is-work-detail .work-detail__back { top:74px; }
+}
 .student-landing { position:fixed; inset:78px 0 0; z-index:5; pointer-events:none; }
 .grade-picker { position:absolute; top:32px; right:4vw; pointer-events:auto; }
 .grade-picker > .eyebrow { margin-left:14px; margin-bottom:10px; }

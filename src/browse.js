@@ -11,6 +11,7 @@ import { createShiDaoDetail } from './shiDaoDetail.js';
 import { createSlimeDetail } from './slimeDetail.js';
 import { mountDiscRoom } from './discRoom.js';
 import { initStudentLanding, cdIntroMarkup } from './studentLanding.js';
+import { showWorkDisc } from './worksDiscs.js';
 
 export const STUDENTS = [
   { name: '王文睿', en: 'WANG WENRUI', color: '#6d76ac', grade: '2024级', bio: '以空间转换与双人协作为切入点，探索游戏机制和玩家之间的关系。', tags: '游戏设计 / 交互体验' },
@@ -129,11 +130,11 @@ export function initBrowse(showScene) {
     const student = STUDENTS[studentIndex];
     const mode = path === '/submit' ? 'submit' : path === '/about' ? 'about' : (path === '/' || path === '/students') ? 'students' : 'content';
     showScene(mode);
-    document.body.classList.toggle('browse-content', mode === 'content');
+    document.body.classList.toggle('browse-content', mode === 'content' && !work);
     setLandingActive(mode === 'students');
     landing.hidden = mode !== 'students';
-    root.hidden = mode !== 'content';
-    document.querySelector('#stage').setAttribute('aria-hidden', String(mode === 'content'));
+    root.hidden = mode !== 'content' || Boolean(work);
+    document.querySelector('#stage').setAttribute('aria-hidden', String(mode === 'content' && !work));
     const activeNav = path === '/' ? 'nav-home' : mode === 'submit' ? 'nav-submit' : mode === 'about' ? 'nav-about' : (student || discMatch || mode === 'students') ? 'nav-lockers' : 'nav-works';
     nav.querySelectorAll('button').forEach((button) => {
       if (button.id === activeNav) button.setAttribute('aria-current', 'page');
@@ -154,16 +155,8 @@ export function initBrowse(showScene) {
     } else if (work) {
       const back = detailOrigin.startsWith('/students/') ? detailOrigin : '/works';
       const backLabel = back === '/works' ? '全部作品' : `${STUDENTS[Number(back.split('/')[2]) - 1].name}的${back.endsWith('/discs') ? '光盘库' : '主页'}`;
-      const source = work.factory(() => {});
-      const copy = source.querySelector('.work-detail__copy');
-      const media = source.querySelector('.bcw-media') || source.querySelector('.work-detail__body');
-      const images = media ? [...media.querySelectorAll('img')].filter((img) => !img.classList.contains('work-detail__poster')) : [];
-      const video = media?.querySelector('video');
-      const trail = back === '/works' ? [['全部作品', '/works'], [work.title]] : [['学生', '/students'], [STUDENTS[Number(back.split('/')[2]) - 1].name, back], [work.title]];
-      root.innerHTML = `${crumbs(trail)}<a class="back-link" href="${back}">← 返回${backLabel}</a>
-        <article class="review-detail"><header class="detail-heading"><div><p class="eyebrow">${kinds[work.kind]} / PROJECT ${String(WORKS.indexOf(work) + 1).padStart(2, '0')}</p><h1 tabindex="-1">${work.title}</h1><p class="detail-summary">${work.summary}</p><div class="project-authors">${authorLinks(work)}</div></div><a class="primary-link" href="#work-media">查看图像${video ? '与视频' : ''} ↓</a></header>
-        <img class="detail-cover" src="${work.cover}" alt="${work.title}主视觉"><div class="detail-content"><aside><p class="eyebrow">PROJECT INFORMATION</p><dl><dt>作品名称</dt><dd>${work.title}</dd><dt>创作类型</dt><dd>${kinds[work.kind]}</dd><dt>创作者</dt><dd>${authorLinks(work)}</dd></dl></aside><section><h2>作品简介</h2><div class="detail-copy">${copy?.innerHTML || work.summary}</div><h2 id="work-media">图像${video ? '与视频' : ''}</h2><div class="detail-gallery">${images.map((img) => img.outerHTML).join('')}</div>${video ? video.outerHTML : ''}</section></div></article>`;
-      source.remove();
+      root.innerHTML = '';
+      showWorkDisc(work.id === 'slime-runner' ? 19 : WORKS.indexOf(work), () => move(back), backLabel, work.authors.map(index => STUDENTS[index]));
     } else if (mode === 'content') {
       root.innerHTML = `${crumbs([['全部作品']])}<header class="collection-heading"><div><p class="eyebrow">FENG / WORK INDEX</p><h1 tabindex="-1">创作，正在发生<span>。</span></h1><p>游戏、角色、场景与影像。找到你感兴趣的作品，直接进入创作现场。</p></div><span class="collection-total">${WORKS.length.toString().padStart(2, '0')}<small>件已收录作品</small></span></header>
         <div class="collection-tools"><div class="kind-tabs" role="group" aria-label="按作品类型筛选">${Object.entries(kinds).map(([key, label]) => `<button type="button" data-kind="${key}" aria-pressed="${key === filter}">${label}</button>`).join('')}</div><label class="search-field"><span>搜索作品或作者</span><input type="search" id="project-search" placeholder="作品名称 / 作者" aria-label="搜索作品或作者"></label></div><p class="result-count" id="result-count" aria-live="polite"></p><div class="project-grid" id="project-results"></div>`;
@@ -173,7 +166,7 @@ export function initBrowse(showScene) {
     document.title = `${discMatch ? `${STUDENTS[discStudentIndex].name}的作品光盘库` : student?.name || work?.title || (mode === 'students' ? '学生展厅' : mode === 'about' ? '关于' : mode === 'submit' ? '作品投稿' : '全部作品')} · FENG`;
     if (mode === 'students') syncLandingNav();
     root.scrollTop = path === '/works' ? listScroll : 0;
-    if (current) {
+    if (current && !work) {
       const focusTarget = path === '/works' && restoreFocus ? root.querySelector(`a[href="${restoreFocus}"]`) : root.querySelector('h1');
       focusTarget?.focus({ preventScroll: true });
       if (mode === 'students') landing.querySelector(landing.dataset.directory === 'true' ? '[data-grade][aria-pressed="true"]' : '#student-start')?.focus({ preventScroll: true });

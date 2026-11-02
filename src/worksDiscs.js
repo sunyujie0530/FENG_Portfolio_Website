@@ -24,10 +24,13 @@ let detail = null;
 let detailPanel;
 let detailTween;
 let restoreDetailFocus = () => {};
+let openRoutedDetail;
+let detailRouteBack = null;
 
 function resetDetail() {
   detailTween?.kill();
   detail = null;
+  detailRouteBack = null;
   document.body.classList.remove('is-work-detail');
   if (detailPanel) {
     detailPanel.querySelector('video')?.pause();
@@ -46,7 +49,12 @@ function closeDetail() {
   detailTween?.kill();
   detailTween = gsap.to(detail, {
     progress: 0, duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1,
-    ease: 'none', onComplete() { resetDetail(); restoreDetailFocus(); }
+    ease: 'none', onComplete() {
+      const onBack = detailRouteBack;
+      resetDetail();
+      if (onBack) onBack();
+      else restoreDetailFocus();
+    }
   });
 }
 const DIRECT_DETAIL = new Set([2, 7]);
@@ -257,6 +265,21 @@ export function initWorks(background = 0xf6f7fa) {
       }
     });
   };
+  openRoutedDetail = (index, onBack, backLabel, authors = []) => {
+    resetDetail();
+    workKinds.clear();
+    angle = targetAngle = (2 - index) / 3;
+    placeDiscs(angle, camera);
+    const selected = discs.find(disc => disc.userData.index === index);
+    if (!selected) return;
+    openDetail(selected);
+    detailRouteBack = onBack;
+    if (detailPanel) detailPanel.querySelector('.work-detail__back').textContent = `← 返回${backLabel}`;
+    detailPanel?.querySelectorAll('h2, header p').forEach(heading => {
+      const text = authors.reduce((text, author) => text.replace(new RegExp(`(${author.name}\\s*)\\d{4}级`, 'g'), `$1${author.grade}`), heading.textContent);
+      if (text !== heading.textContent) heading.textContent = text;
+    });
+  };
   canvas.tabIndex = 0;
   canvas.setAttribute('aria-label', '光盘作品：左右键选择，回车打开作品详情');
   restoreDetailFocus = () => canvas.focus({ preventScroll: true });
@@ -453,6 +476,11 @@ export function showWorks(background) {
   }
   document.body.classList.add('is-lockers', 'is-works');
   window.scrollTo(0, 0);
+}
+
+export function showWorkDisc(index, onBack, backLabel = '全部作品', authors = []) {
+  showWorks();
+  openRoutedDetail(index, onBack, backLabel, authors);
 }
 
 export function hideWorks() {
