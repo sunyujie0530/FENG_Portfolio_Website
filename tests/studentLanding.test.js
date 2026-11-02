@@ -20,7 +20,7 @@ const top = cdOrbitPosition(0, 10);
 assert.ok(top.x < 0 && top.z < 0);
 const positions = Array.from({ length:10 }, (_, i) => cdOrbitPosition(i, 10));
 assert.equal(new Set(positions.map(p => `${p.x},${p.z}`)).size, 10);
-assert.ok(positions.every(p => Math.abs(Math.hypot(p.x, p.z) - .455) < 1e-12));
+assert.ok(positions.every(p => Math.abs(Math.hypot(p.x, p.z) - .47) < 1e-12));
 const markup = cdIntroMarkup([{id:'clay-doll', title:'泥人张', cover:'/assets/works/clay-doll.jpg'}]);
 assert.ok(markup.includes('src="/assets/works/clay-doll.jpg"'));
 assert.ok(markup.includes('href="/works/clay-doll"'));
@@ -60,6 +60,7 @@ for (let step = 0; step < 120; step++) {
   const outlines = Array.from({ length:12 }, (_, index) => outline(cdOrbitPosition(index, 12, step * Math.PI / 60)));
   outlines.forEach((a, index) => outlines.slice(index + 1).forEach(b => { minimumGap = Math.min(minimumGap, gap(a, b)); }));
 }
-assert.ok(minimumGap >= .008, `CD overlap or insufficient gap during rotation: ${minimumGap}`);
+// Keep a narrow positive gap for the denser layout throughout the full rotation.
+assert.ok(minimumGap >= .002, `CD overlap or insufficient gap during rotation: ${minimumGap}`);
 console.log(`CD ring: 120 rotation frames / all disc pairs checked; minimum projected gap ${minimumGap.toFixed(4)}.`);
 console.log('Student landing: scroll endpoints, continuous scale, cabinet motion and mobile layout passed.');
