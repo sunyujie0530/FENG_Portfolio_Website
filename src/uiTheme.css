@@ -151,12 +151,20 @@ body.browse-preview #top-nav button:not(#nav-submit):is(:hover,[aria-current="pa
 }
 body.browse-preview #top-nav button[aria-current]::after { display:none; }
 body.browse-preview #top-nav #nav-submit {
-  min-height:36px;
-  border:1px solid var(--control-border);
-  border-radius:var(--ui-radius);
-  background:var(--control-bg);
-  color:var(--control-text);
-  box-shadow:var(--control-shadow);
+  display:flex; flex-direction:column; align-items:center; width:88px; height:auto; min-height:0;
+  bottom:16px; right:20px; padding:0; border:0; border-radius:12px; background:transparent;
+  color:var(--ui-ink); box-shadow:none; font:500 11px/1.5 var(--ui-font);
+  transition:transform .18s ease,filter .18s ease;
+}
+body.browse-preview #nav-submit img { display:block; width:88px; height:88px; margin-bottom:-14px; mix-blend-mode:multiply; pointer-events:none; }
+body.browse-preview #nav-submit span { pointer-events:none; }
+body.browse-preview #top-nav #nav-submit:hover { transform:translateY(-3px); filter:brightness(1.03); }
+body.browse-preview #top-nav #nav-submit:active { transform:translateY(0) scale(.97); }
+body.browse-preview #top-nav #nav-submit[aria-current] { color:#267941; }
+body.browse-preview.is-disc-room #top-nav #nav-submit { display:none; }
+@media(max-width:600px) {
+  body.browse-preview #top-nav #nav-submit { width:76px; right:14px; bottom:14px; }
+  body.browse-preview #nav-submit img { width:76px; height:76px; margin-bottom:-12px; }
 }
 
 /* One keyboard focus treatment; native controls retain their semantics. */

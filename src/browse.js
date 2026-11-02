@@ -54,7 +54,10 @@ export function initBrowse(showScene) {
   document.body.classList.add('browse-preview');
   const nav = document.querySelector('#top-nav');
   nav.insertAdjacentHTML('afterbegin', '<a class="brand" href="/" aria-label="FENG 首页">FENG<span>学生作品集</span></a><button type="button" id="nav-home">首页</button>');
-  document.querySelector('#nav-submit').textContent = '作品投稿 ↗';
+  const submitButton = document.querySelector('#nav-submit');
+  submitButton.innerHTML = '<img src="/assets/upload-folder.png" alt="" width="88" height="88"><span>作品投稿</span>';
+  submitButton.setAttribute('aria-label', '作品投稿');
+  submitButton.title = '上传你的作品';
   const root = document.createElement('main');
   root.id = 'browse';
   root.setAttribute('aria-label', '作品集浏览');
