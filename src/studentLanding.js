@@ -46,7 +46,6 @@ export function initStudentLanding(landing) {
   const title = [...landing.querySelectorAll('h1 span')];
   const subtitle = [...landing.querySelectorAll('.landing-summary span')];
   const start = landing.querySelector('#student-start');
-  const homeBack = landing.querySelector('#student-home-back');
   const heading = landing.querySelector('.landing-heading');
   const worksLink = landing.querySelector('.landing-works-link');
   const cdIntro = landing.querySelector('.home-cd-intro');
@@ -92,10 +91,11 @@ export function initStudentLanding(landing) {
   const paint = () => {
     frame = 0;
     if (!active || document.body.classList.contains('is-locker-focused')) return;
-    savedScroll = window.scrollY;
+    document.body.classList.toggle('is-student-directory', previewStarted);
+    savedScroll = previewStarted ? 0 : window.scrollY;
     const scrollProgress = landingFrame(innerWidth, innerHeight, savedScroll).progress;
     // Scrolling explores the CD introduction; only the button enters the directory.
-    const f = landingFrame(innerWidth, innerHeight, previewStarted ? savedScroll : 0);
+    const f = landingFrame(innerWidth, innerHeight, previewStarted ? innerHeight : 0);
     landing.dataset.directory = String(previewStarted);
     landing.style.setProperty('--home-hero-y', `${previewStarted ? 0 : -savedScroll}px`);
     landing.style.setProperty('--home-cd-y', `${(1 - scrollProgress) * innerHeight}px`);
@@ -129,7 +129,6 @@ export function initStudentLanding(landing) {
     const picker = landing.querySelector('.grade-picker');
     picker.inert = f.progress < .9;
     start.hidden = f.progress > .98;
-    homeBack.hidden = !previewStarted;
     start.tabIndex = f.progress > .35 ? -1 : 0;
     start.style.pointerEvents = f.progress > .35 ? 'none' : 'auto';
     if (focusPreview && start.hidden) {
@@ -149,7 +148,7 @@ export function initStudentLanding(landing) {
     focusPreview = true;
     paint();
     window.dispatchEvent(new Event('browse-landing-change'));
-    window.scrollTo({ top: innerHeight, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'instant' });
   });
   const returnHome = () => {
     if (!active) return;
@@ -164,22 +163,22 @@ export function initStudentLanding(landing) {
     window.dispatchEvent(new Event('browse-landing-change'));
     start.focus({ preventScroll: true });
   };
-  homeBack.addEventListener('click', returnHome);
   window.addEventListener('browse-home', returnHome);
   return (enabled) => {
     active = enabled;
     if (enabled) {
       const directory = location.pathname === '/students';
-      if (directory !== previewStarted) savedScroll = directory ? innerHeight : 0;
+      if (directory !== previewStarted) savedScroll = 0;
       previewStarted = directory;
       start.dataset.started = String(directory);
       if (!directory) window.dispatchEvent(new Event('browse-overview'));
     }
     if (!enabled) focusPreview = false;
     if (!enabled) stopOrbit();
+    document.body.classList.toggle('is-student-directory', enabled && previewStarted);
     document.body.classList.toggle('is-student-home', enabled);
     if (!enabled) document.body.classList.remove('is-home-cd');
-    window.scrollTo({ top: enabled ? savedScroll : 0, behavior: 'instant' });
+    window.scrollTo({ top: enabled && !previewStarted ? savedScroll : 0, behavior: 'instant' });
     if (enabled) paint();
   };
 }

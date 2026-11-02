@@ -5,6 +5,8 @@ import vm from 'node:vm';
 const source = readFileSync(new URL('../src/browse.js', import.meta.url), 'utf8');
 const render = source.slice(source.indexOf('const render = () =>'));
 assert.ok(render.indexOf("landing.hidden = mode !== 'students'") < render.indexOf("setLandingActive(mode === 'students')"), 'Show landing before measuring its text.');
+assert.ok(!source.includes("crumbs([['全部作品']])"));
+assert.ok(!source.includes('id="student-home-back"'));
 const context = vm.createContext({ colorOf: () => '#abc', kinds: { game: '游戏设计' }, authorLinks: () => '<a>作者名</a>' });
 vm.runInContext(source.slice(source.indexOf('function card(work)'), source.indexOf('export function initBrowse')), context);
 const markup = context.card({ id: 'demo', title: '作品名', kind: 'game', cover: '/cover.png', summary: '不应显示的简介' });
