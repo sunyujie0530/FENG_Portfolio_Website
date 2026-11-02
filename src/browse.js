@@ -68,6 +68,7 @@ export function initBrowse(showScene) {
       {...WORKS[1], cover:'/assets/works/clay-doll/visual-2.png'},
     ])}`;
   document.body.append(landing);
+  landing.querySelector('.landing-heading').insertAdjacentHTML('afterbegin', '<p class="eyebrow page-guide landing-page-guide" hidden>学生 / 柜子展厅</p>');
   const setLandingActive = initStudentLanding(landing);
   let grade = 'all';
   const selectGrade = (value) => {
@@ -86,6 +87,7 @@ export function initBrowse(showScene) {
   let filter = 'all';
   let search = '';
   let detailOrigin = '/works';
+  let submitOrigin = '/';
   let listScroll = 0;
   let restoreFocus = '';
   let lockerReturn = null;
@@ -94,6 +96,7 @@ export function initBrowse(showScene) {
   const move = (path) => {
     if (path === location.pathname) { root.scrollTop = 0; if (path === '/') window.dispatchEvent(new Event('browse-home')); else if (path === '/students') window.dispatchEvent(new Event('browse-overview')); return; }
     if (location.pathname === '/works') listScroll = root.scrollTop;
+    if (path === '/submit') submitOrigin = location.pathname;
     if (path.startsWith('/works/')) {
       detailOrigin = location.pathname.startsWith('/students/') ? location.pathname : '/works';
       restoreFocus = path;
@@ -104,6 +107,7 @@ export function initBrowse(showScene) {
   const crumbs = (parts) => `<nav class="breadcrumbs" aria-label="当前位置"><a href="/">首页</a>${parts.map(([label, href]) => `<span>/</span>${href ? `<a href="${href}">${label}</a>` : `<span aria-current="page">${label}</span>`}`).join('')}</nav>`;
   const syncLandingNav = () => {
     const home = location.pathname === '/';
+    landing.querySelector('.landing-page-guide').hidden = home;
     nav.querySelectorAll('button').forEach(button => {
       if (button.id === (home ? 'nav-home' : 'nav-lockers')) button.setAttribute('aria-current', 'page');
       else button.removeAttribute('aria-current');
@@ -150,7 +154,7 @@ export function initBrowse(showScene) {
       if (grade !== 'all' && grade !== student.grade) selectGrade(student.grade);
       const projects = WORKS.filter((w) => w.authors.includes(studentIndex));
       root.innerHTML = `${crumbs([['学生', '/students'], [student.name]])}<a class="back-link" href="/students">← 返回学生展厅</a>
-        <header class="student-profile"><div class="profile-number">${String(studentIndex + 1).padStart(2, '0')}<span>FENG STUDENT</span></div><div><p class="eyebrow">${student.en}</p><h1 tabindex="-1">${student.name}</h1><p class="profile-grade">${student.grade || 'FENG 创作者'}</p><p class="profile-bio">${student.bio}</p><span class="profile-tag">${student.tags}</span></div><div class="profile-stat"><strong>${projects.length.toString().padStart(2, '0')}</strong><span>已收录作品</span></div></header>
+        <header class="student-profile"><div class="profile-number">${String(studentIndex + 1).padStart(2, '0')}<span>FENG STUDENT</span></div><div><p class="eyebrow page-guide">学生 / ${student.name}的个人主页</p><h1 tabindex="-1">${student.name}</h1><p class="profile-grade">${student.grade || 'FENG 创作者'}</p><p class="profile-bio">${student.bio}</p><span class="profile-tag">${student.tags}</span></div><div class="profile-stat"><strong>${projects.length.toString().padStart(2, '0')}</strong><span>已收录作品</span></div></header>
         <div class="section-heading"><h2>作品 <small>SELECTED WORKS</small></h2><a href="/works">浏览全部作品 ↗</a></div><div class="project-grid">${projects.length ? projects.map(card).join('') : '<p class="empty">作品正在整理中，可先浏览其他同学的创作。</p>'}</div><p class="editorial-note">创作方向简介根据已收录作品整理。</p>`;
     } else if (work) {
       const back = detailOrigin.startsWith('/students/') ? detailOrigin : '/works';
@@ -158,7 +162,7 @@ export function initBrowse(showScene) {
       root.innerHTML = '';
       showWorkDisc(work.id === 'slime-runner' ? 19 : WORKS.indexOf(work), () => move(back), backLabel, work.authors.map(index => STUDENTS[index]));
     } else if (mode === 'content') {
-      root.innerHTML = `${crumbs([['全部作品']])}<header class="collection-heading"><div><p class="eyebrow">FENG / WORK INDEX</p><h1 tabindex="-1">创作，正在发生<span>。</span></h1><p>游戏、角色、场景与影像。找到你感兴趣的作品，直接进入创作现场。</p></div><span class="collection-total">${WORKS.length.toString().padStart(2, '0')}<small>件已收录作品</small></span></header>
+      root.innerHTML = `${crumbs([['全部作品']])}<header class="collection-heading"><div><p class="eyebrow page-guide">全部作品 / 分类浏览与检索</p><h1 tabindex="-1">创作，正在发生<span>。</span></h1><p>游戏、角色、场景与影像。找到你感兴趣的作品，直接进入创作现场。</p></div><span class="collection-total">${WORKS.length.toString().padStart(2, '0')}<small>件已收录作品</small></span></header>
         <div class="collection-tools"><div class="kind-tabs" role="group" aria-label="按作品类型筛选">${Object.entries(kinds).map(([key, label]) => `<button type="button" data-kind="${key}" aria-pressed="${key === filter}">${label}</button>`).join('')}</div><label class="search-field"><span>搜索作品或作者</span><input type="search" id="project-search" placeholder="作品名称 / 作者" aria-label="搜索作品或作者"></label></div><p class="result-count" id="result-count" aria-live="polite"></p><div class="project-grid" id="project-results"></div>`;
       root.querySelector('#project-search').value = search;
       renderResults();
@@ -186,7 +190,9 @@ export function initBrowse(showScene) {
     event.stopImmediatePropagation();
     move(path);
   }, true);
-  document.querySelector('#close-submit').addEventListener('click', (event) => { event.stopImmediatePropagation(); move('/students'); }, true);
+  const leaveSubmit = event => { event.stopImmediatePropagation(); move(submitOrigin); };
+  document.querySelector('#close-submit').addEventListener('click', leaveSubmit, true);
+  document.querySelector('#submit-back').addEventListener('click', leaveSubmit, true);
   document.addEventListener('click', (event) => {
     const link = event.target.closest('a');
     if (!link || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;

@@ -237,6 +237,10 @@ export function initWorks(background = 0xf6f7fa) {
     if (!factory) return null;
     if (!detailPanels.has(index)) {
       const panel = standardWorkLayout(factory(closeDetail), index);
+      const guide = document.createElement('p');
+      guide.className = 'page-guide';
+      guide.textContent = `作品详情 / ${panel.getAttribute('aria-label').replace(/\s*作品详情$/, '')}`;
+      panel.querySelector('.work-detail__intro').prepend(guide);
       panel.addEventListener('scroll', () => panel.updateLayout?.(), { passive: true });
       detailPanels.set(index, panel);
     }

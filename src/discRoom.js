@@ -19,7 +19,7 @@ export function mountDiscRoom({ host, student, studentIndex, students, works, st
   room.innerHTML = `
     <header class="cd-room-header">
       <button type="button" class="cd-room-back">← 返回打开的柜子</button>
-      <p class="eyebrow">FENG® / DIGITAL ARCHIVE</p>
+      <p class="eyebrow page-guide">学生 / ${student.name}的作品光盘库</p>
       <h1 tabindex="-1">${student.name}的<br>作品光盘库<span>。</span></h1>
       <p class="cd-room-lead">一张光盘，一段创作。<br>选择并拖入光驱，打开作品。</p>
     </header>
@@ -58,7 +58,7 @@ export function mountDiscRoom({ host, student, studentIndex, students, works, st
   const select = (work) => {
     state.selectedId = work.id;
     discs.querySelectorAll('button').forEach((disc) => disc.setAttribute('aria-pressed', String(disc.dataset.workId === work.id)));
-    room.querySelector('#cd-current-number').textContent = `SELECTED DISC / ${String(pool.indexOf(work) + 1).padStart(2, '0')} — ${String(pool.length).padStart(2, '0')}`;
+    room.querySelector('#cd-current-number').textContent = `当前光盘 / ${String(pool.indexOf(work) + 1).padStart(2, '0')} — 共 ${String(pool.length).padStart(2, '0')} 张`;
     room.querySelector('#cd-current-title').textContent = work.title;
     room.querySelector('#cd-current-meta').textContent = `${authorsOf(work)} · ${{ game: '游戏设计', model: '角色建模', scene: '数字场景', video: '动画影像' }[work.kind]}`;
     room.querySelector('#cd-current-summary').textContent = work.summary;
