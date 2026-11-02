@@ -4,3 +4,9 @@ dist
 work
 outputs
 .DS_Store
+.vite-preview/
+# Large local-only videos are intentionally excluded from deployment.
+/public/assets/works/beaker-crow/demo.mov
+/public/assets/works/shi-dao/demo.mp4
+/public/assets/works/slime-runner/demo.mp4
+/public/assets/works/stride/demo.mp4

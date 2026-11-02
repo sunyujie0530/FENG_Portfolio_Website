@@ -7,11 +7,15 @@ import { startIntro, finishIntro } from './introMarquee.js';
 import { introCameraDistance } from './introReveal.js';
 import { hideWorks, showWorks, setWorksTransition } from './worksDiscs.js';
 import { hidePortals, showPortal } from './portal.js';
+import { initBrowse, STUDENTS } from './browse.js';
+import { createCdArchive, updateCdArchive, cdArchiveHit } from './cdArchive.js';
+import './uiTheme.css';
+import './studentLanding.css';
 
 const app = document.querySelector('#app');
 const scene = new THREE.Scene();
-// Fog-white campus backdrop.
-scene.background = new THREE.Color(0xf6f7fa);
+// Clean white backdrop keeps the pastel props from looking washed out.
+scene.background = new THREE.Color(0xffffff);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -20,16 +24,19 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.VSMShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.22;
+renderer.toneMappingExposure = 1.1;
 // Soft studio env — kept low so locker matte + lime guitar stay readable.
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-scene.environmentIntensity = 0.16;
+scene.environmentIntensity = 0.2;
 pmrem.dispose();
 app.append(renderer.domElement);
+renderer.domElement.tabIndex = 0;
+renderer.domElement.setAttribute('aria-label', '学生柜子展厅：选择柜子打开柜门，左右方向键切换，Escape 返回全部柜子');
 let sceneDirty = true;
 
 const LOCKER_COUNT = 8;
+let browseLockerCount = LOCKER_COUNT;
 // Wider than the first slim pass; height stays put.
 const LOCKER_WIDTH = 1.22;
 const LOCKER_DEPTH = 0.66;
@@ -72,9 +79,9 @@ const FAR_TARGET = new THREE.Vector3(0, LOCKER_CENTER_Y * 0.98, 0);
 const NEAR_ZOOM = 2.15;
 
 // Soft cool wrap light — clean, healing campus mood.
-scene.add(new THREE.AmbientLight(0xf7f9fb, 0.52));
+scene.add(new THREE.AmbientLight(0xffffff, 0.56));
 
-const hemisphere = new THREE.HemisphereLight(0xffffff, 0x8b939c, 0.36);
+const hemisphere = new THREE.HemisphereLight(0xffffff, 0x7894a8, 0.4);
 scene.add(hemisphere);
 
 const keyLight = new THREE.DirectionalLight(0xffffff, 2.85);
@@ -91,7 +98,7 @@ keyLight.shadow.bias = -0.0002;
 keyLight.shadow.normalBias = 0.04;
 scene.add(keyLight);
 
-const fillLight = new THREE.DirectionalLight(0xc5ced6, 0.12);
+const fillLight = new THREE.DirectionalLight(0xd8efff, 0.18);
 fillLight.position.set(8, 3, 1);
 scene.add(fillLight);
 
@@ -103,17 +110,17 @@ const softBounce = new THREE.PointLight(0xe7edf3, 3.5, 10, 2);
 softBounce.position.set(0, 2, 3);
 scene.add(softBounce);
 
-scene.fog = new THREE.Fog(0xf6f7fa, 32, 60);
+scene.fog = new THREE.Fog(0xffffff, 32, 60);
 
 // Matte light gray — reference cabinet, not the butter yellow.
 const soft = { roughness: 0.88, metalness: 0.06 };
 const materials = {
-  body: new THREE.MeshStandardMaterial({ color: 0x9aa3ac, ...soft }),
-  door: new THREE.MeshStandardMaterial({ color: 0xd8dde3, ...soft }),
-  frame: new THREE.MeshStandardMaterial({ color: 0xa7adb4, ...soft }),
-  recess: new THREE.MeshStandardMaterial({ color: 0x7d868f, roughness: 0.92, metalness: 0.05 }),
-  handle: new THREE.MeshStandardMaterial({ color: 0x5f686f, roughness: 0.88, metalness: 0.08 }),
-  interior: new THREE.MeshStandardMaterial({ color: 0xaeb6be, roughness: 0.92, metalness: 0.04 }),
+  body: new THREE.MeshStandardMaterial({ color: 0xb7c5cf, ...soft }),
+  door: new THREE.MeshStandardMaterial({ color: 0xf0f5f8, ...soft }),
+  frame: new THREE.MeshStandardMaterial({ color: 0xc5d0d8, ...soft }),
+  recess: new THREE.MeshStandardMaterial({ color: 0x718797, roughness: 0.92, metalness: 0.05 }),
+  handle: new THREE.MeshStandardMaterial({ color: 0x526b79, roughness: 0.88, metalness: 0.08 }),
+  interior: new THREE.MeshStandardMaterial({ color: 0xb8ccd8, roughness: 0.92, metalness: 0.04 }),
   pages: new THREE.MeshStandardMaterial({ color: 0xf4f0e6, roughness: 0.9, metalness: 0 }),
   pinkNote: new THREE.MeshStandardMaterial({ color: 0xffc4d6, roughness: 0.95, metalness: 0 }),
   yellowNote: new THREE.MeshStandardMaterial({ color: 0xfff8d0, roughness: 0.95, metalness: 0 }),
@@ -199,7 +206,7 @@ const doorAnims = [];
 function setShadows(root) {
   root.traverse((node) => {
     if (node.isMesh) {
-      node.castShadow = true;
+      node.castShadow = !node.userData.noShadow;
       node.receiveShadow = true;
     }
   });
@@ -1413,7 +1420,7 @@ function createExpandedIdBadge() {
     emissiveIntensity: 0.4,
     ...extra,
   });
-  const cream = new THREE.MeshStandardMaterial({ color: 0xfff3dc, roughness: 0.78, metalness: 0 });
+  const cream = new THREE.MeshStandardMaterial({ color: 0xffedc7, roughness: 0.78, metalness: 0 });
   const clear = new THREE.MeshPhysicalMaterial({
     color: 0xffffff,
     roughness: 0.08,
@@ -1494,7 +1501,7 @@ function createExpandedIdBadge() {
   holder.add(insert);
 
   const print = coverMesh(2.4, 1.52, (ctx, w, h) => {
-    ctx.fillStyle = '#fff3dc';
+    ctx.fillStyle = '#ffedc7';
     ctx.fillRect(0, 0, w, h);
     ctx.fillStyle = '#171a1e';
     ctx.textAlign = 'left';
@@ -1659,7 +1666,7 @@ function createExpandedIdBadge() {
 
   badge.rotation.set(-0.06, -0.12, -0.035);
   badge.userData.restRotation = badge.rotation.clone();
-  const badgeKey = new THREE.PointLight(0xffd4c0, 3.1, 5.2, 1.7);
+  const badgeKey = new THREE.PointLight(0xffc7ad, 2.15, 5.2, 1.7);
   badgeKey.position.set(0.15, 0.35, 1.55);
   badge.add(badgeKey);
   setShadows(badge);
@@ -1973,125 +1980,18 @@ function createBinderStack() {
   return stack;
 }
 
+const cdPlayers = [];
+let hoveredCdPlayer = null;
+let hoveredCdPart = null;
+
 function createOfficePile() {
   const pile = new THREE.Group();
   pile.name = 'office-pile';
-  const black = popMat(0x1c1e22);
-  const paper = popMat(0xe7e2d6);
-  const mugMat = popMat(0xf4f1ea);
-  const orange = popMat(0xe07a32);
-
-  const caseBox = roundedMesh(0.44, 0.1, 0.3, 0.02, black, 2);
-  caseBox.position.y = -0.12;
-  pile.add(caseBox);
-  const grip = boxMesh(0.12, 0.02, 0.02, popMat(0x9aa3ac));
-  grip.position.set(0, -0.15, 0.16);
-  pile.add(grip);
-
-  for (let i = 0; i < 6; i += 1) {
-    const sheet = boxMesh(0.4, 0.012, 0.28, i % 2 ? paper : popMat(0xf6f1e6));
-    sheet.position.set((i - 2) * 0.012, 0.12 + i * 0.016, 0);
-    sheet.rotation.z = (i - 3) * 0.025;
-    pile.add(sheet);
-  }
-
-  const printer = createPrinter();
-  printer.position.y = 0.2;
-  pile.add(printer);
-
-  const mug = cylinder(0.032, 0.03, 0.05, mugMat, 10);
-  mug.position.set(-0.16, 0.36, 0.02);
-  pile.add(mug);
-  const mugHandle = new THREE.Mesh(new THREE.TorusGeometry(0.016, 0.004, 6, 8), mugMat);
-  mugHandle.rotation.y = Math.PI / 2;
-  mugHandle.position.set(-0.192, 0.36, 0.02);
-  pile.add(mugHandle);
-
-  const glasses = new THREE.Group();
-  [-1, 1].forEach((side) => {
-    const lens = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.003, 6, 8), orange);
-    lens.position.x = side * 0.022;
-    glasses.add(lens);
-  });
-  glasses.position.set(0.14, 0.38, 0.02);
-  glasses.rotation.set(-0.7, 0.2, 0.4);
-  pile.add(glasses);
+  const archive = createCdArchive();
+  archive.position.z = 0.1;
+  pile.add(archive);
+  cdPlayers.push(archive);
   return pile;
-}
-
-function createPrinter() {
-  const printer = new THREE.Group();
-  printer.name = 'printer';
-  const cream = new THREE.MeshStandardMaterial({ color: 0xe6d9c4, roughness: 0.52, metalness: 0.05 });
-  const creamDark = new THREE.MeshStandardMaterial({ color: 0xd2c4ae, roughness: 0.58, metalness: 0.04 });
-  const cavity = new THREE.MeshStandardMaterial({ color: 0x2a2826, roughness: 0.88, metalness: 0 });
-  const lcd = new THREE.MeshStandardMaterial({
-    color: 0x314034,
-    roughness: 0.32,
-    metalness: 0.08,
-    emissive: new THREE.Color(0x1c2a18),
-    emissiveIntensity: 0.25
-  });
-
-  const body = roundedMesh(0.42, 0.15, 0.28, 0.018, cream, 2);
-  body.position.y = 0.09;
-  printer.add(body);
-
-  const lid = roundedMesh(0.4, 0.055, 0.26, 0.016, cream, 2);
-  lid.position.y = 0.188;
-  printer.add(lid);
-
-  const inlet = boxMesh(0.22, 0.008, 0.12, creamDark);
-  inlet.position.set(0, 0.214, -0.01);
-  printer.add(inlet);
-
-  const slot = boxMesh(0.22, 0.042, 0.05, cavity);
-  slot.position.set(0, 0.1, 0.125);
-  printer.add(slot);
-
-  const outTray = roundedMesh(0.24, 0.012, 0.14, 0.008, creamDark, 1);
-  outTray.position.set(0, 0.062, 0.2);
-  printer.add(outTray);
-
-  const drawer = roundedMesh(0.38, 0.042, 0.26, 0.012, cream, 1);
-  drawer.position.set(0, 0.02, 0.008);
-  printer.add(drawer);
-
-  [-1, 1].forEach((side) => {
-    for (let i = 0; i < 6; i += 1) {
-      const vent = boxMesh(0.008, 0.016, 0.036, creamDark);
-      vent.position.set(side * 0.208, 0.1, -0.04 + i * 0.02);
-      printer.add(vent);
-    }
-  });
-
-  const screen = boxMesh(0.07, 0.012, 0.004, lcd);
-  screen.position.set(-0.05, 0.175, 0.13);
-  printer.add(screen);
-  for (let i = 0; i < 3; i += 1) {
-    const btn = cylinder(0.006, 0.006, 0.006, creamDark, 8);
-    btn.rotation.x = Math.PI / 2;
-    btn.position.set(0.03 + i * 0.018, 0.175, 0.132);
-    printer.add(btn);
-  }
-  const knob = cylinder(0.01, 0.01, 0.008, creamDark, 10);
-  knob.rotation.x = Math.PI / 2;
-  knob.position.set(0.1, 0.175, 0.132);
-  printer.add(knob);
-
-  const page = coverMesh(0.16, 0.28, (ctx, w, h) => {
-    ctx.fillStyle = '#f7f4ee';
-    ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = '#2f4a32';
-    ctx.textAlign = 'center';
-    ctx.font = '300 48px "PingFang SC", sans-serif';
-    ctx.fillText('校园', w / 2, h * 0.38);
-    ctx.fillText('笔记', w / 2, h * 0.52);
-  });
-  page.rotation.x = -Math.PI / 2;
-  page.position.set(0, 0.078, 0.26);
-  printer.add(page);
-  return printer;
 }
 
 function createRedFolder() {
@@ -2256,9 +2156,10 @@ function createLocker(index, { empty = false } = {}) {
     locker.add(binders);
 
     const folder = createRedFolder();
-    folder.scale.setScalar(1.45);
-    folder.position.set(0.02, 0.88, -0.08);
-    folder.rotation.set(0.1, -0.15, -0.08);
+    // Lay the loose stationery flat below the taller CD players, not through their discs.
+    folder.scale.setScalar(0.55);
+    folder.position.set(0.02, 0.12, -0.08);
+    folder.rotation.set(-Math.PI / 2, 0, 0);
     locker.add(folder);
   }
 
@@ -2297,6 +2198,19 @@ lockerBank.children.forEach((locker) => {
     node.userData.baseColor = mat.color.clone();
   });
 });
+
+const vividMaterials = new Set();
+[lockerBank, expandedBadge].forEach((group) => group.traverse((node) => {
+  if (!node.isMesh) return;
+  const nodeMaterials = Array.isArray(node.material) ? node.material : [node.material];
+  nodeMaterials.forEach((material) => {
+    if (!material?.color || vividMaterials.has(material)) return;
+    vividMaterials.add(material);
+    const hsl = {};
+    material.color.getHSL(hsl);
+    if (hsl.s > 0.06) material.color.setHSL(hsl.h, Math.min(1, hsl.s * 1.18 + 0.035), hsl.l);
+  });
+}));
 
 const {
   locker: submissionLocker,
@@ -2506,6 +2420,13 @@ function isIdBadge(object) {
   return false;
 }
 
+function isWorkPlayer(object) {
+  for (let node = object; node; node = node.parent) {
+    if (node.name === 'office-pile') return true;
+  }
+  return false;
+}
+
 function restoreOrbitLimits() {
   controls.minAzimuthAngle = -0.08;
   controls.maxAzimuthAngle = 0.08;
@@ -2581,7 +2502,7 @@ function closeBadgeDetail() {
   expandedBadge.rotation.copy(expandedBadge.userData.restRotation);
   lockerBank.visible = true;
   doorAnims[3].open = true;
-  focusBadge();
+  openLocker(3);
 }
 
 function setIntroCamera(distance) {
@@ -2594,6 +2515,14 @@ function setIntroCamera(distance) {
   sceneDirty = true;
 }
 
+function browseCameraDistance() {
+  return Math.max(window.innerWidth < 600 ? 1.15 : 1, (1.3 / camera.aspect) * browseLockerCount / LOCKER_COUNT);
+}
+
+function fitBrowseCamera() {
+  setIntroCamera(browseCameraDistance());
+}
+
 function lockerWorldX(index) {
   return -TOTAL_WIDTH / 2 + LOCKER_WIDTH / 2 + index * (LOCKER_WIDTH + GAP);
 }
@@ -2601,9 +2530,46 @@ function lockerWorldX(index) {
 function setFocusArrows() {
   const prev = document.getElementById('cam-prev');
   const next = document.getElementById('cam-next');
-  const near = focusedLocker >= 0 && !badgeFocus;
-  prev.hidden = !near || focusedLocker === 0;
-  next.hidden = !near || focusedLocker === LOCKER_COUNT - 1;
+  const visible = visibleLockerIndices();
+  const position = visible.indexOf(focusedLocker);
+  const near = position >= 0 && !submissionPreviewActive;
+  prev.hidden = !near || position === 0;
+  next.hidden = !near || position === visible.length - 1;
+  if (!prev.hidden) prev.setAttribute('aria-label', `上一个柜子：${STUDENTS[visible[position - 1]].name}`);
+  if (!next.hidden) next.setAttribute('aria-label', `下一个柜子：${STUDENTS[visible[position + 1]].name}`);
+  document.body.classList.toggle('is-locker-focused', near);
+  const context = document.getElementById('locker-context');
+  context.hidden = !near;
+  if (near) {
+    document.getElementById('locker-student-name').textContent = STUDENTS[focusedLocker].name;
+    document.getElementById('locker-student-grade').textContent = STUDENTS[focusedLocker].grade;
+    document.getElementById('locker-student-link').href = `/students/${focusedLocker + 1}`;
+  }
+}
+
+function visibleLockerIndices() {
+  return lockerBank.children.filter((locker) => locker.visible && Number.isInteger(locker.userData.lockerIndex))
+    .map((locker) => locker.userData.lockerIndex);
+}
+
+function openLocker(index) {
+  if (!visibleLockerIndices().includes(index)) return;
+  if (focusedLocker >= 0 && focusedLocker !== index) doorAnims[focusedLocker].open = false;
+  moveFocus(index);
+  doorAnims[index].open = true;
+  setLockerHoverCard(-1);
+}
+
+function returnToLockers() {
+  if (focusedLocker >= 0) doorAnims[focusedLocker].open = false;
+  moveFocus(-1);
+}
+
+function stepLocker(direction) {
+  if (!lockersInteractive() || focusedLocker < 0) return;
+  const visible = visibleLockerIndices();
+  const next = visible[visible.indexOf(focusedLocker) + direction];
+  if (next !== undefined) openLocker(next);
 }
 
 function moveFocus(index) {
@@ -2614,15 +2580,17 @@ function moveFocus(index) {
   lockerBank.visible = !submissionPreviewActive;
   restoreOrbitLimits();
   controls.enabled = true;
+  const distance = index < 0 ? browseCameraDistance() : 1;
+  const focusTarget = index < 0 ? FAR_TARGET.clone()
+    : new THREE.Vector3(lockerBank.children[index].position.x, FAR_TARGET.y, 0);
+  controls.minDistance = controls.maxDistance = introRestDistance * distance;
   zoomAnim = {
     fromZoom: camera.zoom,
     toZoom: index < 0 ? 1 : NEAR_ZOOM,
     from: controls.target.clone(),
-    to: index < 0 ? FAR_TARGET.clone() : new THREE.Vector3(lockerWorldX(index), FAR_TARGET.y, 0),
+    to: focusTarget,
     fromPos: camera.position.clone(),
-    toPos: (index < 0 ? FAR_TARGET : new THREE.Vector3(lockerWorldX(index), FAR_TARGET.y, 0))
-      .clone()
-      .addScaledVector(introCameraOffset, 1),
+    toPos: focusTarget.clone().addScaledVector(introCameraOffset, distance),
     t: 0,
     followBadge: false,
   };
@@ -2633,14 +2601,14 @@ function moveFocus(index) {
 let hoveredLocker = -1;
 let hoveredBadge = false;
 const lockerHoverCard = document.getElementById('locker-hover-card');
-const lockerNames = ['01号学生', '02号学生', '03号学生', '王文骥', '孙玉洁', '06号学生', '07号学生', '08号学生'];
+const lockerNames = STUDENTS.map((student) => student.name);
 
-function setLockerHoverCard(index, event) {
+function setLockerHoverCard(index, event, profile = false, discs = false) {
   if (!lockerHoverCard) return;
   lockerHoverCard.setAttribute('aria-hidden', String(index < 0));
   if (index < 0) return;
-  lockerHoverCard.querySelector('strong').textContent = `${lockerNames[index]}的柜子`;
-  lockerHoverCard.querySelector('span').textContent = index === 4 ? '千万别点开' : '点击打开看看';
+  lockerHoverCard.querySelector('strong').textContent = discs ? `${lockerNames[index]} · 作品光盘` : profile ? `${lockerNames[index]} · 学生卡` : `${lockerNames[index]}的柜子`;
+  lockerHoverCard.querySelector('span').textContent = discs ? '点击打开 CD 光盘库 →' : profile ? '点击查看学生卡模型 →' : '点击打开柜门 →';
   lockerHoverCard.style.left = `${Math.min(event.clientX, window.innerWidth - 230)}px`;
   lockerHoverCard.style.top = `${Math.min(event.clientY, window.innerHeight - 120)}px`;
 }
@@ -2697,7 +2665,7 @@ function hoverLockerAt(event) {
   }
   setPointerFromEvent(event);
   raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObjects(lockerBank.children, true);
+  const hits = raycaster.intersectObjects(lockerBank.children.filter((locker) => locker.visible), true);
   hoveredBadge = hits.some((hit) => isIdBadge(hit.object));
   const index = hits.length > 0 ? doorIndexFromObject(hits[0].object) : -1;
   if (index !== hoveredLocker) {
@@ -2705,12 +2673,20 @@ function hoverLockerAt(event) {
     hoveredLocker = index;
     if (hoveredLocker >= 0) paintLocker(hoveredLocker, true);
   }
-  setLockerHoverCard(doorAnims[hoveredLocker]?.open ? -1 : hoveredLocker, event);
-  renderer.domElement.style.cursor = hoveredBadge || hoveredLocker >= 0 ? 'pointer' : '';
+  const profileHover = hoveredBadge && focusedLocker === 3 && doorAnims[3].progress > 0.6;
+  const discHover = focusedLocker === 3 && doorAnims[3].progress > 0.6 && isWorkPlayer(hits[0]?.object);
+  const archiveHit = discHover ? cdArchiveHit(hits[0]?.object) : null;
+  hoveredCdPlayer = archiveHit?.archive || null;
+  hoveredCdPart = archiveHit?.part || null;
+  const accessoriesHover = hoveredCdPart === 'accessories';
+  setLockerHoverCard(accessoriesHover ? -1 : discHover || profileHover ? 3 : doorAnims[hoveredLocker]?.open ? -1 : hoveredLocker, event, profileHover, discHover);
+  renderer.domElement.style.cursor = !accessoriesHover && (hoveredBadge || hoveredLocker >= 0) ? 'pointer' : '';
 }
 
 renderer.domElement.addEventListener('pointermove', hoverLockerAt);
 renderer.domElement.addEventListener('pointerleave', () => {
+  hoveredCdPlayer = null;
+  hoveredCdPart = null;
   if (hoveredLocker >= 0) paintLocker(hoveredLocker, false);
   hoveredLocker = -1;
   hoveredBadge = false;
@@ -2760,36 +2736,28 @@ renderer.domElement.addEventListener('pointerup', (event) => {
 
   setPointerFromEvent(event);
   raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObjects(lockerBank.children, true);
-  const badgeHit = hits.find((hit) => isIdBadge(hit.object));
+  const hits = raycaster.intersectObjects(lockerBank.children.filter((locker) => locker.visible), true);
   if (hits.length > 0) setLockerHoverCard(-1);
   if (hits.length === 0) {
     if (focusedLocker < 0) return;
-    doorAnims[focusedLocker].open = false;
-    moveFocus(-1);
+    returnToLockers();
     return;
   }
-  if (badgeHit) {
-    if (badgeFocus) {
-      openBadgeDetail();
-      return;
+  if (focusedLocker === 3 && doorAnims[3].progress > 0.6 && isWorkPlayer(hits[0]?.object)) {
+    if (cdArchiveHit(hits[0]?.object)?.opensLibrary) {
+      window.dispatchEvent(new CustomEvent('browse-discs', { detail: 3 }));
     }
-    if (focusedLocker >= 0 && focusedLocker !== 3) doorAnims[focusedLocker].open = false;
+    return;
+  }
+  if (focusedLocker === 3 && doorAnims[3].progress > 0.6 && hits.some((hit) => isIdBadge(hit.object))) {
     focusBadge();
+    openBadgeDetail();
     return;
   }
   const index = doorIndexFromObject(hits[0].object);
   if (index < 0) return;
-  if (badgeFocus && index === 3) {
-    doorAnims[3].open = true;
-    moveFocus(3);
-    doorAnims[3].open = true;
-    return;
-  }
   if (focusedLocker !== index) {
-    if (focusedLocker >= 0) doorAnims[focusedLocker].open = false;
-    moveFocus(index);
-    doorAnims[index].open = true;
+    openLocker(index);
     return;
   }
   toggleDoor(index);
@@ -2810,7 +2778,8 @@ lockerBank.add(transitionGlow);
 
 function markNav(id) {
   document.querySelectorAll('#top-nav button').forEach((button) => {
-    button.toggleAttribute('aria-current', button.id === id);
+    if (button.id === id) button.setAttribute('aria-current', 'page');
+    else button.removeAttribute('aria-current');
   });
 }
 
@@ -2901,12 +2870,27 @@ document.getElementById('nav-about').addEventListener('click', () => {
 });
 
 document.getElementById('cam-prev').addEventListener('click', () => {
-  if (!lockersInteractive() || focusedLocker <= 0) return;
-  moveFocus(focusedLocker - 1);
+  stepLocker(-1);
 });
 document.getElementById('cam-next').addEventListener('click', () => {
-  if (!lockersInteractive() || focusedLocker < 0 || focusedLocker >= LOCKER_COUNT - 1) return;
-  moveFocus(focusedLocker + 1);
+  stepLocker(1);
+});
+document.getElementById('locker-overview').addEventListener('click', returnToLockers);
+window.addEventListener('browse-overview', () => { if (focusedLocker >= 0) returnToLockers(); });
+window.addEventListener('browse-open-locker', ({ detail }) => {
+  if (!lockersInteractive() || document.body.classList.contains('browse-content')) return;
+  openLocker(detail);
+  renderer.domElement.focus({ preventScroll: true });
+});
+window.addEventListener('keydown', (event) => {
+  if (focusedLocker < 0 || !document.body.classList.contains('is-locker-focused') || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    event.preventDefault();
+    stepLocker(event.key === 'ArrowLeft' ? -1 : 1);
+  } else if (event.key === 'Escape') {
+    if (badgeDetailOpen) closeBadgeDetail();
+    else returnToLockers();
+  }
 });
 
 function nearestLocker(x) {
@@ -2922,24 +2906,6 @@ function nearestLocker(x) {
   return best;
 }
 
-renderer.domElement.addEventListener('wheel', (event) => {
-  if (focusedLocker < 0) return;
-  event.preventDefault();
-  event.stopImmediatePropagation();
-  if (badgeFocus) {
-    doorAnims[3].open = true;
-    moveFocus(3);
-    doorAnims[3].open = true;
-  }
-  zoomAnim = null;
-  const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-  const minX = lockerWorldX(0);
-  const maxX = lockerWorldX(LOCKER_COUNT - 1);
-  controls.target.x = THREE.MathUtils.clamp(controls.target.x + delta * 0.004, minX, maxX);
-  focusedLocker = nearestLocker(controls.target.x);
-  setFocusArrows();
-}, { capture: true, passive: false });
-
 function resizeScene() {
   const width = window.innerWidth;
   const height = window.innerHeight;
@@ -2949,11 +2915,16 @@ function resizeScene() {
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(width, height);
+  if (document.body.classList.contains('browse-preview') && !document.body.classList.contains('is-submit')) {
+    if (focusedLocker >= 0) moveFocus(focusedLocker);
+    else fitBrowseCamera();
+  }
   sceneDirty = true;
 }
 
 function animate() {
   const dt = Math.min(clock.getDelta(), 0.05);
+  if (document.body.classList.contains('browse-content') || document.body.classList.contains('is-home-cd')) return;
   // The works scene has its own renderer; do not draw the fully hidden locker scene too.
   if (!switchingWorks && worksProgress === 1) return;
   if (switchingWorks) {
@@ -2992,6 +2963,10 @@ function animate() {
     );
     doorPivots[index].rotation.y = DOOR_OPEN_ANGLE * easeInOutCubic(anim.progress);
     if (anim.progress !== previous) sceneDirty = true;
+  });
+  cdPlayers.forEach(player => {
+    const hovered = player === hoveredCdPlayer && lockersInteractive() && focusedLocker === 3 && doorAnims[3].progress > 0.6;
+    if (updateCdArchive(player, hovered ? hoveredCdPart : null, dt, reducedTransitionMotion.matches)) sceneDirty = true;
   });
   if (submissionPreviewActive) {
     const previous = submissionDoorAnim.progress;
@@ -3056,35 +3031,50 @@ function animate() {
 window.addEventListener('resize', resizeScene);
 resizeScene();
 renderer.setAnimationLoop(animate);
-startIntro({
-  onReveal(fromEntry) {
-    if (fromEntry) {
-      setPath('/students', true);
-      markNav('nav-lockers');
-    }
-    hideWorks();
-    document.body.classList.remove('is-switching');
-    app.style.opacity = '';
-    if (focusedLocker >= 0 || zoomAnim) {
-      controls.minDistance = controls.maxDistance = introRestDistance;
-      controls.enabled = true;
-      return;
-    }
-    controls.enabled = false;
-    introArrive = { t: 0, from: INTRO_FAR, to: 1 };
-    setIntroCamera(INTRO_FAR);
-  }
+window.addEventListener('browse-grade', ({ detail: indices }) => {
+  doorAnims.forEach((anim) => { anim.open = false; });
+  focusedLocker = -1;
+  badgeFocus = badgeDetailOpen = false;
+  expandedBadge.visible = false;
+  lockerBank.visible = !submissionPreviewActive;
+  zoomAnim = null;
+  browseLockerCount = indices.length;
+  if (hoveredLocker >= 0) paintLocker(hoveredLocker, false);
+  hoveredLocker = -1;
+  setLockerHoverCard(-1);
+  lockerBank.children.forEach((locker) => {
+    const index = locker.userData.lockerIndex;
+    if (!Number.isInteger(index)) return;
+    const order = indices.indexOf(index);
+    locker.visible = order >= 0;
+    if (order >= 0) locker.position.x = (order - (indices.length - 1) / 2) * (LOCKER_WIDTH + GAP);
+  });
+  setFocusArrows();
+  if (document.body.classList.contains('is-lockers')) fitBrowseCamera();
+  sceneDirty = true;
 });
-
-const routeButtons = {
-  '/students': 'nav-lockers',
-  '/works': 'nav-works',
-  '/submit': 'nav-submit',
-  '/about': 'nav-about',
-};
-function openCurrentRoute() {
-  const button = document.getElementById(routeButtons[location.pathname]);
-  if (button) button.click();
-}
-window.addEventListener('popstate', openCurrentRoute);
-if (location.pathname !== '/') queueMicrotask(openCurrentRoute);
+initBrowse((mode) => {
+  hideWorks();
+  hidePortals();
+  worksTarget = worksProgress = 0;
+  switchingWorks = false;
+  setLockerHoverCard(-1);
+  document.body.classList.remove('is-switching', 'is-works', 'is-work-detail', 'is-lockers');
+  setSubmissionPreview(mode === 'submit');
+  lockerBank.position.copy(lockerRestPosition);
+  lockerBank.scale.copy(lockerRestScale);
+  app.style.opacity = '';
+  introArrive = zoomAnim = null;
+  focusedLocker = -1;
+  badgeFocus = badgeDetailOpen = false;
+  expandedBadge.visible = false;
+  doorAnims.forEach((anim) => { anim.open = false; });
+  setFocusArrows();
+  fitBrowseCamera();
+  controls.enabled = mode === 'students';
+  controls.enableZoom = mode !== 'students';
+  renderer.domElement.style.touchAction = mode === 'students' ? 'pan-y' : 'none';
+  if (mode === 'submit' || mode === 'about') showPortal(mode);
+  else document.body.classList.add('is-lockers');
+  sceneDirty = true;
+});

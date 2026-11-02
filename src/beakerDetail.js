@@ -23,7 +23,6 @@ export function createBeakerDetail(onBack) {
           <img src="/assets/works/beaker-crow/scene-3.jpg" alt="烧杯与鸦榨 炼金开场" loading="lazy">
         </div>
         <h3>02 视频简介</h3>
-        <video controls playsinline preload="none" poster="${BEAKER_FRONT}" aria-label="烧杯与鸦榨 演示视频"><source src="/assets/works/beaker-crow/demo.mov" type="video/quicktime"></video>
       </div>
     </div>`;
   document.querySelector('#works').append(panel);

@@ -13,6 +13,7 @@ import { BEAKER_FRONT, createBeakerDetail } from './beakerDetail.js';
 import { PANTHEON_BACK, createPantheonDetail } from './pantheonDetail.js';
 import { SHI_BACK, SHI_FRONT, createShiDaoDetail } from './shiDaoDetail.js';
 import { detailPhases, pageProgress } from './workDetailMotion.js';
+import { standardWorkLayout } from './standardWorkLayout.js';
 
 let renderer;
 let camera;
@@ -24,10 +25,13 @@ let detail = null;
 let detailPanel;
 let detailTween;
 let restoreDetailFocus = () => {};
+let openRoutedDetail;
+let detailRouteBack = null;
 
 function resetDetail() {
   detailTween?.kill();
   detail = null;
+  detailRouteBack = null;
   document.body.classList.remove('is-work-detail');
   if (detailPanel) {
     detailPanel.querySelector('video')?.pause();
@@ -46,13 +50,18 @@ function closeDetail() {
   detailTween?.kill();
   detailTween = gsap.to(detail, {
     progress: 0, duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1,
-    ease: 'none', onComplete() { resetDetail(); restoreDetailFocus(); }
+    ease: 'none', onComplete() {
+      const onBack = detailRouteBack;
+      resetDetail();
+      if (onBack) onBack();
+      else restoreDetailFocus();
+    }
   });
 }
 const DIRECT_DETAIL = new Set([2, 7]);
 
 function bindPageSnap(panel, index) {
-  if (!DIRECT_DETAIL.has(index) || panel.dataset.pageSnap) return;
+  if (!panel.classList.contains('bcw-detail') || !DIRECT_DETAIL.has(index) || panel.dataset.pageSnap) return;
   panel.dataset.pageSnap = '1';
   let snapping = false;
   panel.addEventListener('wheel', (event) => {
@@ -227,7 +236,11 @@ export function initWorks(background = 0xf6f7fa) {
     const factory = detailFactories[index];
     if (!factory) return null;
     if (!detailPanels.has(index)) {
-      const panel = factory(closeDetail);
+      const panel = standardWorkLayout(factory(closeDetail), index);
+      const guide = document.createElement('p');
+      guide.className = 'page-guide';
+      guide.textContent = `作品详情 / ${panel.getAttribute('aria-label').replace(/\s*作品详情$/, '')}`;
+      panel.querySelector('.work-detail__intro').prepend(guide);
       panel.addEventListener('scroll', () => panel.updateLayout?.(), { passive: true });
       detailPanels.set(index, panel);
     }
@@ -255,6 +268,26 @@ export function initWorks(background = 0xf6f7fa) {
         detailPanel.style.pointerEvents = 'auto';
         detailPanel.querySelector('h1').focus({ preventScroll: true });
       }
+    });
+  };
+  openRoutedDetail = (index, onBack, backLabel, authors = []) => {
+    resetDetail();
+    workKinds.clear();
+    angle = targetAngle = (2 - index) / 3;
+    placeDiscs(angle, camera);
+    const selected = discs.find(disc => disc.userData.index === index);
+    if (!selected) return;
+    // Routed entries open one record, never gather the surrounding carousel.
+    discs.forEach(disc => { disc.visible = disc === selected; });
+    selected.position.set(0, 0, 1);
+    selected.rotation.set(0, 0, 0);
+    selected.scale.setScalar(Math.min(camera.top * 0.75, 2));
+    openDetail(selected);
+    detailRouteBack = onBack;
+    if (detailPanel) detailPanel.querySelector('.work-detail__back').textContent = `← 返回${backLabel}`;
+    detailPanel?.querySelectorAll('h2, header p').forEach(heading => {
+      const text = authors.reduce((text, author) => text.replace(new RegExp(`(${author.name}\\s*)\\d{4}级`, 'g'), `$1${author.grade}`), heading.textContent);
+      if (text !== heading.textContent) heading.textContent = text;
     });
   };
   canvas.tabIndex = 0;
@@ -377,7 +410,7 @@ export function initWorks(background = 0xf6f7fa) {
     if (detail) {
       const p = detail.progress;
       const { gather, flip, move, text } = detailPhases(p);
-      const direct = DIRECT_DETAIL.has(detail.disc.userData.index);
+      const direct = detailPanel.classList.contains('bcw-detail') && DIRECT_DETAIL.has(detail.disc.userData.index);
       const scroll = direct
         ? pageProgress(detailPanel.scrollTop, innerHeight)
         : smooth(0, innerHeight, detailPanel.scrollTop);
@@ -387,7 +420,7 @@ export function initWorks(background = 0xf6f7fa) {
       discs.forEach((disc, index) => {
         const pose = detail.poses[index];
         if (disc !== detail.disc) {
-          disc.visible = pose.visible && gather < 0.99;
+          disc.visible = !detailRouteBack && pose.visible && gather < 0.99;
           disc.position.set(
             THREE.MathUtils.lerp(pose.position.x, 0, gather),
             THREE.MathUtils.lerp(pose.position.y, 0, gather),
@@ -453,6 +486,11 @@ export function showWorks(background) {
   }
   document.body.classList.add('is-lockers', 'is-works');
   window.scrollTo(0, 0);
+}
+
+export function showWorkDisc(index, onBack, backLabel = '全部作品', authors = []) {
+  showWorks();
+  openRoutedDetail(index, onBack, backLabel, authors);
 }
 
 export function hideWorks() {

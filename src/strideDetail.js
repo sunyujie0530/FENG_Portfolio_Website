@@ -22,7 +22,6 @@ export function createStrideDetail(onBack) {
           <img src="${STRIDE_BACK}" alt="迈步 地铁人潮" loading="lazy">
         </div>
         <h3>02 视频简介</h3>
-        <video controls playsinline preload="none" poster="${STRIDE_BACK}" aria-label="迈步 短片"><source src="/assets/works/stride/demo.mp4" type="video/mp4"></video>
       </div>
     </div>`;
   document.querySelector('#works').append(panel);

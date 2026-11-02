@@ -1,0 +1,28 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+
+const source = readFileSync(new URL('../src/browse.js', import.meta.url), 'utf8');
+const render = source.slice(source.indexOf('const render = () =>'));
+assert.ok(render.indexOf("landing.hidden = mode !== 'students'") < render.indexOf("setLandingActive(mode === 'students')"), 'Show landing before measuring its text.');
+assert.ok(!source.includes("crumbs([['全部作品']])"));
+assert.ok(!source.includes('id="student-home-back"'));
+assert.ok(source.includes('src="/assets/upload-folder.png" alt=""'));
+assert.ok(source.includes("submitButton.setAttribute('aria-label', '作品上传')"));
+assert.ok(source.includes('<span>作品上传</span>'));
+const icon = readFileSync(new URL('../public/assets/upload-folder.png', import.meta.url));
+assert.deepEqual([...icon.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+const context = vm.createContext({ colorOf: () => '#abc', kinds: { game: '游戏设计' }, authorLinks: () => '<a>作者名</a>' });
+vm.runInContext(source.slice(source.indexOf('function card(work)'), source.indexOf('export function initBrowse')), context);
+const markup = context.card({ id: 'demo', title: '作品名', kind: 'game', cover: '/cover.png', summary: '不应显示的简介' });
+assert.ok(markup.includes('作品名'));
+assert.ok(markup.includes('作者名'));
+assert.ok(markup.includes('游戏设计'));
+assert.ok(markup.includes('href="/works/demo"'));
+assert.ok(markup.includes('class="record-disc" aria-hidden="true"'));
+assert.ok(!markup.includes('查看作品 ↗'));
+assert.ok(!markup.includes('不应显示的简介'));
+assert.ok(!markup.includes('<p>'));
+const theme = readFileSync(new URL('../src/uiTheme.css', import.meta.url), 'utf8');
+assert.ok(theme.includes('.collection-tools .kind-tabs button:is([aria-pressed="true"],:active)'));
+console.log('Browse presentation: visible-before-measure, minimal clickable cards and recessed filters passed.');

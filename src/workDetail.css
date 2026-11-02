@@ -60,6 +60,7 @@ body.is-work-detail #works-scene { position: absolute; inset: 0; z-index: 2; poi
 }
 .bcw-media { box-sizing: border-box; }
 .work-detail__poster { display: block; width: 100%; height: auto; }
+.work-detail__body video { display:block; width:100%; height:auto; aspect-ratio:16 / 9; background:#000; }
 .bcw-layout { position: relative; min-height: 200vh; }
 .bcw-author, .bcw-copy, .bcw-section, .bcw-media { position: absolute; }
 .bcw-author h1 { width: max-content; max-width: 100%; white-space: nowrap; }
