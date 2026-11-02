@@ -8,7 +8,7 @@ export function navigationGuide({ path, origin = '/works', studentIndex = null, 
   if (path.startsWith('/works/')) {
     const author = origin.match(/^\/students\/(\d+)(?:\/discs)?$/);
     const work = works.find(work => path === `/works/${work.id}`);
-    return author && work ? `${studentTrail(Number(author[1]) - 1)} / 作品 / ${work.title}` : '全部作品 / 作品详情';
+    return author && work ? `${studentTrail(Number(author[1]) - 1)} / 作品详情` : '全部作品 / 作品详情';
   }
   return null;
 }

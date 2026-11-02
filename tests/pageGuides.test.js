@@ -44,8 +44,8 @@ for (const [state, expected] of [
   [{ path: '/students', studentIndex: 3, card: true }, `${base} / 学生卡`],
   [{ path: '/students/4/discs' }, `${base} / 作品详情`],
   [{ path: '/students/4' }, `${base} / 作品详情`],
-  [{ path: '/works/barbarian', origin: '/students/4/discs' }, `${base} / 作品 / 野蛮人战士`],
-  [{ path: '/works/barbarian', origin: '/students/4' }, `${base} / 作品 / 野蛮人战士`],
+  [{ path: '/works/barbarian', origin: '/students/4/discs' }, `${base} / 作品详情`],
+  [{ path: '/works/barbarian', origin: '/students/4' }, `${base} / 作品详情`],
   [{ path: '/works/barbarian', origin: '/works' }, '全部作品 / 作品详情'],
 ]) assert.equal(navigationGuide(state, students, works), expected);
 assert.ok(read('src/main.js').includes("new CustomEvent('browse-locker-context'"));
