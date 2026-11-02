@@ -1,0 +1,37 @@
+/* One fixed scene, two scroll endpoints; the same text moves between them. */
+body.browse-preview #top-nav { border-bottom:0; }
+body.browse-preview.is-student-home { height:200vh; overflow-x:hidden; overflow-y:auto; background:#fff; }
+body.browse-preview.is-student-home.is-locker-focused { overflow-y:hidden; }
+body.browse-preview.is-student-home .student-landing { inset:0; }
+body.browse-preview.is-student-home .stage { background:#fff; }
+body.browse-preview.is-student-home #app { transform:translateY(var(--landing-cabinet-y,0px)); }
+body.browse-preview.is-student-home.is-locker-focused #app { transform:none; }
+body.browse-preview.is-student-home .landing-heading { position:absolute; inset:0; }
+body.browse-preview.is-student-home .landing-heading h1 { display:contents; }
+body.browse-preview.is-student-home .landing-heading h1 span {
+  position:absolute; display:block; white-space:nowrap; font-weight:650;
+  line-height:1.2; letter-spacing:-.04em; color:#101310;
+}
+body.browse-preview.is-student-home .landing-summary { display:contents; }
+body.browse-preview.is-student-home .landing-summary span {
+  position:absolute; display:block; white-space:nowrap; line-height:1.7;
+  color:#252b25; letter-spacing:0;
+}
+body.browse-preview #student-start {
+  position:absolute; top:42vh; left:50%; transform:translateX(-50%);
+  border:0; border-radius:999px; padding:10px 32px; background:#f3f4f3;
+  color:#171a17; font:400 16px/1.5 var(--ui-font); cursor:pointer;
+  opacity:calc(1 - var(--landing-progress,0) * 3); pointer-events:auto;
+}
+body.browse-preview #student-start:hover { background:#e7eae6; box-shadow:0 3px 9px #252b2514; }
+body.browse-preview.is-student-home .grade-picker {
+  top:auto; bottom:12vh; left:50%; right:auto; transform:translateX(-50%);
+  opacity:clamp(0,calc((var(--landing-progress,0) - .65) / .35),1);
+}
+body.browse-preview.is-student-home .grade-picker > .eyebrow { display:none; }
+body.browse-preview.is-student-home .grade-picker .kind-tabs { flex-wrap:nowrap; }
+body.browse-preview.is-student-home.is-locker-focused .grade-picker { display:none; }
+@media(max-width:699px) {
+  body.browse-preview #student-start { top:45vh; font-size:14px; padding:9px 26px; }
+  body.browse-preview.is-student-home .grade-picker { bottom:17vh; }
+}

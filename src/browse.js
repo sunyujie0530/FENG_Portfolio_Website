@@ -10,6 +10,7 @@ import { createBeakerDetail } from './beakerDetail.js';
 import { createShiDaoDetail } from './shiDaoDetail.js';
 import { createSlimeDetail } from './slimeDetail.js';
 import { mountDiscRoom } from './discRoom.js';
+import { initStudentLanding } from './studentLanding.js';
 
 export const STUDENTS = [
   { name: '王文睿', en: 'WANG WENRUI', color: '#6d76ac', grade: '2024级', bio: '以空间转换与双人协作为切入点，探索游戏机制和玩家之间的关系。', tags: '游戏设计 / 交互体验' },
@@ -59,10 +60,11 @@ export function initBrowse(showScene) {
   document.body.append(root);
   const landing = document.createElement('section');
   landing.className = 'student-landing';
-  landing.innerHTML = `<div class="landing-heading"><p class="eyebrow">FENG / STUDENT DIRECTORY</p><h1>八扇柜门，<br>各自成世界<span>。</span></h1><p>从一个人出发，认识一组创作。<br>点击柜子打开柜门，使用左右箭头切换浏览。</p><a class="text-link" href="/works">也可以从全部作品开始 ↗</a></div>
+  landing.innerHTML = `<div class="landing-heading"><h1><span>每一扇柜门，</span><span>都是一位创作者。</span></h1><p class="landing-summary"><span>从一个人出发，认识一组创作。</span><span>点击柜门，探索他们的作品与创作故事。</span></p><button type="button" id="student-start">开始预览</button></div>
     <div class="grade-picker"><p class="eyebrow">按入学年级浏览</p><div class="kind-tabs" role="group" aria-label="学生年级筛选"><button type="button" data-grade="all" aria-pressed="true">全部</button><button type="button" data-grade="2024级" aria-pressed="false">2024级</button><button type="button" data-grade="2025级" aria-pressed="false">2025级</button></div></div>
     <nav class="locker-access" aria-label="键盘选择学生">${STUDENTS.map((s, i) => `<a href="/students/${i + 1}" data-student="${i}">${String(i + 1).padStart(2, '0')} · ${s.name} · ${s.grade}</a>`).join('')}</nav>`;
   document.body.append(landing);
+  const setLandingActive = initStudentLanding(landing);
   let grade = 'all';
   const selectGrade = (value) => {
     grade = value;
@@ -116,6 +118,7 @@ export function initBrowse(showScene) {
     const mode = path === '/submit' ? 'submit' : path === '/about' ? 'about' : path === '/students' ? 'students' : 'content';
     showScene(mode);
     document.body.classList.toggle('browse-content', mode === 'content');
+    setLandingActive(mode === 'students');
     landing.hidden = mode !== 'students';
     root.hidden = mode !== 'content';
     document.querySelector('#stage').setAttribute('aria-hidden', String(mode === 'content'));

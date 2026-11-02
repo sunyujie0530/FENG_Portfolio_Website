@@ -10,6 +10,7 @@ import { hidePortals, showPortal } from './portal.js';
 import { initBrowse, STUDENTS } from './browse.js';
 import { createCdArchive, updateCdArchive, cdArchiveHit } from './cdArchive.js';
 import './uiTheme.css';
+import './studentLanding.css';
 
 const app = document.querySelector('#app');
 const scene = new THREE.Scene();
@@ -3069,6 +3070,8 @@ initBrowse((mode) => {
   setFocusArrows();
   fitBrowseCamera();
   controls.enabled = mode === 'students';
+  controls.enableZoom = mode !== 'students';
+  renderer.domElement.style.touchAction = mode === 'students' ? 'pan-y' : 'none';
   if (mode === 'submit' || mode === 'about') showPortal(mode);
   else document.body.classList.add('is-lockers');
   sceneDirty = true;
