@@ -59,6 +59,11 @@ export function initBrowse(showScene) {
   root.id = 'browse';
   root.setAttribute('aria-label', '作品集浏览');
   document.body.append(root);
+  const pageGuide = document.createElement('p');
+  pageGuide.id = 'page-location';
+  pageGuide.className = 'page-guide';
+  pageGuide.setAttribute('aria-label', '当前页面导览');
+  document.body.append(pageGuide);
   const landing = document.createElement('section');
   landing.className = 'student-landing';
   landing.innerHTML = `<div class="landing-heading"><h1><span>每一扇柜门，</span><span>都是一位创作者。</span></h1><p class="landing-summary"><span>从一个人出发，认识一组创作。</span><span>点击柜门，探索他们的作品与创作故事。</span></p><button type="button" id="student-start">开始预览</button><a class="text-link landing-works-link" href="/works" hidden>从全部作品开始 ↗</a></div>
@@ -105,6 +110,16 @@ export function initBrowse(showScene) {
     render();
   };
   const crumbs = (parts) => `<nav class="breadcrumbs" aria-label="当前位置"><a href="/">首页</a>${parts.map(([label, href]) => `<span>/</span>${href ? `<a href="${href}">${label}</a>` : `<span aria-current="page">${label}</span>`}`).join('')}</nav>`;
+  const syncPageGuide = () => {
+    const path = location.pathname;
+    const source = path === '/students' ? landing.querySelector('.page-guide')
+      : path === '/submit' ? document.querySelector('#submit-view .page-guide')
+      : path === '/about' ? document.querySelector('#about-view .page-guide')
+      : path.startsWith('/works/') ? document.querySelector('.work-detail:not([hidden]) .page-guide')
+      : root.querySelector('.page-guide');
+    pageGuide.textContent = path === '/' ? '' : source?.textContent || '';
+    pageGuide.hidden = !pageGuide.textContent;
+  };
   const syncLandingNav = () => {
     const home = location.pathname === '/';
     landing.querySelector('.landing-page-guide').hidden = home;
@@ -113,6 +128,7 @@ export function initBrowse(showScene) {
       else button.removeAttribute('aria-current');
     });
     document.title = `${home ? '首页' : '学生展厅'} · FENG`;
+    syncPageGuide();
   };
   window.addEventListener('browse-landing-change', syncLandingNav);
   const renderResults = () => {
@@ -169,6 +185,7 @@ export function initBrowse(showScene) {
     }
     document.title = `${discMatch ? `${STUDENTS[discStudentIndex].name}的作品光盘库` : student?.name || work?.title || (mode === 'students' ? '学生展厅' : mode === 'about' ? '关于' : mode === 'submit' ? '作品投稿' : '全部作品')} · FENG`;
     if (mode === 'students') syncLandingNav();
+    else syncPageGuide();
     root.scrollTop = path === '/works' ? listScroll : 0;
     if (current && !work) {
       const focusTarget = path === '/works' && restoreFocus ? root.querySelector(`a[href="${restoreFocus}"]`) : root.querySelector('h1');
