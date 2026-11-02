@@ -8,7 +8,8 @@ assert.ok(render.indexOf("landing.hidden = mode !== 'students'") < render.indexO
 assert.ok(!source.includes("crumbs([['全部作品']])"));
 assert.ok(!source.includes('id="student-home-back"'));
 assert.ok(source.includes('src="/assets/upload-folder.png" alt=""'));
-assert.ok(source.includes("submitButton.setAttribute('aria-label', '作品投稿')"));
+assert.ok(source.includes("submitButton.setAttribute('aria-label', '作品上传')"));
+assert.ok(source.includes('<span>作品上传</span>'));
 const icon = readFileSync(new URL('../public/assets/upload-folder.png', import.meta.url));
 assert.deepEqual([...icon.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
 const context = vm.createContext({ colorOf: () => '#abc', kinds: { game: '游戏设计' }, authorLinks: () => '<a>作者名</a>' });
