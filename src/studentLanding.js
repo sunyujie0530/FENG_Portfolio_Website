@@ -41,6 +41,20 @@ export function cdIntroMarkup(works) {
   </section>`;
 }
 
+export function homeAboutMarkup(students) {
+  const published = students.filter(student => student.tags !== '资料待补充');
+  const grades = [...new Set(published.map(student => student.grade.replace('级', '')))].sort();
+  return `<section class="home-about" id="home-about" aria-labelledby="home-about-title" inert>
+    <div class="home-about-grid">
+      <div class="home-about-name"><p>About</p><h2 id="home-about-title">枫门</h2></div>
+      <div class="home-about-mentor"><h3>朱小枫老师</h3><p>北京师范大学 艺术与传媒学院</p></div>
+      <div class="home-about-cohort"><h3>${published.length}位学生</h3><p>${grades.join('–')}<span>级</span></p></div>
+      <div class="home-about-copy"><h3>每一扇柜门背后，是一位创作者；每一张光盘里，是一件作品。</h3><p>你可以从学生出发，了解他们的创作与个性，也可以直接浏览全部作品，发现不同方向的探索与表达。</p></div>
+    </div>
+    <footer class="home-footer"><a class="home-footer-brand" href="/" aria-label="FENG 首页">FENG<span>学生作品集</span></a><p>持续收录，让创作被看见。</p><div><span>© 2026 FENG</span><button id="home-back-top" type="button">返回顶部 ↑</button></div></footer>
+  </section>`;
+}
+
 export function initStudentLanding(landing) {
   const title = [...landing.querySelectorAll('h1 span')];
   const subtitle = [...landing.querySelectorAll('.landing-summary span')];
@@ -48,6 +62,7 @@ export function initStudentLanding(landing) {
   const heading = landing.querySelector('.landing-heading');
   const worksLink = landing.querySelector('.landing-works-link');
   const cdIntro = landing.querySelector('.home-cd-intro');
+  const about = landing.querySelector('.home-about');
   const orbitLinks = [...cdIntro.querySelectorAll('.cd-orbit-link')];
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   let active = false;
@@ -97,9 +112,13 @@ export function initStudentLanding(landing) {
     const f = landingFrame(innerWidth, innerHeight, previewStarted ? innerHeight : 0);
     landing.dataset.directory = String(previewStarted);
     landing.style.setProperty('--home-hero-y', `${previewStarted ? 0 : -savedScroll}px`);
-    landing.style.setProperty('--home-cd-y', `${(1 - scrollProgress) * innerHeight}px`);
+    landing.style.setProperty('--home-cd-y', `${innerHeight - savedScroll}px`);
+    about.hidden = previewStarted;
+    about.inert = previewStarted || savedScroll < innerHeight;
+    landing.style.setProperty('--home-about-y', `${innerHeight * 2 - savedScroll}px`);
+    document.body.style.setProperty('--home-about-height', `${about.offsetHeight}px`);
     cdIntro.hidden = previewStarted;
-    cdIntro.inert = previewStarted || scrollProgress < .8;
+    cdIntro.inert = previewStarted || scrollProgress < .8 || savedScroll >= innerHeight * 2 - (innerWidth < 600 ? 64 : 78);
     heading.inert = !previewStarted && scrollProgress > .2;
     syncOrbit();
     landing.querySelector('.locker-access').inert = !previewStarted && scrollProgress > .1;
@@ -163,6 +182,15 @@ export function initStudentLanding(landing) {
     start.focus({ preventScroll: true });
   };
   window.addEventListener('browse-home', returnHome);
+  window.addEventListener('browse-about', () => {
+    if (!active || previewStarted) return;
+    window.scrollTo({ top: innerHeight * 2, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+  });
+  landing.querySelector('#home-back-top').addEventListener('click', () => {
+    if (location.hash === '#about') history.replaceState({ ...history.state }, '', '/');
+    window.scrollTo({ top: 0, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+    start.focus({ preventScroll: true });
+  });
   return (enabled) => {
     active = enabled;
     if (enabled) {

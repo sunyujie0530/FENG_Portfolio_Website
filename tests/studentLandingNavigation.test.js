@@ -5,13 +5,13 @@ const listeners = new Map();
 const frames = new Map();
 let frameId = 0;
 const element = () => ({
-  dataset: {}, style: { setProperty(name, value) { this[name] = value; } }, offsetWidth: 100,
+  dataset: {}, style: { setProperty(name, value) { this[name] = value; } }, offsetWidth: 100, offsetHeight: 560,
   addEventListener(type, fn) { this[type] = fn; },
   focus() { this.focused = true; }, matches() { return false; },
 });
 const start = element(), picker = element(), selected = element();
 picker.querySelector = () => selected;
-const nodes = new Map(['.landing-heading', '.landing-works-link', '.home-cd-intro', '.locker-access'].map(key => [key, element()]));
+const nodes = new Map(['.landing-heading', '.landing-works-link', '.home-cd-intro', '.locker-access', '.home-about', '#home-back-top'].map(key => [key, element()]));
 nodes.set('#student-start', start);
 nodes.set('.grade-picker', picker);
 nodes.get('.home-cd-intro').querySelectorAll = () => [];
@@ -48,12 +48,21 @@ const expectHome = () => {
 };
 active(true);
 expectHome();
+window.dispatchEvent(new Event('browse-about')); flush();
+assert.equal(window.scrollY, innerHeight * 2);
+assert.equal(nodes.get('.home-about').hidden, false);
+assert.equal(nodes.get('.home-about').inert, false);
+assert.equal(landing.style['--home-cd-y'], '-720px');
+assert.equal(landing.style['--home-about-y'], '0px');
+nodes.get('#home-back-top').click(); flush();
+expectHome();
 start.click(); flush();
 assert.equal(entries.length, 2);
 assert.equal(location.pathname, '/students');
 assert.equal(landing.dataset.directory, 'true');
 assert.equal(bodyClasses.has('is-student-directory'), true);
 assert.equal(start.hidden, true);
+assert.equal(nodes.get('.home-about').hidden, true);
 for (const scroll of [0, 360, 1440]) {
   window.scrollY = scroll; window.dispatchEvent(new Event('scroll')); flush();
   assert.equal(landing.style['--landing-progress'], 1);

@@ -10,7 +10,7 @@ import { createBeakerDetail } from './beakerDetail.js';
 import { createShiDaoDetail } from './shiDaoDetail.js';
 import { createSlimeDetail } from './slimeDetail.js';
 import { mountDiscRoom } from './discRoom.js';
-import { initStudentLanding, cdIntroMarkup } from './studentLanding.js';
+import { initStudentLanding, cdIntroMarkup, homeAboutMarkup } from './studentLanding.js';
 import { showWorkDisc } from './worksDiscs.js';
 import { navigationGuide } from './navigationGuide.js';
 
@@ -54,6 +54,7 @@ function card(work) {
 export function initBrowse(showScene) {
   document.body.classList.add('browse-preview');
   const nav = document.querySelector('#top-nav');
+  nav.querySelector('#nav-about').hidden = true;
   nav.insertAdjacentHTML('afterbegin', '<a class="brand" href="/" aria-label="FENG 首页">FENG<span>学生作品集</span></a><button type="button" id="nav-home">首页</button>');
   const submitButton = document.querySelector('#nav-submit');
   submitButton.innerHTML = '<img src="/assets/upload-folder.png" alt="" width="88" height="88"><span>作品上传</span>';
@@ -75,7 +76,7 @@ export function initBrowse(showScene) {
     <nav class="locker-access" aria-label="键盘选择学生">${STUDENTS.map((s, i) => `<a href="/students/${i + 1}" data-student="${i}">${String(i + 1).padStart(2, '0')} · ${s.name} · ${s.grade}</a>`).join('')}</nav>${cdIntroMarkup([...WORKS,
       {...WORKS[0], cover:'/assets/works/wrong-plane/scene-1.png'},
       {...WORKS[1], cover:'/assets/works/clay-doll/visual-2.png'},
-    ])}`;
+    ])}${homeAboutMarkup(STUDENTS)}`;
   document.body.append(landing);
   landing.querySelector('.landing-heading').insertAdjacentHTML('afterbegin', '<p class="eyebrow page-guide landing-page-guide" hidden>学生 / 柜子展厅</p>');
   const setLandingActive = initStudentLanding(landing);
@@ -105,6 +106,7 @@ export function initBrowse(showScene) {
   const discStates = new Map();
   let disposeDiscRoom = () => {};
   const move = (path) => {
+    if (path === '/about') path = '/#about';
     if (path === location.pathname) { root.scrollTop = 0; if (path === '/') window.dispatchEvent(new Event('browse-home')); else if (path === '/students') window.dispatchEvent(new Event('browse-overview')); return; }
     if (location.pathname === '/works') listScroll = root.scrollTop;
     if (path === '/submit') submitOrigin = location.pathname;
@@ -151,6 +153,7 @@ export function initBrowse(showScene) {
   const render = () => {
     disposeDiscRoom();
     disposeDiscRoom = () => {};
+    if (location.pathname === '/about') history.replaceState({}, '', '/#about');
     root.querySelectorAll('video').forEach((video) => video.pause());
     const path = location.pathname;
     const studentMatch = path.match(/^\/students\/(\d+)$/);
@@ -205,6 +208,7 @@ export function initBrowse(showScene) {
       if (mode === 'students') landing.querySelector(landing.dataset.directory === 'true' ? '[data-grade][aria-pressed="true"]' : '#student-start')?.focus({ preventScroll: true });
     }
     current = path;
+    if (path === '/' && location.hash === '#about') window.dispatchEvent(new Event('browse-about'));
     if (mode === 'students' && lockerReturn !== null) {
       const index = lockerReturn;
       lockerReturn = null;
