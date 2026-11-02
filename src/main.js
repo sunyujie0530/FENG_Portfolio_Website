@@ -2540,11 +2540,7 @@ function setFocusArrows() {
   document.body.classList.toggle('is-locker-focused', near);
   const context = document.getElementById('locker-context');
   context.hidden = !near;
-  if (near) {
-    document.getElementById('locker-student-name').textContent = STUDENTS[focusedLocker].name;
-    document.getElementById('locker-student-grade').textContent = STUDENTS[focusedLocker].grade;
-    document.getElementById('locker-student-link').href = `/students/${focusedLocker + 1}`;
-  }
+  document.getElementById('locker-overview').textContent = badgeDetailOpen ? '← 返回打开的柜子' : '← 返回全部柜子';
 }
 
 function visibleLockerIndices() {
@@ -2875,7 +2871,10 @@ document.getElementById('cam-prev').addEventListener('click', () => {
 document.getElementById('cam-next').addEventListener('click', () => {
   stepLocker(1);
 });
-document.getElementById('locker-overview').addEventListener('click', returnToLockers);
+document.getElementById('locker-overview').addEventListener('click', () => {
+  if (badgeDetailOpen) closeBadgeDetail();
+  else returnToLockers();
+});
 window.addEventListener('browse-overview', () => { if (focusedLocker >= 0) returnToLockers(); });
 window.addEventListener('browse-open-locker', ({ detail }) => {
   if (!lockersInteractive() || document.body.classList.contains('browse-content')) return;

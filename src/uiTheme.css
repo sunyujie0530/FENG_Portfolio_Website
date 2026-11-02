@@ -42,16 +42,16 @@ body.browse-preview #page-location {
 body.browse-preview .student-landing[data-directory="true"] .landing-heading { transform:translateY(30px); }
 body.browse-preview #browse:has(> .breadcrumbs) { padding-top:64px; }
 body.browse-preview.is-disc-room .cd-room-header { top:66px; }
-body.browse-preview.is-work-detail .work-detail__back { left:auto; right:4vw; }
+body.browse-preview.is-work-detail .work-detail__back { left:4vw; right:auto; }
 body.browse-preview.is-work-detail .work-detail { z-index:3; }
 /* Submission shares the public navigation and keeps a clear, non-destructive exit. */
 body.browse-preview.is-submit #top-nav { top:0; left:0; width:100%; height:78px; padding:0 4vw; gap:32px; background:#fff; }
 body.browse-preview.is-submit { --paper:#fff; --ui-paper:#fff; background:#fff; }
-body.browse-preview .submit-back { position:fixed; top:94px; left:auto; right:calc(5vw + 50px); z-index:21; pointer-events:auto; }
+body.browse-preview .submit-back { position:fixed; top:126px; left:4vw; right:auto; z-index:21; pointer-events:auto; }
 body.browse-preview .submit-view .portal-shell { width:min(560px,40vw); margin:0 5vw 0 auto; padding:28px 24px 80px; }
-body.browse-preview .submit-hero { top:150px; left:5vw; }
+body.browse-preview .submit-hero { top:180px; left:5vw; }
 body.browse-preview .submit-hero p { font-size:clamp(44px,5.2vw,80px); }
-body.browse-preview .close-submit { top:94px; right:5vw; }
+body.browse-preview .close-submit { display:none; }
 @media(max-width:720px) {
   body.browse-preview .submit-view { background:#fff; }
   body.browse-preview .submit-view .portal-shell { width:90vw; margin:0 5vw; padding:18px 16px 80px; }
@@ -61,8 +61,8 @@ body.browse-preview .close-submit { top:94px; right:5vw; }
   body.browse-preview.is-submit #top-nav { height:64px; padding:0 5vw; gap:10px; }
   body.browse-preview #page-location { top:76px; left:5vw; max-width:calc(90vw - 50px); }
   body.browse-preview .close-submit { top:78px; }
-  body.browse-preview .submit-back { top:110px; right:5vw; }
-  body.browse-preview.is-work-detail .work-detail__back { top:110px; right:5vw; }
+  body.browse-preview .submit-back { top:110px; left:5vw; right:auto; }
+  body.browse-preview.is-work-detail .work-detail__back { top:110px; left:5vw; right:auto; }
 }
 
 /* State variables let every control share feedback without overriding its geometry. */
@@ -308,4 +308,18 @@ body.browse-preview .cd-room-footer { border-color:var(--ui-line); }
 }
 @media(prefers-reduced-motion:reduce) {
   body.browse-preview :is(button,a,input,select,textarea) { transition:none; }
+}
+
+/* One shared upper-left exit position, below the page-location label. */
+body.browse-preview #locker-context { position:static; inset:auto; padding:0; border:0; background:transparent; box-shadow:none; }
+body.browse-preview :is(#locker-overview,.work-detail__back,.submit-back,.cd-room-back,#browse > .back-link) {
+  position:fixed; top:126px; left:4vw; right:auto; bottom:auto; z-index:40;
+  margin:0; width:fit-content; height:auto; pointer-events:auto;
+  --ui-control-size:12px; --ui-control-padding:8px 12px;
+  font:400 12px/1.5 var(--ui-font); letter-spacing:normal;
+}
+body.browse-preview.is-disc-room .cd-room-header { top:110px; }
+@media(max-width:600px) {
+  body.browse-preview :is(#locker-overview,.work-detail__back,.submit-back,.cd-room-back,#browse > .back-link) { top:110px; left:5vw; }
+  body.browse-preview.is-disc-room .cd-room-header { top:102px; }
 }

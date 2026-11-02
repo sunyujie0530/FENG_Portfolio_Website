@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const read = file => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+const html = read('index.html');
+assert.ok(html.includes('id="locker-overview"'));
+assert.ok(!html.includes('id="locker-student-name"'));
+assert.ok(!html.includes('id="locker-student-link"'));
+const css = read('src/uiTheme.css');
+assert.ok(css.includes(':is(#locker-overview,.work-detail__back,.submit-back,.cd-room-back,#browse > .back-link)'));
+assert.ok(css.includes('top:126px; left:4vw; right:auto; bottom:auto'));
+assert.ok(css.includes('{ top:110px; left:5vw; }'));
+assert.ok(css.includes('.close-submit { display:none; }'));
+assert.ok(read('src/main.js').includes('if (badgeDetailOpen) closeBadgeDetail();\n  else returnToLockers();'));
