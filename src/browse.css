@@ -205,3 +205,22 @@ body.browse-preview #browse #project-search { padding:9px 34px 9px 12px; width:1
   body.browse-preview #browse #project-search { min-width:0; width:auto; }
 }
 @media(prefers-reduced-motion:reduce) { #project-results .record-disc,#project-results .project-cover img { transition:none; } }
+
+/* Alternate whole shelf rows, keeping each record's caption directly below it. */
+#project-results { width:84%; margin-left:auto; margin-top:76px; row-gap:90px; padding-bottom:40px; }
+#project-results .project-card:nth-child(6n + 4),
+#project-results .project-card:nth-child(6n + 5),
+#project-results .project-card:nth-child(6n + 6) { transform:translateX(-55%); }
+#project-results .project-meta,#project-results h2 { text-align:center; }
+#project-results .project-meta,#project-results .project-authors { justify-content:center; }
+#project-results .project-meta { margin-top:22px; }
+#project-results .is-extracting { z-index:5; }
+@media(max-width:900px) and (min-width:601px) {
+  #project-results { width:90%; }
+  #project-results .project-card:nth-child(n) { transform:none; }
+  #project-results .project-card:nth-child(4n + 3),#project-results .project-card:nth-child(4n + 4) { transform:translateX(-22%); }
+}
+@media(max-width:600px) {
+  #project-results { width:100%; margin-top:42px; row-gap:52px; }
+  #project-results .project-card:nth-child(n) { transform:none; }
+}

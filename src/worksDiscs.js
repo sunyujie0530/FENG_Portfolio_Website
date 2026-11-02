@@ -277,6 +277,11 @@ export function initWorks(background = 0xf6f7fa) {
     placeDiscs(angle, camera);
     const selected = discs.find(disc => disc.userData.index === index);
     if (!selected) return;
+    // Routed entries open one record, never gather the surrounding carousel.
+    discs.forEach(disc => { disc.visible = disc === selected; });
+    selected.position.set(0, 0, 1);
+    selected.rotation.set(0, 0, 0);
+    selected.scale.setScalar(Math.min(camera.top * 0.75, 2));
     openDetail(selected);
     detailRouteBack = onBack;
     if (detailPanel) detailPanel.querySelector('.work-detail__back').textContent = `← 返回${backLabel}`;
@@ -415,7 +420,7 @@ export function initWorks(background = 0xf6f7fa) {
       discs.forEach((disc, index) => {
         const pose = detail.poses[index];
         if (disc !== detail.disc) {
-          disc.visible = pose.visible && gather < 0.99;
+          disc.visible = !detailRouteBack && pose.visible && gather < 0.99;
           disc.position.set(
             THREE.MathUtils.lerp(pose.position.x, 0, gather),
             THREE.MathUtils.lerp(pose.position.y, 0, gather),

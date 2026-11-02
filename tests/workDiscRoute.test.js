@@ -10,9 +10,9 @@ const button = { textContent: '' };
 const authorHeading = { textContent: '陈嘉伟 2025级硕士' };
 let opened, returned = 0, reset = 0;
 const context = vm.createContext({
-  discs: [0, 1, 2, 19].map(index => ({ userData: { index } })),
+  discs: [0, 1, 2, 19].map(index => ({ userData: { index }, position: { set() {} }, rotation: { set() {} }, scale: { setScalar() {} } })),
   resetDetail() { reset++; }, workKinds: new Set(['video']),
-  angle: 0, targetAngle: 0, camera: {}, placeDiscs() {},
+  angle: 0, targetAngle: 0, camera: { top: 3 }, placeDiscs() {},
   openDetail(disc) { opened = disc.userData.index; },
   detailPanel: { querySelector: () => button, querySelectorAll: () => [authorHeading] }, detailRouteBack: null,
 });
@@ -20,6 +20,7 @@ vm.runInContext(source.match(/  openRoutedDetail = \(index, onBack, backLabel, a
 for (const index of [0, 1, 2, 19]) {
   context.openRoutedDetail(index, () => returned++, '全部作品', [{ name: '陈嘉伟', grade: '2024级' }]);
   assert.equal(opened, index);
+  assert.deepEqual(Array.from(context.discs.filter(disc => disc.visible), disc => disc.userData.index), [index]);
   assert.equal(context.workKinds.size, 0);
   assert.equal(button.textContent, '← 返回全部作品');
   assert.equal(authorHeading.textContent, '陈嘉伟 2024级硕士');
@@ -27,6 +28,8 @@ for (const index of [0, 1, 2, 19]) {
 context.detailRouteBack();
 assert.equal(returned, 1);
 assert.equal(reset, 4);
+assert.ok(source.includes('disc.visible = !detailRouteBack && pose.visible && gather < 0.99'));
+assert.ok(browse.includes("transform: 'translateX(62%) rotate(12deg)'"));
 
 // Routed close must navigate once; ordinary legacy close must still restore focus.
 let focus = 0;

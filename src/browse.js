@@ -99,6 +99,7 @@ export function initBrowse(showScene) {
   let listScroll = 0;
   let restoreFocus = '';
   let lockerReturn = null;
+  let extractingRecord = false;
   const discStates = new Map();
   let disposeDiscRoom = () => {};
   const move = (path) => {
@@ -213,7 +214,7 @@ export function initBrowse(showScene) {
   const leaveSubmit = event => { event.stopImmediatePropagation(); move(submitOrigin); };
   document.querySelector('#close-submit').addEventListener('click', leaveSubmit, true);
   document.querySelector('#submit-back').addEventListener('click', leaveSubmit, true);
-  document.addEventListener('click', (event) => {
+  document.addEventListener('click', async (event) => {
     const link = event.target.closest('a');
     if (!link || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     const url = new URL(link.href);
@@ -224,6 +225,27 @@ export function initBrowse(showScene) {
     }
     if (url.pathname !== '/' && !/^\/(students|works)(\/|$)/.test(url.pathname)) return;
     event.preventDefault();
+    const record = link.closest('#project-results .project-card')?.querySelector('.record-disc');
+    if (record && url.pathname.startsWith('/works/')) {
+      if (extractingRecord) return;
+      extractingRecord = true;
+      const article = record.closest('.project-card');
+      article.classList.add('is-extracting');
+      const origin = location.pathname;
+      try {
+        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          await record.animate([
+            { transform: 'translateX(0) rotate(0)' },
+            { transform: 'translateX(62%) rotate(12deg)' },
+          ], { duration: 580, easing: 'cubic-bezier(.22,.61,.36,1)', fill: 'forwards' }).finished;
+        }
+        if (location.pathname === origin && link.isConnected) move(url.pathname);
+      } finally {
+        article.classList.remove('is-extracting');
+        extractingRecord = false;
+      }
+      return;
+    }
     if (link.closest('.locker-access')) {
       window.dispatchEvent(new CustomEvent('browse-open-locker', { detail: Number(link.dataset.student) }));
       return;
