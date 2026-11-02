@@ -2502,7 +2502,7 @@ function closeBadgeDetail() {
   expandedBadge.rotation.copy(expandedBadge.userData.restRotation);
   lockerBank.visible = true;
   doorAnims[3].open = true;
-  focusBadge();
+  openLocker(3);
 }
 
 function setIntroCamera(distance) {
@@ -2608,7 +2608,7 @@ function setLockerHoverCard(index, event, profile = false, discs = false) {
   lockerHoverCard.setAttribute('aria-hidden', String(index < 0));
   if (index < 0) return;
   lockerHoverCard.querySelector('strong').textContent = discs ? `${lockerNames[index]} · 作品光盘` : profile ? `${lockerNames[index]} · 学生卡` : `${lockerNames[index]}的柜子`;
-  lockerHoverCard.querySelector('span').textContent = discs ? '点击打开 CD 光盘库 →' : profile ? '点击查看个人介绍与作品 →' : '点击打开柜门 →';
+  lockerHoverCard.querySelector('span').textContent = discs ? '点击打开 CD 光盘库 →' : profile ? '点击查看学生卡模型 →' : '点击打开柜门 →';
   lockerHoverCard.style.left = `${Math.min(event.clientX, window.innerWidth - 230)}px`;
   lockerHoverCard.style.top = `${Math.min(event.clientY, window.innerHeight - 120)}px`;
 }
@@ -2750,7 +2750,8 @@ renderer.domElement.addEventListener('pointerup', (event) => {
     return;
   }
   if (focusedLocker === 3 && doorAnims[3].progress > 0.6 && hits.some((hit) => isIdBadge(hit.object))) {
-    window.dispatchEvent(new CustomEvent('browse-student', { detail: 3 }));
+    focusBadge();
+    openBadgeDetail();
     return;
   }
   const index = doorIndexFromObject(hits[0].object);
@@ -2887,7 +2888,8 @@ window.addEventListener('keydown', (event) => {
     event.preventDefault();
     stepLocker(event.key === 'ArrowLeft' ? -1 : 1);
   } else if (event.key === 'Escape') {
-    returnToLockers();
+    if (badgeDetailOpen) closeBadgeDetail();
+    else returnToLockers();
   }
 });
 
