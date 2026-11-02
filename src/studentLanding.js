@@ -37,8 +37,7 @@ export function cdIntroMarkup(works) {
       return `<a class="cd-orbit-link" href="/works/${work.id}" aria-label="查看作品：${work.title}" style="--orbit-x:${p.x};--orbit-z:${p.z};--orbit-yaw:${p.yaw}deg;--orbit-lean:${p.lean}deg">
         <span class="cd-orbit-face"><img src="${work.cover}" alt="${work.title}" decoding="async"><i></i></span></a>`;
     }).join('')}</nav></div>
-    <div class="cd-orbit-copy"><h2 id="home-cd-title">一张 CD，一个作品</h2><p>每张光盘，收录一件学生作品。<br>从游戏、影像到三维与视觉设计，<br>在这里发现创作者的灵感与表达。</p></div></div>
-    <a class="cd-intro-cta" href="/works">从全部作品开始</a>
+    <div class="cd-orbit-copy"><h2 id="home-cd-title">一张 CD，一个作品</h2><p>每张光盘，收录一件学生作品。<br>从游戏、影像到三维与视觉设计，<br>在这里发现创作者的灵感与表达。</p><a class="cd-intro-cta" href="/works">从全部作品开始</a></div></div>
   </section>`;
 }
 
@@ -175,8 +174,8 @@ export function initStudentLanding(landing) {
     }
     if (!enabled) focusPreview = false;
     if (!enabled) stopOrbit();
-    document.body.classList.toggle('is-student-directory', enabled && previewStarted);
     document.body.classList.toggle('is-student-home', enabled);
+    document.body.classList.toggle('is-student-directory', enabled && previewStarted);
     if (!enabled) document.body.classList.remove('is-home-cd');
     window.scrollTo({ top: enabled && !previewStarted ? savedScroll : 0, behavior: 'instant' });
     if (enabled) paint();
