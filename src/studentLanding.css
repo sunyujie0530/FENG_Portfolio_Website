@@ -19,11 +19,16 @@ body.browse-preview.is-student-home .landing-summary span {
 }
 body.browse-preview #student-start {
   position:absolute; top:42vh; left:50%; transform:translateX(-50%);
-  border:0; border-radius:999px; padding:10px 32px; background:#f3f4f3;
-  color:#171a17; font:400 16px/1.5 var(--ui-font); cursor:pointer;
+  border:1px solid #f5f6f3; border-radius:999px; padding:10px 32px;
+  background:var(--ui-pill-inset-bg); box-shadow:var(--ui-pill-inset-shadow);
+  color:#252725; font:500 16px/1.5 var(--ui-font); cursor:pointer;
   opacity:calc(1 - var(--landing-progress,0) * 3); pointer-events:auto;
 }
-body.browse-preview #student-start:hover { background:#e7eae6; box-shadow:0 3px 9px #252b2514; }
+body.browse-preview #student-start:hover { filter:brightness(1.03); }
+body.browse-preview.is-student-home .landing-works-link {
+  position:absolute; left:4vw;
+  --control-opacity:clamp(0,calc((var(--landing-progress,0) - .65) / .35),1);
+}
 body.browse-preview.is-student-home .grade-picker {
   top:auto; bottom:12vh; left:50%; right:auto; transform:translateX(-50%);
   opacity:clamp(0,calc((var(--landing-progress,0) - .65) / .35),1);

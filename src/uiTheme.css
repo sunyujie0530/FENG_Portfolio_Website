@@ -9,6 +9,8 @@
   --ui-paper:#f6f7fa;
   --ui-white:#fff;
   --ui-radius:2px;
+  --ui-pill-inset-bg:linear-gradient(145deg,#dedfdd,#eeefec);
+  --ui-pill-inset-shadow:inset 3px 4px 7px #333a332e,inset -3px -3px 6px #fff,0 1px 1px #fff;
   --ui-font:"PingFang SC","Hiragino Sans GB",sans-serif;
   --ui-mono:"HY Pixel","PingFang SC",monospace;
 }
@@ -181,9 +183,9 @@ body.browse-preview .grade-picker .kind-tabs button:hover {
   --control-shadow:3px 5px 8px #20252030,-3px -3px 7px #fff,inset 0 1px 1px #fff;
 }
 body.browse-preview .grade-picker .kind-tabs button:is([aria-pressed="true"],:active) {
-  --control-bg:linear-gradient(145deg,#dedfdd,#eeeFec);
+  --control-bg:var(--ui-pill-inset-bg);
   --control-border:#f5f6f3;
-  --control-shadow:inset 3px 4px 7px #333a332e,inset -3px -3px 6px #fff,0 1px 1px #fff;
+  --control-shadow:var(--ui-pill-inset-shadow);
 }
 body.browse-preview #locker-context { border-color:var(--ui-line); border-radius:var(--ui-radius); background:var(--ui-white); }
 body.browse-preview .locker-access:focus-within { border:1px solid var(--ui-ink); border-radius:var(--ui-radius); }

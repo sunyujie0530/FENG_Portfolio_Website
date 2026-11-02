@@ -13,15 +13,19 @@ export function landingFrame(width, height, scroll) {
   };
 }
 
+export const showWorksEntry = (started, progress) => started && progress >= .9;
+
 export function initStudentLanding(landing) {
   const title = [...landing.querySelectorAll('h1 span')];
   const subtitle = [...landing.querySelectorAll('.landing-summary span')];
   const start = landing.querySelector('#student-start');
+  const worksLink = landing.querySelector('.landing-works-link');
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   let active = false;
   let savedScroll = 0;
   let frame = 0;
   let focusPreview = false;
+  let previewStarted = false;
   const paint = () => {
     frame = 0;
     if (!active || document.body.classList.contains('is-locker-focused')) return;
@@ -45,6 +49,9 @@ export function initStudentLanding(landing) {
     };
     positionLines(title, f.titleY, f.fontSize * 1.35, f.compact);
     positionLines(subtitle, f.subtitleY, f.subtitleSize * 1.7, f.compact);
+    worksLink.style.top = `${f.subtitleY + f.subtitleSize * 3.4 + 14}px`;
+    worksLink.hidden = !showWorksEntry(previewStarted, f.progress);
+    worksLink.inert = f.progress < .9;
     const picker = landing.querySelector('.grade-picker');
     picker.inert = f.progress < .9;
     start.hidden = f.progress > .98;
@@ -59,6 +66,7 @@ export function initStudentLanding(landing) {
   window.addEventListener('scroll', schedule, { passive: true });
   window.addEventListener('resize', schedule);
   start.addEventListener('click', () => {
+    previewStarted = true;
     focusPreview = true;
     window.scrollTo({ top: innerHeight, behavior: reducedMotion.matches ? 'instant' : 'smooth' });
   });
