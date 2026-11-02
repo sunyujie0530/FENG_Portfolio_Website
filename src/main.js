@@ -9,6 +9,7 @@ import { hideWorks, showWorks, setWorksTransition } from './worksDiscs.js';
 import { hidePortals, showPortal } from './portal.js';
 import { initBrowse, STUDENTS } from './browse.js';
 import { createCdArchive, updateCdArchive, cdArchiveHit } from './cdArchive.js';
+import './uiTheme.css';
 
 const app = document.querySelector('#app');
 const scene = new THREE.Scene();

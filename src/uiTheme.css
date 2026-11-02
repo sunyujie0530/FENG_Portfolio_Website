@@ -1,0 +1,207 @@
+/* Shared UI language from the submission page. Artwork and 3D materials are not tinted. */
+:root {
+  --ui-accent:#dfff21;
+  --ui-accent-soft:#f3ffc3;
+  --ui-focus:#2aa800;
+  --ui-ink:#171a17;
+  --ui-muted:#69736d;
+  --ui-line:#aeb7b1;
+  --ui-paper:#f6f7fa;
+  --ui-white:#fff;
+  --ui-radius:2px;
+  --ui-font:"PingFang SC","Hiragino Sans GB",sans-serif;
+  --ui-mono:"HY Pixel","PingFang SC",monospace;
+}
+body.browse-preview,
+body.browse-preview.is-disc-room {
+  --ink:var(--ui-ink);
+  --muted:var(--ui-muted);
+  --paper:var(--ui-paper);
+  --line:#d8ddd8;
+  color:var(--ui-ink);
+  background:var(--ui-paper);
+  font-family:var(--ui-font);
+}
+body.browse-preview ::selection { color:var(--ui-ink); background:var(--ui-accent); }
+body.browse-preview .submit-view { --submit-green:var(--ui-accent); }
+
+/* State variables let every control share feedback without overriding its geometry. */
+body.browse-preview :where(button,a,.locker-numbers span) {
+  --control-bg:var(--ui-white);
+  --control-border:var(--ui-line);
+  --control-text:var(--ui-ink);
+  --control-shadow:none;
+  --control-opacity:1;
+}
+body.browse-preview :where(button:hover,a:hover,.locker-numbers span:hover) {
+  --control-bg:var(--ui-accent-soft);
+  --control-border:var(--ui-ink);
+  --control-shadow:2px 2px 0 var(--ui-ink);
+}
+body.browse-preview :where([aria-pressed="true"],[aria-current="page"],[aria-current="true"],button.is-on) {
+  --control-bg:var(--ui-accent);
+  --control-border:var(--ui-ink);
+  --control-shadow:inset 0 -2px 0 var(--ui-ink);
+}
+body.browse-preview :where(button,a):active {
+  --control-bg:var(--ui-accent);
+  --control-border:var(--ui-ink);
+  --control-shadow:inset 1px 1px 0 var(--ui-ink);
+}
+body.browse-preview :where(:disabled,[aria-disabled="true"]) {
+  --control-bg:#f2f5e8;
+  --control-border:#c9d0c6;
+  --control-text:#929b90;
+  --control-shadow:none;
+  --control-opacity:.55;
+}
+body.browse-preview :is(
+  .kind-tabs button,#nav-submit,#cam-prev,#cam-next,#locker-overview,#locker-student-link,
+  .primary-link,.empty button,.text-link,.back-link,.cd-room-back,.cd-insert,
+  .confirm-locker,.submit-button,.close-submit,.work-detail__back,.work-detail__down,.intro__enter
+) {
+  border:1px solid var(--control-border);
+  border-radius:var(--ui-radius);
+  background:var(--control-bg);
+  color:var(--control-text);
+  box-shadow:var(--control-shadow);
+  opacity:var(--control-opacity);
+  padding:var(--ui-control-padding,9px 14px);
+  font:500 var(--ui-control-size,12px)/1.3 var(--ui-font);
+  text-decoration:none;
+  cursor:pointer;
+  transition:background-color .14s,border-color .14s,color .14s,box-shadow .14s;
+}
+body.browse-preview :is(.primary-link,.text-link,.back-link,.work-detail__down) { display:inline-flex; align-items:center; width:fit-content; }
+body.browse-preview :is(.text-link,.back-link,.cd-room-back,#locker-overview,#locker-student-link) { --ui-control-size:11px; --ui-control-padding:7px 10px; }
+body.browse-preview :is(.confirm-locker,.submit-button) { --ui-control-size:14px; --ui-control-padding:12px 20px; }
+body.browse-preview :is(.confirm-locker,.submit-button):enabled {
+  --control-bg:var(--ui-accent);
+  --control-border:var(--ui-ink);
+}
+body.browse-preview :is(.confirm-locker,.submit-button):enabled:hover { --control-shadow:2px 2px 0 var(--ui-ink); }
+body.browse-preview :is(.confirm-locker,.submit-button,.cd-insert):disabled { cursor:not-allowed; }
+body.browse-preview :is(#cam-prev,#cam-next) { --ui-control-size:32px; --ui-control-padding:0; }
+body.browse-preview .close-submit { --ui-control-size:26px; --ui-control-padding:0; width:34px; height:34px; }
+
+/* Main navigation: the same selected/hover state, with compact navigation geometry. */
+body.browse-preview #top-nav {
+  background:var(--ui-paper);
+  border-bottom-color:var(--ui-line);
+}
+body.browse-preview #top-nav button:not(#nav-submit) {
+  align-self:center;
+  height:auto;
+  min-height:34px;
+  padding:7px 10px;
+  border:1px solid transparent;
+  border-radius:var(--ui-radius);
+  color:var(--ui-muted);
+  background:transparent;
+  font-family:var(--ui-font);
+  transition:background-color .14s,border-color .14s,box-shadow .14s;
+}
+body.browse-preview #top-nav button:not(#nav-submit):is(:hover,[aria-current="page"],[aria-current="true"]) {
+  color:var(--ui-ink);
+  border-color:var(--control-border);
+  background:var(--control-bg);
+  box-shadow:var(--control-shadow);
+}
+body.browse-preview #top-nav button[aria-current]::after { display:none; }
+body.browse-preview #top-nav #nav-submit {
+  min-height:36px;
+  border:1px solid var(--control-border);
+  border-radius:var(--ui-radius);
+  background:var(--control-bg);
+  color:var(--control-text);
+  box-shadow:var(--control-shadow);
+}
+body.browse-preview .edition { border-color:var(--ui-line); border-radius:var(--ui-radius); color:var(--ui-muted); font-family:var(--ui-mono); }
+
+/* One keyboard focus treatment; native controls retain their semantics. */
+body.browse-preview :is(button,a,input,select,textarea):focus-visible {
+  outline:2px solid var(--ui-focus);
+  outline-offset:3px;
+}
+body.browse-preview :is(input,select,textarea) { accent-color:var(--ui-focus); }
+body.browse-preview :is(.search-field input,.cd-library select,#submission-form select,#submission-form textarea,
+  #submission-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"])) {
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-radius);
+  background:var(--ui-white);
+  color:var(--ui-ink);
+  padding:9px 10px;
+  font-family:var(--ui-font);
+}
+body.browse-preview :is(.search-field input,.cd-library select,#submission-form input,#submission-form select,#submission-form textarea):focus {
+  border-color:var(--ui-focus);
+  outline:2px solid rgb(42 168 0 / .2);
+  outline-offset:2px;
+}
+body.browse-preview input[type="file"]::file-selector-button {
+  border:1px solid var(--ui-line); border-radius:var(--ui-radius); padding:6px 10px;
+  background:var(--ui-white); color:var(--ui-ink); font-family:var(--ui-font); cursor:pointer;
+}
+body.browse-preview input[type="file"]::file-selector-button:hover { background:var(--ui-accent-soft); border-color:var(--ui-ink); }
+body.browse-preview .locker-numbers span { border-color:var(--control-border); border-radius:var(--ui-radius); background:var(--control-bg); color:var(--control-text); box-shadow:var(--control-shadow); }
+body.browse-preview .locker-numbers input:checked + span { background:var(--ui-accent); border-color:var(--ui-ink); color:var(--ui-ink); box-shadow:inset 0 -2px 0 var(--ui-ink); }
+body.browse-preview .locker-numbers input:focus-visible + span { outline:2px solid var(--ui-focus); outline-offset:3px; }
+body.browse-preview .deco-scroller button:not(.is-on):hover { background:var(--ui-accent-soft); color:var(--ui-ink); box-shadow:inset 0 0 0 1px var(--ui-ink); }
+body.browse-preview :is(.locker-choice-number,#submission-form legend span) { color:var(--ui-focus); }
+
+/* Public information uses the submission page's label and frame vocabulary. */
+body.browse-preview :is(.landing-heading>.eyebrow,.collection-heading .eyebrow,.student-profile .eyebrow,
+  .detail-heading .eyebrow,.detail-content aside>.eyebrow,.cd-room-header .eyebrow,.cd-room-footer .eyebrow,.about-shell>.intro__eyebrow) {
+  display:inline-block; width:fit-content; padding:4px 6px; background:var(--ui-accent); color:var(--ui-ink);
+  font:400 10px/1.4 var(--ui-mono); letter-spacing:.1em;
+}
+body.browse-preview :is(.landing-heading h1,.collection-heading h1,.student-profile h1,.detail-heading h1) { color:var(--ui-ink); }
+body.browse-preview :is(.landing-heading h1 span,.collection-heading h1 span) { color:var(--ui-ink); }
+body.browse-preview .grade-picker .kind-tabs { border-color:var(--ui-line); border-radius:var(--ui-radius); background:var(--ui-white); }
+body.browse-preview #locker-context { border-color:var(--ui-line); border-radius:var(--ui-radius); background:var(--ui-white); }
+body.browse-preview .locker-access:focus-within { border:1px solid var(--ui-ink); border-radius:var(--ui-radius); }
+body.browse-preview .locker-hover-card strong { color:var(--ui-ink); background:var(--ui-accent); border-color:var(--ui-ink); }
+body.browse-preview .locker-hover-card span { color:var(--ui-ink); background:var(--ui-white); border-color:var(--ui-ink); }
+body.browse-preview :is(.breadcrumbs a,.author-link,.project-card h2 a,.section-heading a):hover { color:var(--ui-ink); background:var(--ui-accent); text-decoration:none; }
+body.browse-preview .project-cover { border:1px solid var(--ui-line); border-radius:var(--ui-radius); }
+body.browse-preview .project-cover:hover { outline:2px solid var(--ui-accent); outline-offset:2px; border-color:var(--ui-ink); }
+body.browse-preview .project-cover span { color:var(--ui-ink); background:var(--ui-accent); border:1px solid var(--ui-ink); border-radius:var(--ui-radius); }
+body.browse-preview :is(.profile-number,.detail-cover,.detail-gallery img) { border-radius:var(--ui-radius); }
+body.browse-preview .profile-number { border:1px solid var(--ui-ink); font-family:var(--ui-mono); }
+body.browse-preview .about-view { background:var(--ui-paper); color:var(--ui-ink); }
+body.browse-preview .about-note { border-top-color:var(--ui-ink); }
+body.browse-preview .about-note span { width:fit-content; background:var(--ui-accent); padding:4px 6px; color:var(--ui-ink); }
+
+/* Optical objects keep their material; only interactive rings/statuses become green. */
+body.browse-preview.is-disc-room #top-nav { background:var(--ui-paper); }
+body.browse-preview.is-disc-room #top-nav button[aria-current]::after { display:none; }
+body.browse-preview .cd-room { background:radial-gradient(ellipse at 49% 35%,#fff 0,var(--ui-paper) 70%); }
+body.browse-preview .cd-room-header h1 span { color:var(--ui-ink); }
+body.browse-preview .archive-disc[aria-pressed="true"] { box-shadow:0 0 0 2px var(--ui-ink),0 0 0 5px var(--ui-accent),0 13px 18px -4px #211d2b33; }
+body.browse-preview .archive-disc:hover { box-shadow:0 0 0 2px var(--ui-accent),0 18px 26px -5px #211d2b35; }
+body.browse-preview .archive-disc[aria-pressed="true"]:hover { box-shadow:0 0 0 2px var(--ui-ink),0 0 0 5px var(--ui-accent),0 18px 26px -5px #211d2b35; }
+body.browse-preview .archive-disc.is-dragging { box-shadow:0 0 0 2px var(--ui-accent),0 28px 32px -5px #28222e3b; }
+/* The centre-hole mask clips outer shadows; draw feedback inside the disc edge too. */
+body.browse-preview .archive-disc:hover::before { border:2px solid var(--ui-accent); mix-blend-mode:normal; }
+body.browse-preview .archive-disc[aria-pressed="true"]::before,
+body.browse-preview .archive-disc:focus-visible::before {
+  border:1px solid var(--ui-ink);
+  box-shadow:inset 0 0 0 4px var(--ui-accent);
+  mix-blend-mode:normal;
+}
+body.browse-preview .cd-drive.is-drop-ready .cd-tray-ring { box-shadow:0 0 0 2px var(--ui-accent),0 0 20px #dfff2140,inset 0 0 0 3px #232127; }
+body.browse-preview .cd-drive.is-drop-ready + .cd-drop-hint { color:var(--ui-ink); background:var(--ui-accent); border-color:var(--ui-ink); }
+body.browse-preview .is-inserting .cd-drive-led { background:var(--ui-focus); box-shadow:0 0 8px #2aa80080; }
+body.browse-preview .is-inserting .cd-drop-hint { color:var(--ui-ink); border-color:var(--ui-focus); }
+body.browse-preview .cd-loading > div::after { background:var(--ui-focus); }
+body.browse-preview .cd-room-footer { border-color:var(--ui-line); }
+@media(max-width:600px) {
+  body.browse-preview #top-nav { gap:10px; }
+  body.browse-preview #top-nav button:not(#nav-submit) { padding:6px 7px; min-height:32px; }
+  body.browse-preview :is(.kind-tabs button,.cd-room-back,.cd-insert) { --ui-control-size:10px; --ui-control-padding:7px 10px; }
+  body.browse-preview :is(#cam-prev,#cam-next) { --ui-control-size:28px; --ui-control-padding:0; }
+  body.browse-preview #locker-context { gap:10px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  body.browse-preview :is(button,a,input,select,textarea) { transition:none; }
+}
