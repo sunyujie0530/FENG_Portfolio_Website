@@ -21,7 +21,6 @@ export function createSlimeDetail(onBack) {
           <img src="/assets/works/slime-runner/scene-3.png" alt="SLIME RUNNER 开始菜单" loading="lazy">
         </div>
         <h3>02 视频简介</h3>
-        <video controls playsinline preload="none" poster="${SLIME_BACK}" aria-label="SLIME RUNNER 演示视频"><source src="/assets/works/slime-runner/demo.mp4" type="video/mp4"></video>
       </div>
     </div>`;
   document.querySelector('#works').append(panel);

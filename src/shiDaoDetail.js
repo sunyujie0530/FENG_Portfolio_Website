@@ -22,7 +22,6 @@ export function createShiDaoDetail(onBack) {
           <img src="/assets/works/shi-dao/scene-3.jpg" alt="屎到临头 主菜单" loading="lazy">
         </div>
         <h3>02 视频简介</h3>
-        <video controls playsinline preload="none" poster="${SHI_BACK}" aria-label="屎到临头 宣传与实机"><source src="/assets/works/shi-dao/demo.mp4" type="video/mp4"></video>
       </div>
     </div>`;
   document.querySelector('#works').append(panel);
