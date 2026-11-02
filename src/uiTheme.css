@@ -36,7 +36,7 @@ body.browse-preview .page-guide {
 body.browse-preview .page-guide:not(#page-location) { display:none !important; }
 body.browse-preview #page-location {
   position:fixed; z-index:29; top:90px; left:4vw; margin:0; padding:4px 7px;
-  max-width:calc(92vw - 150px); overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+  max-width:92vw; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
   font:400 11px/1.5 var(--ui-font); letter-spacing:.08em; pointer-events:none;
 }
 body.browse-preview .student-landing[data-directory="true"] .landing-heading { transform:translateY(30px); }
@@ -59,7 +59,7 @@ body.browse-preview .close-submit { display:none; }
 }
 @media(max-width:600px) {
   body.browse-preview.is-submit #top-nav { height:64px; padding:0 5vw; gap:10px; }
-  body.browse-preview #page-location { top:76px; left:5vw; max-width:calc(90vw - 50px); }
+  body.browse-preview #page-location { top:76px; left:5vw; max-width:90vw; }
   body.browse-preview .close-submit { top:78px; }
   body.browse-preview .submit-back { top:110px; left:5vw; right:auto; }
   body.browse-preview.is-work-detail .work-detail__back { top:110px; left:5vw; right:auto; }
