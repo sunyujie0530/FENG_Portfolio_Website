@@ -101,23 +101,36 @@ export function initBrowse(showScene) {
   let submitOrigin = '/';
   let listScroll = 0;
   let restoreFocus = '';
-  let lockerReturn = null;
+  let returning = false;
   let lockerContext = { studentIndex: null, card: false };
   let extractingRecord = false;
   const discStates = new Map();
   let disposeDiscRoom = () => {};
-  const move = (path) => {
+  const move = (path, { replace = false, state = {} } = {}) => {
     if (path === '/about') path = '/#about';
     if (path === location.pathname) { root.scrollTop = 0; if (path === '/') window.dispatchEvent(new Event('browse-home')); else if (path === '/students') window.dispatchEvent(new Event('browse-overview')); return; }
     if (location.pathname === '/works') listScroll = root.scrollTop;
-    if (path === '/submit') submitOrigin = location.pathname;
+    if (location.pathname === '/students') history.replaceState({ ...history.state, lockerIndex: lockerContext.studentIndex }, '', location.href);
+    if (path === '/submit') submitOrigin = location.pathname + location.hash;
     if (path.startsWith('/works/')) {
       if (location.pathname.startsWith('/students/')) detailOrigin = location.pathname;
       else if (location.pathname === '/works' || location.pathname === '/') detailOrigin = '/works';
       restoreFocus = path;
     }
-    history.pushState(path.startsWith('/works/') ? { detailOrigin } : {}, '', path);
+    history[replace ? 'replaceState' : 'pushState']({
+      from: replace ? history.state?.from : location.pathname + location.hash,
+      ...state,
+      ...(path.startsWith('/works/') ? { detailOrigin } : {}),
+      ...(path === '/submit' ? { submitOrigin } : {}),
+    }, '', path);
     render();
+  };
+  const goBack = (path, state = {}) => {
+    if (returning) return;
+    if (history.state?.from === path) {
+      returning = true;
+      history.back();
+    } else move(path, { replace: true, state });
   };
   const crumbs = (parts) => `<nav class="breadcrumbs" aria-label="当前位置"><a href="/">首页</a>${parts.map(([label, href]) => `<span>/</span>${href ? `<a href="${href}">${label}</a>` : `<span aria-current="page">${label}</span>`}`).join('')}</nav>`;
   const syncPageGuide = () => {
@@ -143,6 +156,7 @@ export function initBrowse(showScene) {
   window.addEventListener('browse-landing-change', syncLandingNav);
   window.addEventListener('browse-locker-context', ({ detail }) => {
     lockerContext = { studentIndex: detail.index, card: detail.card };
+    if (location.pathname === '/students') history.replaceState({ ...history.state, lockerIndex: detail.index }, '', location.href);
     syncPageGuide();
   });
   const renderResults = () => {
@@ -152,11 +166,14 @@ export function initBrowse(showScene) {
     root.querySelectorAll('[data-kind]').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.kind === filter)));
   };
   const render = () => {
+    returning = false;
     disposeDiscRoom();
     disposeDiscRoom = () => {};
     if (location.pathname === '/about') history.replaceState({}, '', '/#about');
     root.querySelectorAll('video').forEach((video) => video.pause());
     const path = location.pathname;
+    const returnLocker = path === '/students' ? history.state?.lockerIndex : null;
+    if (path === '/submit') submitOrigin = history.state?.submitOrigin || '/';
     const studentMatch = path.match(/^\/students\/(\d+)$/);
     const discMatch = path.match(/^\/students\/([1-8])\/discs$/);
     const discStudentIndex = discMatch ? Number(discMatch[1]) - 1 : -1;
@@ -178,9 +195,8 @@ export function initBrowse(showScene) {
     root.style.setProperty('--author', student?.color || (work ? colorOf(work) : '#638251'));
     if (discMatch) {
       root.innerHTML = '';
-      lockerReturn = discStudentIndex;
       if (!discStates.has(discStudentIndex)) discStates.set(discStudentIndex, {});
-      disposeDiscRoom = mountDiscRoom({ host: root, student: STUDENTS[discStudentIndex], studentIndex: discStudentIndex, students: STUDENTS, works: WORKS, state: discStates.get(discStudentIndex), onOpen: (selected) => move(`/works/${selected.id}`), onBack: () => move('/students') });
+      disposeDiscRoom = mountDiscRoom({ host: root, student: STUDENTS[discStudentIndex], studentIndex: discStudentIndex, students: STUDENTS, works: WORKS, state: discStates.get(discStudentIndex), onOpen: (selected) => move(`/works/${selected.id}`), onBack: () => goBack('/students', { lockerIndex: discStudentIndex }) });
     } else if (student) {
       if (grade !== 'all' && grade !== student.grade) selectGrade(student.grade);
       const projects = WORKS.filter((w) => w.authors.includes(studentIndex));
@@ -188,11 +204,11 @@ export function initBrowse(showScene) {
         <header class="student-profile"><div class="profile-number">${String(studentIndex + 1).padStart(2, '0')}<span>FENG STUDENT</span></div><div><p class="eyebrow page-guide">学生 / ${student.name}的个人主页</p><h1 tabindex="-1">${student.name}</h1><p class="profile-grade">${student.grade || 'FENG 创作者'}</p><p class="profile-bio">${student.bio}</p><span class="profile-tag">${student.tags}</span></div><div class="profile-stat"><strong>${projects.length.toString().padStart(2, '0')}</strong><span>已收录作品</span></div></header>
         <div class="section-heading"><h2>作品 <small>SELECTED WORKS</small></h2><a href="/works">浏览全部作品 ↗</a></div><div class="project-grid">${projects.length ? projects.map(card).join('') : '<p class="empty">作品正在整理中，可先浏览其他同学的创作。</p>'}</div><p class="editorial-note">创作方向简介根据已收录作品整理。</p>`;
     } else if (work) {
-      detailOrigin = history.state?.detailOrigin || detailOrigin;
+      detailOrigin = history.state?.detailOrigin || '/works';
       const back = detailOrigin.startsWith('/students/') ? detailOrigin : '/works';
       const backLabel = back === '/works' ? '全部作品' : `${STUDENTS[Number(back.split('/')[2]) - 1].name}的${back.endsWith('/discs') ? '光盘库' : '主页'}`;
       root.innerHTML = '';
-      showWorkDisc(work.id === 'slime-runner' ? 19 : WORKS.indexOf(work), () => move(back), backLabel, work.authors.map(index => STUDENTS[index]));
+      showWorkDisc(work.id === 'slime-runner' ? 19 : WORKS.indexOf(work), () => goBack(back), backLabel, work.authors.map(index => STUDENTS[index]));
     } else if (mode === 'content') {
       root.innerHTML = `<header class="collection-heading"><div><p class="eyebrow page-guide">全部作品 / 分类浏览与检索</p><h1 tabindex="-1">创作，正在发生<span>。</span></h1><p>游戏、角色、场景与影像。找到你感兴趣的作品，直接进入创作现场。</p></div><span class="collection-total">${WORKS.length.toString().padStart(2, '0')}<small>件已收录作品</small></span></header>
         <div class="collection-tools"><div class="kind-tabs" role="group" aria-label="按作品类型筛选">${Object.entries(kinds).map(([key, label]) => `<button type="button" data-kind="${key}" aria-pressed="${key === filter}">${label}</button>`).join('')}</div><label class="search-field"><span>搜索作品或作者</span><input type="search" id="project-search" placeholder="作品名称 / 作者" aria-label="搜索作品或作者"></label></div><p class="result-count" id="result-count" aria-live="polite"></p><div class="project-grid" id="project-results"></div>`;
@@ -210,10 +226,9 @@ export function initBrowse(showScene) {
     }
     current = path;
     if (path === '/' && location.hash === '#about') window.dispatchEvent(new Event('browse-about'));
-    if (mode === 'students' && lockerReturn !== null) {
-      const index = lockerReturn;
-      lockerReturn = null;
-      window.dispatchEvent(new CustomEvent('browse-open-locker', { detail: index }));
+    if (Number.isInteger(returnLocker) && STUDENTS[returnLocker]) {
+      if (grade !== 'all' && grade !== STUDENTS[returnLocker].grade) selectGrade(STUDENTS[returnLocker].grade);
+      window.dispatchEvent(new CustomEvent('browse-open-locker', { detail: returnLocker }));
     }
   };
   nav.addEventListener('click', (event) => {
@@ -224,7 +239,7 @@ export function initBrowse(showScene) {
     event.stopImmediatePropagation();
     move(path);
   }, true);
-  const leaveSubmit = event => { event.stopImmediatePropagation(); move(submitOrigin); };
+  const leaveSubmit = event => { event.stopImmediatePropagation(); goBack(submitOrigin); };
   document.querySelector('#close-submit').addEventListener('click', leaveSubmit, true);
   document.querySelector('#submit-back').addEventListener('click', leaveSubmit, true);
   document.addEventListener('click', async (event) => {
@@ -263,7 +278,10 @@ export function initBrowse(showScene) {
       window.dispatchEvent(new CustomEvent('browse-open-locker', { detail: Number(link.dataset.student) }));
       return;
     }
-    if (link.id === 'locker-student-link') lockerReturn = Number(url.pathname.split('/')[2]) - 1;
+    if (link.matches('.back-link') && url.pathname === '/students') {
+      goBack('/students', { lockerIndex: Number(location.pathname.split('/')[2]) - 1 });
+      return;
+    }
     move(url.pathname);
   });
   root.addEventListener('click', (event) => {
@@ -273,19 +291,17 @@ export function initBrowse(showScene) {
   });
   root.addEventListener('input', (event) => { if (event.target.id === 'project-search') { search = event.target.value.trim(); renderResults(); } });
   window.addEventListener('browse-student', ({ detail }) => {
-    lockerReturn = detail;
     move(`/students/${detail + 1}`);
   });
   window.addEventListener('browse-discs', ({ detail }) => {
-    lockerReturn = detail;
     move(`/students/${detail + 1}/discs`);
   });
   window.addEventListener('popstate', render);
   window.addEventListener('keydown', (event) => {
     if (document.body.classList.contains('is-disc-room')) return;
     if (event.key !== 'Escape' || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
-    if (location.pathname.startsWith('/works/')) move(detailOrigin);
-    else if (location.pathname.startsWith('/students/')) move('/students');
+    if (location.pathname.startsWith('/works/')) goBack(detailOrigin);
+    else if (location.pathname.startsWith('/students/')) goBack('/students', { lockerIndex: Number(location.pathname.split('/')[2]) - 1 });
   });
   if (!/^\/(students(\/[1-8](\/discs)?)?|works(\/[^/]+)?|submit|about)?$/.test(location.pathname)) history.replaceState({}, '', '/');
   render();
