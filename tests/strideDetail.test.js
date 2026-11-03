@@ -8,7 +8,7 @@ createStrideDetail(() => {});
 assert.equal((panel.innerHTML.match(/LI RUOHAN/g) || []).length, 1);
 assert.equal((panel.innerHTML.match(/李若晗 2025级硕士/g) || []).length, 1);
 assert.ok(panel.innerHTML.includes('AIGC 动画短片'));
-assert.ok(panel.innerHTML.includes('<video controls'));
+assert.ok(!panel.innerHTML.includes('<video'), 'Local-only large video must not enter deployment');
 assert.equal((panel.innerHTML.match(/<img /g) || []).length, 2);
 for (const file of ['front.jpg', 'back.jpg']) {
   assert.ok(statSync(new URL(`../public/assets/works/stride/${file}`, import.meta.url)).size > 1000);

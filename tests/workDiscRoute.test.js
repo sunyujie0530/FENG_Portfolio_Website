@@ -4,7 +4,7 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('../src/worksDiscs.js', import.meta.url), 'utf8');
 const browse = readFileSync(new URL('../src/browse.js', import.meta.url), 'utf8');
-assert.ok(browse.includes("showWorkDisc(work.id === 'slime-runner' ? 19 : WORKS.indexOf(work), () => move(back), backLabel, work.authors.map(index => STUDENTS[index]))"));
+assert.ok(browse.includes("showWorkDisc(work.id === 'slime-runner' ? 19 : WORKS.indexOf(work), () => goBack(back), backLabel, work.authors.map(index => STUDENTS[index]))"));
 assert.ok(browse.includes("root.hidden = mode !== 'content' || Boolean(work)"));
 const button = { textContent: '' };
 const authorHeading = { textContent: '陈嘉伟 2025级硕士' };
