@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
+import { escapeHtml } from '../src/submissionData.js';
 
 const source = readFileSync(new URL('../src/browse.js', import.meta.url), 'utf8');
 const render = source.slice(source.indexOf('const render = () =>'));
@@ -12,7 +13,7 @@ assert.ok(source.includes("submitButton.setAttribute('aria-label', '作品上传
 assert.ok(source.includes('<span>作品上传</span>'));
 const icon = readFileSync(new URL('../public/assets/upload-folder.png', import.meta.url));
 assert.deepEqual([...icon.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
-const context = vm.createContext({ colorOf: () => '#abc', kinds: { game: '游戏设计' }, authorLinks: () => '<a>作者名</a>' });
+const context = vm.createContext({ escapeHtml, colorOf: () => '#abc', kinds: { game: '游戏设计' }, authorLinks: () => '<a>作者名</a>' });
 vm.runInContext(source.slice(source.indexOf('function card(work)'), source.indexOf('export function initBrowse')), context);
 const markup = context.card({ id: 'demo', title: '作品名', kind: 'game', cover: '/cover.png', summary: '不应显示的简介' });
 assert.ok(markup.includes('作品名'));

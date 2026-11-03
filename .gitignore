@@ -5,6 +5,9 @@ work
 outputs
 .DS_Store
 .vite-preview/
+.env
+.env.*
+!.env.example
 # Large local-only videos are intentionally excluded from deployment.
 /public/assets/works/beaker-crow/demo.mov
 /public/assets/works/shi-dao/demo.mp4

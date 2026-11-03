@@ -1,0 +1,27 @@
+body.browse-preview .submission-account { border:1px solid var(--ui-line); padding:22px; margin:20px 0 28px; background:#fff; font:400 14px/1.7 var(--ui-font); }
+.submission-account h2 { margin:0 0 10px; font-size:22px; }
+.account-controls { display:flex; flex-wrap:wrap; align-items:flex-end; gap:12px; }
+.account-controls label { display:grid; gap:5px; }
+.account-controls input,.account-controls button,.submission-account article button,.review-tools button,.review-card button { min-height:40px; padding:8px 12px; border:1px solid #aeb7b1; border-radius:3px; background:#fff; color:#171a17; font:inherit; }
+.account-controls button:enabled:hover,.review-card button:enabled:hover { background:#dfff21; cursor:pointer; }
+.account-controls button:disabled { opacity:.5; }
+.backend-notice { padding:12px; background:#f3ffc3; }
+.submission-account article { padding:12px 0; border-top:1px solid #d8ddd8; }
+.submission-account article span { margin:0 12px; color:#69736d; }
+#review-status,#account-status { white-space:pre-wrap; }
+.review-tools { display:flex; flex-wrap:wrap; gap:10px; margin:20px 0; }
+.review-card { padding:24px 0; border-bottom:1px solid #d8ddd8; }
+.review-card h2 { font-size:24px; }
+.review-card label { display:grid; gap:8px; margin:16px 0; }
+.review-card textarea { font:inherit; max-width:600px; }
+.review-copy,.published-copy { white-space:pre-wrap; line-height:1.8; }
+.review-media,.published-gallery { display:flex; flex-wrap:wrap; gap:16px; margin:20px 0; align-items:flex-start; }
+.review-media img { max-width:min(260px,100%); max-height:240px; object-fit:contain; }
+.published-gallery img { width:min(640px,100%); height:auto; }
+.published-cover { width:min(560px,100%); height:auto; display:block; margin:24px 0; }
+.published-detail { padding-top:54px; }
+body.browse-preview .published-detail [data-published-back] { position:fixed; top:126px; left:4vw; z-index:30; }
+.published-detail h1 { overflow-wrap:anywhere; }
+.backend-load-status { margin:14px 0; color:#69736d; font-size:13px; }
+@media(max-width:600px) { body.browse-preview .submission-account { padding:16px; } .account-controls { align-items:stretch; flex-direction:column; } }
+@media(max-width:600px) { body.browse-preview .published-detail [data-published-back] { top:110px; left:5vw; } }
