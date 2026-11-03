@@ -1,13 +1,7 @@
 import './portal.css';
-
-const MB = 1024 * 1024;
-const fileRules = {
-  avatar: { count: 1, each: 5 * MB, total: 5 * MB, types: ['image/jpeg', 'image/png', 'image/webp'] },
-  cover: { count: 1, each: 5 * MB, total: 5 * MB, types: ['image/jpeg', 'image/png', 'image/webp'] },
-  gallery: { count: 12, each: 8 * MB, total: 60 * MB, types: ['image/jpeg', 'image/png', 'image/webp'] },
-  video: { count: 1, each: 200 * MB, total: 200 * MB, types: ['video/mp4', 'video/webm'] },
-  document: { count: 1, each: 20 * MB, total: 20 * MB, types: ['application/pdf'] },
-};
+import { MB, fileRules, validateFiles } from './submissionData.js';
+import { backendConfigured, currentUser, uploadSubmission } from './submissionBackend.js';
+import { mountSubmissionAccount } from './submissionUi.js';
 
 const views = ['submit', 'about'];
 
@@ -35,22 +29,6 @@ export function showPortal(name) {
 function formatBytes(bytes) {
   if (!bytes) return '0MB';
   return `${(bytes / MB).toFixed(bytes < 10 * MB ? 1 : 0)}MB`;
-}
-
-function validateFiles(form) {
-  const errors = [];
-  let grandTotal = 0;
-  for (const [name, rule] of Object.entries(fileRules)) {
-    const files = [...form.elements[name].files];
-    const total = files.reduce((sum, file) => sum + file.size, 0);
-    grandTotal += total;
-    if (files.length > rule.count) errors.push(`${name} 最多选择 ${rule.count} 个文件`);
-    if (files.some((file) => !rule.types.includes(file.type))) errors.push(`${name} 包含不支持的文件格式`);
-    if (files.some((file) => file.size > rule.each)) errors.push(`${name} 中有单个文件超过 ${formatBytes(rule.each)}`);
-    if (total > rule.total) errors.push(`${name} 总大小超过 ${formatBytes(rule.total)}`);
-  }
-  if (grandTotal > 250 * MB) errors.push('单次投稿总大小不能超过 250MB');
-  return { errors, grandTotal };
 }
 
 function initSubmissionForm() {
@@ -130,8 +108,8 @@ function initSubmissionForm() {
     const { errors, grandTotal } = validateFiles(form);
     const names = Object.keys(fileRules).flatMap((name) => [...form.elements[name].files]);
     summary.textContent = names.length
-      ? `${names.length} 个文件 · ${formatBytes(grandTotal)} / 250MB${errors.length ? ` · ${errors[0]}` : ''}`
-      : '尚未选择文件 · 单次投稿总量最大 250MB';
+      ? `${names.length} 个文件 · ${formatBytes(grandTotal)} / 90MB${errors.length ? ` · ${errors[0]}` : ''}`
+      : '尚未选择文件 · 单次投稿总量最大 90MB · 不支持视频';
     summary.classList.toggle('has-error', errors.length > 0);
   };
 
@@ -140,9 +118,16 @@ function initSubmissionForm() {
     document.querySelector('[data-counter="summary"]').textContent = `${form.elements.summary.value.length} / 500`;
   });
 
+  let uploading = false;
+  window.addEventListener('beforeunload', event => { if (uploading) { event.preventDefault(); event.returnValue = ''; } });
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (uploading) return;
     status.className = 'submission-status';
+    if (!backendConfigured) { status.textContent = '后端尚未配置，文件没有上传。请先完成配置说明。'; status.classList.add('has-error'); return; }
+    try { if (!await currentUser()) throw new Error('请先在上方完成邮箱验证并登录'); }
+    catch (error) { status.textContent = error.message; status.classList.add('has-error'); return; }
+    if (uploading) return;
     if (form.dataset.lockerConfirmed !== 'true') {
       lockerStatus.textContent = '请先选择并确认柜子。';
       lockerStatus.classList.add('has-error');
@@ -161,18 +146,13 @@ function initSubmissionForm() {
       return;
     }
 
-    const endpoint = import.meta.env.VITE_SUBMIT_ENDPOINT;
-    if (!endpoint) {
-      status.textContent = '投稿资料已通过本地检查。当前尚未连接审核存储，文件没有离开你的设备。';
-      status.classList.add('is-ready');
-      return;
-    }
-
+    uploading = true;
     submitButton.disabled = true;
+    form.inert = true;
+    document.querySelector('#submission-account').inert = true;
     status.textContent = '正在上传，请不要关闭页面…';
     try {
-      const response = await fetch(endpoint, { method: 'POST', body: new FormData(form) });
-      if (!response.ok) throw new Error('upload failed');
+      await uploadSubmission(form, message => { status.textContent = message; });
       form.reset();
       setWorkLocked(true);
       confirmLocker.disabled = true;
@@ -182,13 +162,21 @@ function initSubmissionForm() {
       document.querySelector('#deco-scroller [data-deco="-1"]')?.click();
       avatarImage.hidden = true;
       avatarLabel.hidden = false;
+      if (avatarUrl) URL.revokeObjectURL(avatarUrl);
+      avatarUrl = '';
+      document.querySelector('[data-counter="summary"]').textContent = '0 / 500';
       updateSummary();
-      status.textContent = '投稿成功，作品已进入审核。';
+      status.textContent = '投稿成功，作品已进入审核。可在上方“我的投稿”查看结果。';
       status.classList.add('is-ready');
-    } catch {
-      status.textContent = '上传失败，请检查网络后重试。';
+      window.dispatchEvent(new Event('submission-complete'));
+    } catch (error) {
+      status.textContent = `上传未完成：${error.message || '请检查网络后重试'}。资料和文件选择已保留；可重试当前草稿，请先查看“我的投稿”避免重复提交。`;
       status.classList.add('has-error');
+      window.dispatchEvent(new Event('submission-complete'));
     } finally {
+      uploading = false;
+      form.inert = false;
+      document.querySelector('#submission-account').inert = false;
       submitButton.disabled = form.dataset.lockerConfirmed !== 'true';
     }
   });
@@ -242,3 +230,4 @@ function initDecoPicker() {
 
 initSubmissionForm();
 initDecoPicker();
+mountSubmissionAccount(document.querySelector('#submission-account'));

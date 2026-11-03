@@ -76,8 +76,9 @@
         <header class="portal-header">
           <p class="page-guide">作品投稿 / 定制展示柜与上传作品</p>
           <h1>上传你的作品</h1>
-          <span>先选择并设计你的展示柜，再填写作品资料。文件通过格式和大小检查后进入审核。</span>
+          <span>邮箱登录后，选择展示柜样式并上传图片或 PDF。作品审核通过后公开展示；第一版暂不支持视频。</span>
         </header>
+        <section id="submission-account" class="submission-account" aria-label="登录与我的投稿"></section>
         <form id="submission-form" novalidate>
           <div class="submission-layout">
             <aside class="locker-builder" aria-labelledby="locker-builder-title">
@@ -88,7 +89,7 @@
                 <div><small>当前选择的柜子</small><strong class="locker-choice-number">01</strong></div>
               </div>
               <fieldset class="locker-controls">
-                <legend>柜子编号</legend>
+                <legend>展示柜样式编号（不占用现有柜子）</legend>
                 <div class="locker-numbers">
                   <label><input type="radio" name="lockerNumber" value="01" required><span>01</span></label>
                   <label><input type="radio" name="lockerNumber" value="02"><span>02</span></label>
@@ -113,7 +114,7 @@
                 <legend><span>01</span>学生信息</legend>
                 <div class="form-grid">
                   <label>姓名<input name="studentName" required minlength="2" maxlength="20" autocomplete="name"></label>
-                  <label>学校邮箱<input name="email" type="email" required autocomplete="email"></label>
+                  <label>已验证邮箱<input name="email" type="email" required autocomplete="email" readonly></label>
                   <label>年级<select name="grade" required><option value="">请选择</option><option>2024级</option><option>2025级</option><option>2026级</option></select></label>
                   <label>学号（不会公开）<input name="studentId" required maxlength="30" autocomplete="off"></label>
                 </div>
@@ -133,13 +134,12 @@
                 <div class="upload-grid">
                   <label class="upload-box">封面图<span>JPG / PNG / WebP · 1:1 · 最大 5MB</span><input name="cover" type="file" accept="image/jpeg,image/png,image/webp" required></label>
                   <label class="upload-box">展示图片<span>最多 12 张 · 每张 8MB · 总计 60MB</span><input name="gallery" type="file" accept="image/jpeg,image/png,image/webp" multiple></label>
-                  <label class="upload-box">演示视频<span>MP4 / WebM · 最大 200MB</span><input name="video" type="file" accept="video/mp4,video/webm"></label>
                   <label class="upload-box">作品 PDF<span>可选 · 最大 20MB</span><input name="document" type="file" accept="application/pdf"></label>
                 </div>
-                <div id="file-summary" class="file-summary" aria-live="polite">尚未选择文件 · 单次投稿总量最大 250MB</div>
+                <div id="file-summary" class="file-summary" aria-live="polite">尚未选择文件 · 单次投稿总量最大 90MB · 不支持视频</div>
               </fieldset>
               <label class="consent"><input name="consent" type="checkbox" required disabled>我确认拥有作品及上传材料的展示授权，并同意提交后进入审核。</label>
-              <button class="submit-button" type="submit" disabled>检查并生成投稿预览</button>
+              <button class="submit-button" type="submit" disabled>上传并提交审核</button>
               <p id="submission-status" class="submission-status" aria-live="polite"></p>
             </div>
           </div>
