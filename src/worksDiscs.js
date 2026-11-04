@@ -13,6 +13,7 @@ import { BEAKER_FRONT, createBeakerDetail } from './beakerDetail.js';
 import { PANTHEON_BACK, createPantheonDetail } from './pantheonDetail.js';
 import { SHI_BACK, SHI_FRONT, createShiDaoDetail } from './shiDaoDetail.js';
 import { detailPhases, pageProgress } from './workDetailMotion.js';
+import { createPublishedDetail } from './publishedViews.js';
 import { standardWorkLayout } from './standardWorkLayout.js';
 
 let renderer;
@@ -26,6 +27,7 @@ let detailPanel;
 let detailTween;
 let restoreDetailFocus = () => {};
 let openRoutedDetail;
+let openPublishedDetail;
 let detailRouteBack = null;
 
 function resetDetail() {
@@ -270,6 +272,31 @@ export function initWorks(background = 0xf6f7fa) {
       }
     });
   };
+  // One reusable uploaded-record slot keeps GPU resources bounded across navigation.
+  openPublishedDetail = (work, onBack, backLabel) => {
+    resetDetail();
+    const previous = discs.find(disc => disc.userData.index === COUNT);
+    if (previous) {
+      scene.remove(previous);
+      const body = previous.children[0];
+      body.geometry.dispose();
+      for (const material of [body.material[0],body.material[2]]) { material.map?.dispose(); material.dispose(); }
+      previous.userData.glow.material.dispose();
+      previous.userData.halo.material.dispose();
+      discs.splice(discs.indexOf(previous),1);
+      detailPanels.get(COUNT)?.remove();
+      detailPanels.delete(COUNT);
+    }
+    COVER_ART[COUNT] = work.cover;
+    BACK_ART[COUNT] = work.cover;
+    DISC_KIND[COUNT] = work.kind;
+    const disc = createDisc(COUNT,geometry,palettes[0],hubMaterial,darkHub,rimMaterial,discParts);
+    disc.userData.uploaded = true;
+    scene.add(disc);
+    discs.push(disc);
+    detailFactories[COUNT] = () => createPublishedDetail(work,closeDetail);
+    openRoutedDetail(COUNT,onBack,backLabel);
+  };
   openRoutedDetail = (index, onBack, backLabel, authors = []) => {
     resetDetail();
     workKinds.clear();
@@ -493,6 +520,11 @@ export function showWorkDisc(index, onBack, backLabel = '全部作品', authors 
   openRoutedDetail(index, onBack, backLabel, authors);
 }
 
+export function showPublishedWorkDisc(work, onBack, backLabel = '全部作品') {
+  showWorks();
+  openPublishedDetail(work,onBack,backLabel);
+}
+
 export function hideWorks() {
   resetDetail();
   const layer = document.querySelector('#works');
@@ -510,8 +542,7 @@ const TRACK_STOPS = [
 ];
 
 function matchingDiscs() {
-  if (workKinds.size === 0) return discs;
-  return discs.filter((disc) => workKinds.has(disc.userData.kind));
+  return discs.filter(disc => !disc.userData.uploaded && (workKinds.size === 0 || workKinds.has(disc.userData.kind)));
 }
 
 function placeDiscs(offset, view) {
