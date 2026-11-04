@@ -25,5 +25,5 @@ assert.ok(!markup.includes('查看作品 ↗'));
 assert.ok(!markup.includes('不应显示的简介'));
 assert.ok(!markup.includes('<p>'));
 const theme = readFileSync(new URL('../src/uiTheme.css', import.meta.url), 'utf8');
-assert.ok(theme.includes('.collection-tools .kind-tabs button:is([aria-pressed="true"],:active)'));
+assert.ok(theme.includes(':is(.collection-tools,.my-works-toolbar) .kind-tabs button:is([aria-pressed="true"],:active)'));
 console.log('Browse presentation: visible-before-measure, minimal clickable cards and recessed filters passed.');

@@ -14,8 +14,9 @@ import { initStudentLanding, cdIntroMarkup, homeAboutMarkup } from './studentLan
 import { showWorkDisc, showPublishedWorkDisc } from './worksDiscs.js';
 import { navigationGuide } from './navigationGuide.js';
 import { backendConfigured, publishedCatalog } from './submissionBackend.js';
-import { publishedWork, escapeHtml } from './submissionData.js';
+import { publishedWork, escapeHtml, syncPublishedStudents, studentPath } from './submissionData.js';
 import { creatorView } from './publishedViews.js';
+import { mountMyWorks } from './myWorks.js';
 import { mountReview } from './submissionUi.js';
 
 export const STUDENTS = [
@@ -89,7 +90,7 @@ export function initBrowse(showScene) {
   let grade = 'all';
   const selectGrade = (value) => {
     grade = value;
-    const indices = STUDENTS.flatMap((student, index) => grade === 'all' || student.grade === grade ? [index] : []);
+    const indices = STUDENTS.flatMap((student, index) => student.active !== false && (grade === 'all' || student.grade === grade) ? [index] : []);
     landing.querySelectorAll('[data-grade]').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.grade === grade)));
     landing.querySelectorAll('[data-student]').forEach((link) => { link.hidden = !indices.includes(Number(link.dataset.student)); });
     window.dispatchEvent(new CustomEvent('browse-grade', { detail: indices }));
@@ -112,6 +113,7 @@ export function initBrowse(showScene) {
   const discStates = new Map();
   let disposeDiscRoom = () => {};
   let disposeReview = () => {};
+  let disposeMyWorks = () => {};
   let catalogLoading = backendConfigured;
   let catalogError = '';
   let catalogVersion = 0;
@@ -120,7 +122,12 @@ export function initBrowse(showScene) {
     if (path === location.pathname) { root.scrollTop = 0; if (path === '/') window.dispatchEvent(new Event('browse-home')); else if (path === '/students') window.dispatchEvent(new Event('browse-overview')); return; }
     if (location.pathname === '/works') listScroll = root.scrollTop;
     if (location.pathname === '/students') history.replaceState({ ...history.state, lockerIndex: lockerContext.studentIndex }, '', location.href);
-    if (path === '/submit') submitOrigin = location.pathname + location.hash;
+    const uploadFlow = ['/submit','/my-works','/review'];
+    if (uploadFlow.includes(path)) {
+      submitOrigin = uploadFlow.includes(location.pathname)
+        ? history.state?.submitOrigin || submitOrigin || '/'
+        : location.pathname + location.hash;
+    }
     if (path.startsWith('/works/')) {
       if (location.pathname.startsWith('/students/')) detailOrigin = location.pathname;
       else if (location.pathname.startsWith('/creators/')) detailOrigin = location.pathname;
@@ -131,7 +138,7 @@ export function initBrowse(showScene) {
       from: replace ? history.state?.from : location.pathname + location.hash,
       ...state,
       ...(path.startsWith('/works/') ? { detailOrigin } : {}),
-      ...(path === '/submit' ? { submitOrigin } : {}),
+      ...(uploadFlow.includes(path) ? { submitOrigin } : {}),
     }, '', path);
     render();
   };
@@ -179,20 +186,27 @@ export function initBrowse(showScene) {
     returning = false;
     disposeDiscRoom();
     disposeDiscRoom = () => {};
+    disposeMyWorks();
+    disposeMyWorks = () => {};
     disposeReview();
     disposeReview = () => {};
     if (location.pathname === '/about') history.replaceState({}, '', '/#about');
     root.querySelectorAll('video').forEach((video) => video.pause());
     const path = location.pathname;
+    const mineEntry = path === '/submit';
+    submitButton.innerHTML = `<img src="/assets/${mineEntry ? 'my-works-folder' : 'upload-folder'}.png" alt="" width="88" height="88"><span>${mineEntry ? '我的作品' : '作品上传'}</span>`;
+    submitButton.setAttribute('aria-label',mineEntry ? '我的作品' : '作品上传');
+    submitButton.title = mineEntry ? '查看和编辑我上传的作品' : '上传你的作品';
     const returnLocker = path === '/students' ? history.state?.lockerIndex : null;
-    if (path === '/submit') submitOrigin = history.state?.submitOrigin || '/';
+    if (['/submit','/my-works','/review'].includes(path)) submitOrigin = history.state?.submitOrigin || '/';
     const studentMatch = path.match(/^\/students\/(\d+)$/);
-    const discMatch = path.match(/^\/students\/([1-8])\/discs$/);
+    const creatorMatch = path.match(/^\/creators\/([0-9a-f-]{36})(\/discs)?$/);
+    const creatorIndex = creatorMatch ? STUDENTS.findIndex(student => student.creatorId === creatorMatch[1] && student.active) : -1;
+    const discMatch = path.match(/^\/students\/(\d+)\/discs$/) || (creatorMatch?.[2] && creatorIndex >= 0 ? [path,String(creatorIndex + 1)] : null);
     const discStudentIndex = discMatch ? Number(discMatch[1]) - 1 : -1;
     const work = WORKS.find((w) => path === `/works/${w.id}`);
-    const creatorMatch = path.match(/^\/creators\/([0-9a-f-]{36})$/);
-    const studentIndex = studentMatch ? Number(studentMatch[1]) - 1 : -1;
-    const student = STUDENTS[studentIndex];
+    const studentIndex = studentMatch ? Number(studentMatch[1]) - 1 : creatorIndex;
+    const student = STUDENTS[studentIndex]?.active !== false ? STUDENTS[studentIndex] : null;
     const mode = path === '/submit' ? 'submit' : path === '/about' ? 'about' : (path === '/' || path === '/students') ? 'students' : 'content';
     showScene(mode);
     document.body.classList.toggle('browse-content', mode === 'content' && !work);
@@ -200,31 +214,33 @@ export function initBrowse(showScene) {
     setLandingActive(mode === 'students');
     root.hidden = mode !== 'content' || Boolean(work);
     document.querySelector('#stage').setAttribute('aria-hidden', String(mode === 'content' && !work));
-    const activeNav = path === '/' ? 'nav-home' : mode === 'submit' || path === '/review' ? 'nav-submit' : mode === 'about' ? 'nav-about' : (student || discMatch || mode === 'students') ? 'nav-lockers' : 'nav-works';
+    const activeNav = path === '/' ? 'nav-home' : mode === 'submit' || path === '/review' || path === '/my-works' ? 'nav-submit' : mode === 'about' ? 'nav-about' : (student || discMatch || mode === 'students') ? 'nav-lockers' : 'nav-works';
     nav.querySelectorAll('button').forEach((button) => {
       if (button.id === activeNav) button.setAttribute('aria-current', 'page');
       else button.removeAttribute('aria-current');
     });
     root.style.setProperty('--author', student?.color || (work ? colorOf(work) : '#638251'));
-    if (path === '/review') {
+    if (path === '/my-works') {
+      disposeMyWorks = mountMyWorks(root);
+    } else if (path === '/review') {
       disposeReview = mountReview(root);
-    } else if (creatorMatch || (!work && path.startsWith('/works/submission-'))) {
+    } else if ((creatorMatch && !student) || (!work && path.startsWith('/works/submission-'))) {
       const projects = WORKS.filter(work => work.creatorId === creatorMatch?.[1]);
       root.innerHTML = creatorMatch && projects.length ? creatorView(projects,card) : `<h1 tabindex="-1">${catalogLoading ? '正在读取作品…' : catalogError ? '作品暂时无法读取' : '未找到已发布的作品'}</h1><p>${escapeHtml(catalogError || '未审核通过或已下架的投稿不会公开展示。')}</p><a class="back-link" href="/works">← 返回全部作品</a>${catalogError ? '<button type="button" data-reload-catalog>重新读取</button>' : ''}`;
-    } else if (discMatch) {
+    } else if (discMatch && STUDENTS[discStudentIndex]?.active !== false && STUDENTS[discStudentIndex]) {
       root.innerHTML = '';
       if (!discStates.has(discStudentIndex)) discStates.set(discStudentIndex, {});
       disposeDiscRoom = mountDiscRoom({ host: root, student: STUDENTS[discStudentIndex], studentIndex: discStudentIndex, students: STUDENTS, works: WORKS, state: discStates.get(discStudentIndex), onOpen: (selected) => move(`/works/${selected.id}`), onBack: () => goBack('/students', { lockerIndex: discStudentIndex }) });
     } else if (student) {
       if (grade !== 'all' && grade !== student.grade) selectGrade(student.grade);
       const projects = WORKS.filter((w) => w.authors.includes(studentIndex));
-      root.innerHTML = `${crumbs([['学生', '/students'], [student.name]])}<a class="back-link" href="/students">← 返回学生展厅</a>
-        <header class="student-profile"><div class="profile-number">${String(studentIndex + 1).padStart(2, '0')}<span>FENG STUDENT</span></div><div><p class="eyebrow page-guide">学生 / ${student.name}的个人主页</p><h1 tabindex="-1">${student.name}</h1><p class="profile-grade">${student.grade || 'FENG 创作者'}</p><p class="profile-bio">${student.bio}</p><span class="profile-tag">${student.tags}</span></div><div class="profile-stat"><strong>${projects.length.toString().padStart(2, '0')}</strong><span>已收录作品</span></div></header>
-        <div class="section-heading"><h2>作品 <small>SELECTED WORKS</small></h2><a href="/works">浏览全部作品 ↗</a></div><div class="project-grid">${projects.length ? projects.map(card).join('') : '<p class="empty">作品正在整理中，可先浏览其他同学的创作。</p>'}</div><p class="editorial-note">创作方向简介根据已收录作品整理。</p>`;
+      root.innerHTML = `${crumbs([['学生', '/students'], [escapeHtml(student.name)]])}<a class="back-link" href="/students">← 返回学生展厅</a>
+        <header class="student-profile"><div class="profile-number">${String(studentIndex + 1).padStart(2, '0')}<span>FENG STUDENT</span></div><div><p class="eyebrow page-guide">学生 / ${escapeHtml(student.name)}的个人主页</p><h1 tabindex="-1">${escapeHtml(student.name)}</h1><p class="profile-grade">${escapeHtml(student.grade || 'FENG 创作者')}</p><p class="profile-bio">${escapeHtml(student.bio)}</p><span class="profile-tag">${escapeHtml(student.tags)}</span></div><div class="profile-stat"><strong>${projects.length.toString().padStart(2, '0')}</strong><span>已收录作品</span></div></header>
+        <div class="section-heading"><h2>作品 <small>SELECTED WORKS</small></h2><a href="${studentPath(student,studentIndex)}/discs">进入作品光盘库 ↗</a></div><div class="project-grid">${projects.length ? projects.map(card).join('') : '<p class="empty">作品正在整理中，可先浏览其他同学的创作。</p>'}</div><p class="editorial-note">创作方向简介根据已收录作品整理。</p>`;
     } else if (work) {
       detailOrigin = history.state?.detailOrigin || '/works';
-      const back = /^\/(students\/[1-8](\/discs)?|creators\/[0-9a-f-]{36})$/.test(detailOrigin) ? detailOrigin : '/works';
-      const backLabel = back === '/works' ? '全部作品' : back.startsWith('/creators/') ? '作者作品' : `${STUDENTS[Number(back.split('/')[2]) - 1].name}的${back.endsWith('/discs') ? '光盘库' : '主页'}`;
+      const back = /^\/(students\/\d+(\/discs)?|creators\/[0-9a-f-]{36}(\/discs)?)$/.test(detailOrigin) ? detailOrigin : '/works';
+      const backLabel = back === '/works' ? '全部作品' : back.startsWith('/creators/') ? `${STUDENTS.find(s => back.includes(s.creatorId))?.name || '作者'}的${back.endsWith('/discs') ? '光盘库' : '主页'}` : `${STUDENTS[Number(back.split('/')[2]) - 1].name}的${back.endsWith('/discs') ? '光盘库' : '主页'}`;
       root.innerHTML = '';
       if (work.uploaded) {
         showPublishedWorkDisc(work, () => goBack(back), backLabel);
@@ -238,7 +254,7 @@ export function initBrowse(showScene) {
       renderResults();
       if (backendConfigured && (catalogLoading || catalogError)) root.insertAdjacentHTML('afterbegin', `<p class="backend-load-status" role="status">${catalogLoading ? '正在读取新投稿…' : `新投稿读取失败：${escapeHtml(catalogError)} <button type="button" data-reload-catalog>重试</button>`}</p>`);
     }
-    document.title = `${path === '/review' ? '投稿审核' : creatorMatch ? '创作者作品' : discMatch ? `${STUDENTS[discStudentIndex].name}的作品光盘库` : student?.name || work?.title || (mode === 'students' ? '学生展厅' : mode === 'about' ? '关于' : mode === 'submit' ? '作品投稿' : '全部作品')} · FENG`;
+    document.title = `${path === '/my-works' ? '我的作品' : path === '/review' ? '投稿审核' : creatorMatch && !student ? '创作者作品' : discMatch && STUDENTS[discStudentIndex] ? `${STUDENTS[discStudentIndex].name}的作品光盘库` : student?.name || work?.title || (mode === 'students' ? '学生展厅' : mode === 'about' ? '关于' : mode === 'submit' ? '作品投稿' : '全部作品')} · FENG`;
     if (mode === 'students') syncLandingNav();
     else syncPageGuide();
     root.scrollTop = path === '/works' ? listScroll : 0;
@@ -255,7 +271,7 @@ export function initBrowse(showScene) {
     }
   };
   nav.addEventListener('click', (event) => {
-    const paths = { 'nav-home': '/', 'nav-lockers': '/students', 'nav-works': '/works', 'nav-submit': '/submit', 'nav-about': '/about' };
+    const paths = { 'nav-home': '/', 'nav-lockers': '/students', 'nav-works': '/works', 'nav-submit': location.pathname === '/submit' ? '/my-works' : '/submit', 'nav-about': '/about' };
     const path = paths[event.target.closest('button')?.id];
     if (!path) return;
     event.preventDefault();
@@ -274,7 +290,7 @@ export function initBrowse(showScene) {
       if (url.pathname === location.pathname) { event.preventDefault(); root.querySelector(url.hash)?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); }
       return;
     }
-    if (url.pathname !== '/' && !/^\/(students|works|creators)(\/|$)/.test(url.pathname) && !['/submit','/review'].includes(url.pathname)) return;
+    if (url.pathname !== '/' && !/^\/(students|works|creators)(\/|$)/.test(url.pathname) && !['/submit','/review','/my-works'].includes(url.pathname)) return;
     event.preventDefault();
     const record = link.closest('#project-results .project-card')?.querySelector('.record-disc');
     if (record && url.pathname.startsWith('/works/')) {
@@ -302,7 +318,7 @@ export function initBrowse(showScene) {
       return;
     }
     if (link.matches('.back-link') && url.pathname === '/students') {
-      goBack('/students', { lockerIndex: Number(location.pathname.split('/')[2]) - 1 });
+      goBack('/students', { lockerIndex: STUDENTS.findIndex((s,i) => studentPath(s,i) === location.pathname.replace(/\/discs$/, '')) });
       return;
     }
     move(url.pathname);
@@ -315,17 +331,17 @@ export function initBrowse(showScene) {
   });
   root.addEventListener('input', (event) => { if (event.target.id === 'project-search') { search = event.target.value.trim(); renderResults(); } });
   window.addEventListener('browse-student', ({ detail }) => {
-    move(`/students/${detail + 1}`);
+    if (STUDENTS[detail]) move(studentPath(STUDENTS[detail],detail));
   });
   window.addEventListener('browse-discs', ({ detail }) => {
-    move(`/students/${detail + 1}/discs`);
+    if (STUDENTS[detail]) move(`${studentPath(STUDENTS[detail],detail)}/discs`);
   });
   window.addEventListener('popstate', render);
   window.addEventListener('keydown', (event) => {
     if (document.body.classList.contains('is-disc-room')) return;
     if (event.key !== 'Escape' || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
     if (location.pathname.startsWith('/works/')) goBack(detailOrigin);
-    else if (location.pathname.startsWith('/students/')) goBack('/students', { lockerIndex: Number(location.pathname.split('/')[2]) - 1 });
+    else if (/^\/(students|creators)\//.test(location.pathname)) goBack('/students', { lockerIndex: STUDENTS.findIndex((s,i) => studentPath(s,i) === location.pathname.replace(/\/discs$/, '')) });
   });
   const refreshCatalog = async () => {
     if (!backendConfigured) return;
@@ -334,6 +350,16 @@ export function initBrowse(showScene) {
     try {
       const rows = await publishedCatalog();
       if (version !== catalogVersion) return;
+      syncPublishedStudents(rows,STUDENTS);
+      window.dispatchEvent(new Event('browse-students-change'));
+      const active = STUDENTS.filter(student => student.active !== false);
+      const grades = [...new Set(active.map(student => student.grade))].sort();
+      landing.querySelector('.grade-picker .kind-tabs').innerHTML = ['all',...grades].map(value => `<button type="button" data-grade="${escapeHtml(value)}" aria-pressed="${value === grade}">${value === 'all' ? '全部' : escapeHtml(value)}</button>`).join('');
+      landing.querySelector('.locker-access').innerHTML = STUDENTS.map((student,index) => student.active === false ? '' : `<a href="${studentPath(student,index)}" data-student="${index}">${String(index + 1).padStart(2,'0')} · ${escapeHtml(student.name)} · ${escapeHtml(student.grade)}</a>`).join('');
+      const cohort = landing.querySelector('.home-about-cohort');
+      cohort.querySelector('h3').textContent = `${active.filter(student => student.tags !== '资料待补充').length}位学生`;
+      cohort.querySelector('p').textContent = `${grades.map(value => value.replace('级','')).join('–')}级`;
+      selectGrade(grades.includes(grade) ? grade : 'all');
       const uploaded = rows.map(row => publishedWork(row,STUDENTS));
       WORKS.splice(0,WORKS.length,...WORKS.filter(work => !work.uploaded),...uploaded);
       catalogError = '';
@@ -341,12 +367,12 @@ export function initBrowse(showScene) {
     finally {
       if (version === catalogVersion) {
         catalogLoading = false;
-        if (/^\/(works|creators|students\/\d+)(\/|$)/.test(location.pathname)) render();
+        if (/^\/(works|creators|students)(\/|$)/.test(location.pathname)) render();
       }
     }
   };
   window.addEventListener('published-catalog-change',refreshCatalog);
-  if (!/^\/(students(\/[1-8](\/discs)?)?|works(\/[^/]+)?|creators\/[0-9a-f-]{36}|submit|review|about)?$/.test(location.pathname)) history.replaceState({}, '', '/');
+  if (!/^\/(students(\/\d+(\/discs)?)?|works(\/[^/]+)?|creators\/[0-9a-f-]{36}(\/discs)?|submit|review|my-works|about)?$/.test(location.pathname)) history.replaceState({}, '', '/');
   render();
   refreshCatalog();
 }

@@ -47,11 +47,6 @@
       </aside>
     </div>
     <section id="submit-view" class="portal-view submit-view" hidden aria-hidden="true">
-      <div class="submit-hero" aria-hidden="true">
-        <p>Upload Works</p>
-        <span>＋</span>
-        <div class="submit-cursor" aria-hidden="true"></div>
-      </div>
       <aside id="deco-picker" class="deco-picker" aria-label="柜外装饰">
         <p>柜外装饰</p>
         <strong id="deco-picker-label">无</strong>
@@ -74,72 +69,42 @@
       <button id="submit-back" class="text-link submit-back" type="button">← 返回上一页</button>
       <div class="portal-shell">
         <header class="portal-header">
-          <p class="page-guide">作品投稿 / 定制展示柜与上传作品</p>
+          <p class="page-guide">作品上传</p>
           <h1>上传你的作品</h1>
-          <span>邮箱登录后，选择展示柜样式并上传图片或 PDF。作品审核通过后公开展示；第一版暂不支持视频。</span>
+          <span>邮箱登录后直接填写作品。个人头像、封面图和 3 张展示图片必传；学生与作品资料均为必填，审核通过后公开展示。</span>
         </header>
         <section id="submission-account" class="submission-account" aria-label="登录与我的投稿"></section>
         <form id="submission-form" novalidate>
           <div class="submission-layout">
-            <aside class="locker-builder" aria-labelledby="locker-builder-title">
-              <p>第一步 / 定制你的柜子</p>
-              <h2 id="locker-builder-title">先选一个柜子</h2>
-              <div class="locker-identity" aria-label="柜子身份信息">
-                <div class="locker-avatar"><span>头像</span><img alt="头像预览" hidden></div>
-                <div><small>当前选择的柜子</small><strong class="locker-choice-number">01</strong></div>
-              </div>
-              <fieldset class="locker-controls">
-                <legend>展示柜样式编号（不占用现有柜子）</legend>
-                <div class="locker-numbers">
-                  <label><input type="radio" name="lockerNumber" value="01" required><span>01</span></label>
-                  <label><input type="radio" name="lockerNumber" value="02"><span>02</span></label>
-                  <label><input type="radio" name="lockerNumber" value="03"><span>03</span></label>
-                  <label><input type="radio" name="lockerNumber" value="04"><span>04</span></label>
-                  <label><input type="radio" name="lockerNumber" value="05"><span>05</span></label>
-                  <label><input type="radio" name="lockerNumber" value="06"><span>06</span></label>
-                  <label><input type="radio" name="lockerNumber" value="07"><span>07</span></label>
-                  <label><input type="radio" name="lockerNumber" value="08"><span>08</span></label>
-                </div>
-                <div class="locker-colors">
-                  <label>柜体颜色<input name="lockerColor" type="color" value="#9aa3ac"></label>
-                  <label>强调颜色<input name="lockerAccent" type="color" value="#2aa800"></label>
-                </div>
-                <label class="avatar-picker">个人头像<span>JPG / PNG / WebP · 最大 5MB</span><input name="avatar" type="file" accept="image/jpeg,image/png,image/webp"></label>
-              </fieldset>
-              <button id="confirm-locker" class="confirm-locker" type="button">确认柜子并继续 →</button>
-              <p id="locker-status" class="locker-status" aria-live="polite">请选择一个柜子编号。</p>
-            </aside>
-            <div id="work-upload" class="submission-fields is-locked" aria-disabled="true">
-              <fieldset data-work-field disabled>
+            <div id="work-upload" class="submission-fields">
+              <fieldset data-work-field>
                 <legend><span>01</span>学生信息</legend>
                 <div class="form-grid">
                   <label>姓名<input name="studentName" required minlength="2" maxlength="20" autocomplete="name"></label>
-                  <label>已验证邮箱<input name="email" type="email" required autocomplete="email" readonly></label>
                   <label>年级<select name="grade" required><option value="">请选择</option><option>2024级</option><option>2025级</option><option>2026级</option></select></label>
-                  <label>学号（不会公开）<input name="studentId" required maxlength="30" autocomplete="off"></label>
+                  <label class="avatar-picker">个人头像（必传）<span>JPG / PNG / WebP · 最大 5MB</span><input name="avatar" type="file" accept="image/jpeg,image/png,image/webp" required><img id="avatar-preview" alt="个人头像预览" hidden></label>
                 </div>
               </fieldset>
-              <fieldset data-work-field disabled>
+              <fieldset data-work-field>
                 <legend><span>02</span>作品信息</legend>
                 <div class="form-grid">
                   <label>作品名称<input name="title" required minlength="2" maxlength="40"></label>
                   <label>作品类型<select name="category" required><option value="">请选择</option><option>游戏</option><option>动画</option><option>3D</option><option>视觉设计</option><option>交互设计</option><option>其他</option></select></label>
                   <label>创作年份<input name="year" type="number" min="2020" max="2030" required></label>
-                  <label>团队成员与分工<input name="roles" maxlength="200" placeholder="个人作品可填写：独立完成"></label>
+                  <label>团队成员与分工<input name="roles" required maxlength="200" placeholder="个人作品可填写：独立完成"></label>
                 </div>
                 <label>作品简介 <small data-counter="summary">0 / 500</small><textarea name="summary" required minlength="80" maxlength="500" rows="6" placeholder="请用 80–500 字介绍作品背景、过程和最终成果"></textarea></label>
               </fieldset>
-              <fieldset data-work-field disabled>
+              <fieldset data-work-field>
                 <legend><span>03</span>上传文件</legend>
                 <div class="upload-grid">
                   <label class="upload-box">封面图<span>JPG / PNG / WebP · 1:1 · 最大 5MB</span><input name="cover" type="file" accept="image/jpeg,image/png,image/webp" required></label>
-                  <label class="upload-box">展示图片<span>最多 12 张 · 每张 8MB · 总计 60MB</span><input name="gallery" type="file" accept="image/jpeg,image/png,image/webp" multiple></label>
-                  <label class="upload-box">作品 PDF<span>可选 · 最大 20MB</span><input name="document" type="file" accept="application/pdf"></label>
+                  <label class="upload-box">展示图片（必传 3 张）<span>请选择 3 张 · 每张最大 8MB</span><input name="gallery" type="file" accept="image/jpeg,image/png,image/webp" multiple required></label>
                 </div>
                 <div id="file-summary" class="file-summary" aria-live="polite">尚未选择文件 · 单次投稿总量最大 90MB · 不支持视频</div>
               </fieldset>
-              <label class="consent"><input name="consent" type="checkbox" required disabled>我确认拥有作品及上传材料的展示授权，并同意提交后进入审核。</label>
-              <button class="submit-button" type="submit" disabled>上传并提交审核</button>
+              <label class="consent"><input name="consent" type="checkbox" required>我确认拥有作品及上传材料的展示授权，并同意提交后进入审核。</label>
+              <button class="submit-button" type="submit">上传并提交审核</button>
               <p id="submission-status" class="submission-status" aria-live="polite"></p>
             </div>
           </div>

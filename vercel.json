@@ -1,10 +1,32 @@
 {
   "rewrites": [
-    { "source": "/students/:path*", "destination": "/index.html" },
-    { "source": "/works/:path*", "destination": "/index.html" },
-    { "source": "/creators/:path*", "destination": "/index.html" },
-    { "source": "/review", "destination": "/index.html" },
-    { "source": "/submit", "destination": "/index.html" },
-    { "source": "/about", "destination": "/index.html" }
+    {
+      "source": "/students/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/works/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/creators/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/review",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/my-works",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/submit",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/about",
+      "destination": "/index.html"
+    }
   ]
 }

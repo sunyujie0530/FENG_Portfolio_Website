@@ -5,7 +5,7 @@ const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
 
 assert.ok(html.includes('id="locker-hover-card"'));
-assert.ok(main.includes('const lockerNames = STUDENTS.map((student) => student.name)'));
+assert.ok(main.includes('STUDENTS[index].name'));
 assert.ok(main.includes("'点击打开柜门 →'"));
 assert.ok(main.includes('doorAnims[hoveredLocker]?.open ? -1 : hoveredLocker, event, profileHover, discHover'));
 assert.ok(main.includes('if (hits.length > 0) setLockerHoverCard(-1)'));

@@ -6,11 +6,12 @@ import { validatePublicSupabaseConfig } from '../src/backendConfig.js';
 
 const source = readFileSync(new URL('../src/submissionBackend.js',import.meta.url),'utf8')
   .replace(/^import .*;\n/gm,'').replace(/import\.meta\.env/g,'env').replace(/export /g,'');
-const values = {studentName:'学生甲',title:'测试作品',grade:'2025级',category:'3D',year:'2026',roles:'独立完成',summary:'作品介绍。'.repeat(20),lockerNumber:'01',lockerColor:'#9aa3ac',lockerAccent:'#2aa800',studentId:'private-id'};
+const values = {studentName:'学生甲',title:'测试作品',grade:'2025级',category:'3D',year:'2026',roles:'独立完成',summary:'作品介绍。'.repeat(20),lockerNumber:'01',lockerColor:'#9aa3ac',lockerAccent:'#2aa800'};
 const form = {elements:Object.fromEntries(Object.entries(values).map(([name,value]) => [name,{value}]))};
 for (const kind of Object.keys(fileRules)) form.elements[kind] = {files:[]};
 form.elements.cover.files = [{size:1000,type:'image/png'}];
-form.elements.document.files = [{size:1000,type:'application/pdf'}];
+form.elements.avatar.files = [{size:1000,type:'image/png'}];
+form.elements.gallery.files = Array.from({length:3},()=>({size:1000,type:'image/png'}));
 let failure = '', status = 'draft', rpcCalls = [], uploaded = [], removed = [];
 const storage = new Map();
 const fake = {
@@ -41,10 +42,13 @@ failure = ''; rpcCalls = []; uploaded = [];
 await context.upload(form);
 assert.equal(rpcCalls[0].args.p_draft_id,'draft-1');
 assert.ok(removed.includes('draft-1/gallery-11'));
-assert.deepEqual(uploaded.map(file => file.path),['draft-1/cover','draft-1/document']);
+assert.deepEqual(uploaded.map(file => file.path),['draft-1/avatar','draft-1/cover','draft-1/gallery-00','draft-1/gallery-01','draft-1/gallery-02']);
 assert.equal(storage.has('feng-upload-draft:user-1'),false);
 assert.equal(rpcCalls.at(-1).name,'finish_submission');
 failure = 'finish-response';
 assert.equal(await context.upload(form),'draft-1');
 assert.equal(storage.has('feng-upload-draft:user-1'),false);
 console.log('Upload orchestration: interrupted upload preserves draft, stale slots removed, safe retry and finalization passed.');
+
+form.elements.roles.value='   ';
+await assert.rejects(() => context.upload(form),/请填写团队成员与分工/);

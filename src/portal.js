@@ -35,75 +35,28 @@ function initSubmissionForm() {
   const form = document.querySelector('#submission-form');
   const summary = document.querySelector('#file-summary');
   const status = document.querySelector('#submission-status');
-  const lockerBuilder = document.querySelector('.locker-builder');
-  const workUpload = document.querySelector('#work-upload');
-  const confirmLocker = document.querySelector('#confirm-locker');
-  const lockerStatus = document.querySelector('#locker-status');
-  if (!form || !summary || !status || !lockerBuilder || !workUpload || !confirmLocker || !lockerStatus) return;
-
-  const workFieldsets = [...form.querySelectorAll('[data-work-field]')];
-  const consent = form.elements.consent;
+  if (!form || !summary || !status) return;
   const submitButton = form.querySelector('[type="submit"]');
-  const avatarImage = lockerBuilder.querySelector('img');
-  const avatarLabel = lockerBuilder.querySelector('.locker-avatar span');
-  const syncLockerScene = (detail) => window.dispatchEvent(new CustomEvent('submission-locker-change', { detail }));
+  const avatarImage = document.querySelector('#avatar-preview');
   let avatarUrl = '';
-
-  const setWorkLocked = (locked) => {
-    workFieldsets.forEach((fieldset) => { fieldset.disabled = locked; });
-    consent.disabled = locked;
-    submitButton.disabled = locked;
-    workUpload.classList.toggle('is-locked', locked);
-    workUpload.setAttribute('aria-disabled', String(locked));
-    form.dataset.lockerConfirmed = String(!locked);
-  };
-
-  setWorkLocked(true);
-  confirmLocker.disabled = true;
-
-  for (const radio of form.elements.lockerNumber) {
-    radio.addEventListener('change', () => {
-      lockerBuilder.querySelector('.locker-choice-number').textContent = radio.value;
-      syncLockerScene({ number: radio.value });
-      confirmLocker.disabled = false;
-      lockerStatus.textContent = `已选择 ${radio.value} 号柜，可继续调整外观。`;
-    });
-  }
-  form.elements.lockerColor.addEventListener('input', (event) => {
-    syncLockerScene({ color: event.target.value });
-  });
-  form.elements.lockerAccent.addEventListener('input', (event) => {
-    lockerBuilder.style.setProperty('--locker-accent', event.target.value);
-    syncLockerScene({ accent: event.target.value });
-  });
   form.elements.avatar.addEventListener('change', () => {
     const [file] = form.elements.avatar.files;
     if (avatarUrl) URL.revokeObjectURL(avatarUrl);
     avatarUrl = '';
     avatarImage.hidden = true;
-    avatarLabel.hidden = false;
     if (!file) return;
     const rule = fileRules.avatar;
     if (!rule.types.includes(file.type) || file.size > rule.each) {
       form.elements.avatar.value = '';
-      lockerStatus.textContent = '头像须为 JPG、PNG 或 WebP，且不超过 5MB。';
-      lockerStatus.classList.add('has-error');
+      status.textContent = '头像须为 JPG、PNG 或 WebP，且不超过 5MB。';
+      status.classList.add('has-error');
       return;
     }
-    lockerStatus.classList.remove('has-error');
+    status.classList.remove('has-error');
     avatarUrl = URL.createObjectURL(file);
     avatarImage.src = avatarUrl;
     avatarImage.hidden = false;
-    avatarLabel.hidden = true;
   });
-  confirmLocker.addEventListener('click', () => {
-    if (!form.elements.lockerNumber.value) return;
-    setWorkLocked(false);
-    lockerStatus.classList.remove('has-error');
-    lockerStatus.textContent = `${form.elements.lockerNumber.value} 号柜已确认，现在可以填写并上传作品。`;
-    workUpload.querySelector('input, select, textarea')?.focus();
-  });
-
   const updateSummary = () => {
     const { errors, grandTotal } = validateFiles(form);
     const names = Object.keys(fileRules).flatMap((name) => [...form.elements[name].files]);
@@ -128,11 +81,6 @@ function initSubmissionForm() {
     try { if (!await currentUser()) throw new Error('请先在上方完成邮箱验证并登录'); }
     catch (error) { status.textContent = error.message; status.classList.add('has-error'); return; }
     if (uploading) return;
-    if (form.dataset.lockerConfirmed !== 'true') {
-      lockerStatus.textContent = '请先选择并确认柜子。';
-      lockerStatus.classList.add('has-error');
-      return;
-    }
     if (!form.checkValidity()) {
       form.reportValidity();
       status.textContent = '请先补全必填信息。';
@@ -154,14 +102,8 @@ function initSubmissionForm() {
     try {
       await uploadSubmission(form, message => { status.textContent = message; });
       form.reset();
-      setWorkLocked(true);
-      confirmLocker.disabled = true;
-      lockerBuilder.style.removeProperty('--locker-accent');
-      lockerBuilder.querySelector('.locker-choice-number').textContent = '01';
-      syncLockerScene({ color: '#9aa3ac', number: '01' });
       document.querySelector('#deco-scroller [data-deco="-1"]')?.click();
       avatarImage.hidden = true;
-      avatarLabel.hidden = false;
       if (avatarUrl) URL.revokeObjectURL(avatarUrl);
       avatarUrl = '';
       document.querySelector('[data-counter="summary"]').textContent = '0 / 500';
@@ -177,7 +119,7 @@ function initSubmissionForm() {
       uploading = false;
       form.inert = false;
       document.querySelector('#submission-account').inert = false;
-      submitButton.disabled = form.dataset.lockerConfirmed !== 'true';
+      submitButton.disabled = false;
     }
   });
 }

@@ -34,59 +34,6 @@
   overscroll-behavior: contain;
 }
 
-.submit-hero {
-  position: fixed;
-  top: clamp(72px, 8vh, 96px);
-  left: clamp(28px, 3.4vw, 56px);
-  z-index: 3;
-  width: max-content;
-  color: #111;
-  pointer-events: none;
-  transform: none;
-}
-
-.submit-hero::before {
-  content: "";
-  position: absolute;
-  inset: -2px 0 6px;
-  border: 1.5px solid #111;
-}
-
-.submit-hero p {
-  position: relative;
-  width: max-content;
-  margin: 0;
-  padding: 2px 18px 8px;
-  font: 800 clamp(52px, 6.4vw, 88px)/0.9 "Arial Black", "Helvetica Neue", "PingFang SC", sans-serif;
-  letter-spacing: -0.045em;
-}
-
-.submit-hero span {
-  position: absolute;
-  top: 112%;
-  left: 2%;
-  display: grid;
-  width: 56px;
-  height: 56px;
-  place-items: center;
-  border: 3px dashed #171a17;
-  font: 400 42px/1 "HY Pixel", monospace;
-}
-
-.submit-cursor {
-  position: absolute;
-  top: 54%;
-  left: 82%;
-  z-index: 4;
-  width: clamp(46px, 4.6vw, 68px);
-  aspect-ratio: 0.76;
-  background: var(--submit-green);
-  clip-path: polygon(0 0, 100% 61%, 62% 66%, 79% 94%, 59% 100%, 42% 71%, 14% 94%);
-  filter: drop-shadow(3px 0 #111) drop-shadow(-3px 0 #111) drop-shadow(0 3px #111) drop-shadow(0 -3px #111);
-  pointer-events: none;
-  transform: rotate(-18deg);
-}
-
 .deco-picker {
   position: fixed;
   left: clamp(56px, 6.4vw, 96px);
@@ -221,8 +168,8 @@ body.is-submit #app {
   grid-template-columns: 1fr;
   gap: 10px;
   padding: 18px 48px 22px 18px;
-  border: 1px solid #171a17;
-  transform: rotate(-2.5deg);
+  border: 0;
+  transform: none;
 }
 
 .submit-view .portal-header h1 {
@@ -488,8 +435,6 @@ body.is-submit #app {
 .submission-fields > fieldset:nth-of-type(2) { transform: rotate(0.8deg); }
 .submission-fields > fieldset:nth-of-type(3) { transform: rotate(-0.65deg); }
 
-.submit-hero::after,
-.submit-view .portal-header::after,
 .locker-builder::after,
 .submission-fields > fieldset::after {
   content: "";
@@ -694,14 +639,6 @@ body.is-submit #app {
     pointer-events: auto;
   }
 
-  .submit-hero {
-    display: none;
-  }
-
-  .submit-cursor {
-    display: none;
-  }
-
   .close-submit {
     top: 70px;
     right: 18px;
@@ -744,3 +681,7 @@ body.is-submit #app {
     grid-template-columns: 1fr;
   }
 }
+
+/* Submit directly; decoration remains available in the scene preview. */
+.submission-layout { display:block; }
+#avatar-preview { width:80px; height:80px; object-fit:cover; margin-top:10px; }
