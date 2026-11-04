@@ -1,0 +1,26 @@
+.my-works-heading { display:flex; align-items:center; justify-content:space-between; gap:24px; margin:20px 0 36px; }
+.my-works-heading h1,.my-works-heading h2 { margin:8px 0; }
+.my-works-toolbar,.my-works-toolbar > div,.edit-actions { display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
+.my-works-toolbar { justify-content:space-between; margin-bottom:24px; }
+.my-works-toolbar button,.my-works-heading button,.edit-actions button { font:inherit; color:inherit; background:#fff; border:1px solid #aeb7b1; padding:10px 16px; cursor:pointer; }
+.edit-actions button[type="submit"] { background:#dfff21; }
+.my-works-list { display:grid; gap:24px; }
+.my-work-card { display:grid; grid-template-columns:200px 1fr; gap:28px; padding:24px; border:1px solid #d8ddd8; }
+.my-work-card > img,.my-work-placeholder { width:100%; aspect-ratio:1; object-fit:cover; background:#f3f4f2; }
+.my-work-placeholder { display:grid; place-items:center; color:#69736d; }
+.my-work-card h2 { margin:12px 0; font-size:24px; }
+.my-work-card p,.edit-explanation { color:#606a63; line-height:1.8; }
+.my-work-state { font-size:13px; padding:5px 10px; background:#eff3e9; }
+.my-work-note { white-space:pre-wrap; }
+.my-works-empty { padding:48px 0; }
+.work-editor { display:grid; gap:24px; }
+.work-editor label { display:grid; gap:10px; font-size:15px; }
+.edit-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+.work-editor input:not([type="checkbox"]),.work-editor select,.work-editor textarea { box-sizing:border-box; width:100%; padding:12px; border:1px solid #aeb7b1; background:white; color:inherit; font:inherit; }
+.edit-media-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+.edit-previews { display:flex; flex-wrap:wrap; gap:10px; }
+.edit-previews img { width:100px; height:100px; object-fit:cover; }
+.work-editor .edit-consent { display:flex; align-items:center; }
+.edit-consent input { flex-shrink:0; }
+.edit-media-grid span,.edit-status { color:#606a63; line-height:1.7; }
+@media(max-width:650px) { .my-works-heading { align-items:flex-start; flex-direction:column; } .my-work-card,.edit-grid,.edit-media-grid { grid-template-columns:1fr; } .my-work-card > img { max-width:220px; } }

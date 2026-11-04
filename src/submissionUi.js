@@ -2,36 +2,35 @@ import { backend, backendConfigured, checked, currentUser, isAdmin, mySubmission
 import { escapeHtml as e, statusLabels } from './submissionData.js';
 import './submissionUi.css';
 
-export function mountSubmissionAccount(host) {
-  host.innerHTML = `<h2>邮箱登录</h2><p>先通过邮件登录链接或验证码验证邮箱，再上传图片和 PDF。作品审核通过后公开。</p>
+export function mountSubmissionAccount(host, {showSubmissions = true} = {}) {
+  host.innerHTML = `<h2>邮箱登录</h2><p>先通过邮件登录链接或验证码验证邮箱，再上传图片。作品审核通过后公开。</p>
     <p class="backend-notice" ${backendConfigured ? 'hidden' : ''}>后端尚未配置：现在可以预览和填写，但不能真实上传。请按 docs/BACKEND_SETUP.md 创建项目。</p>
     <div class="account-controls"><label>登录邮箱<input id="account-email" type="email" autocomplete="email" maxlength="254"></label>
     <button type="button" id="account-send">发送登录邮件</button>
     <label>邮箱验证码<input id="account-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></label>
     <button type="button" id="account-verify">验证并登录</button><button type="button" id="account-logout" hidden>退出登录</button></div>
     <p id="account-status" role="status" aria-live="polite"></p><a class="text-link" id="review-entry" href="/review" hidden>进入管理员审核 →</a>
-    <h3>我的投稿</h3><div id="my-submissions">登录后可查看审核结果。</div>`;
+    <div ${showSubmissions ? '' : 'hidden'}><h3>我的投稿</h3><div id="my-submissions">登录后可查看审核结果。</div></div>`;
   const email = host.querySelector('#account-email'), code = host.querySelector('#account-code');
   const send = host.querySelector('#account-send'), verify = host.querySelector('#account-verify'), logout = host.querySelector('#account-logout');
   const status = host.querySelector('#account-status'), mine = host.querySelector('#my-submissions');
-  let busy = false, cooldown = 0, timer, sentEmail = '', generation = 0;
+  let busy = false, cooldown = 0, timer, sentEmail = '', generation = 0, disposed = false;
   const controls = () => { send.disabled = !backend || busy || cooldown > 0; verify.disabled = !backend || busy || !sentEmail; logout.disabled = busy; send.textContent = cooldown ? `${cooldown} 秒后重发` : '发送登录邮件'; };
   const refresh = async () => {
     const run = ++generation;
     try {
       const user = await currentUser();
-      if (run !== generation) return;
+      if (disposed || run !== generation) return;
       logout.hidden = !user;
       email.disabled = Boolean(user);
       verify.hidden = code.parentElement.hidden = send.hidden = Boolean(user);
-      const schoolEmail = document.querySelector('#submission-form [name="email"]');
-      if (schoolEmail) { schoolEmail.value = user?.email || ''; schoolEmail.readOnly = true; }
       if (!user) { mine.textContent = '登录后可查看审核结果。'; host.querySelector('#review-entry').hidden = true; return; }
       email.value = user.email;
       status.textContent = `已登录：${user.email}`;
       const [rows, admin] = await Promise.all([mySubmissions(),isAdmin()]);
-      if (run !== generation) return;
+      if (disposed || run !== generation) return;
       host.querySelector('#review-entry').hidden = !admin;
+      if (!showSubmissions) return;
       mine.innerHTML = rows.length ? rows.map(row => `<article><strong>${e(row.data.title)}</strong><span>${statusLabels[row.status]}</span>
         ${row.review_note ? `<p>审核意见：${e(row.review_note)}</p>` : ''}
         ${['draft','rejected'].includes(row.status) ? `<button type="button" data-resume="${e(row.id)}">继续填写这份投稿</button>` : ''}</article>`).join('') : '<p>暂时没有投稿。</p>';
@@ -40,19 +39,13 @@ export function mountSubmissionAccount(host) {
         const form = document.querySelector('#submission-form');
         if (!form) return;
         resumeDraft(row.id,user.id);
-        for (const name of ['avatar','cover','gallery','document']) form.elements[name].value = '';
+        for (const name of ['avatar','cover','gallery']) form.elements[name].value = '';
         form.elements.avatar.dispatchEvent(new Event('change',{bubbles:true}));
         form.elements.cover.dispatchEvent(new Event('change',{bubbles:true}));
         for (const name of ['studentName','title','grade','category','year','roles','summary']) form.elements[name].value = row.data[name] || '';
-        form.elements.lockerColor.value = row.data.lockerColor;
-        form.elements.lockerAccent.value = row.data.lockerAccent;
-        const radio = [...form.elements.lockerNumber].find(input => input.value === row.data.lockerNumber);
-        radio.checked = true; radio.dispatchEvent(new Event('change',{ bubbles:true }));
-        form.elements.lockerColor.dispatchEvent(new Event('input',{ bubbles:true }));
-        form.elements.lockerAccent.dispatchEvent(new Event('input',{ bubbles:true }));
         document.querySelector(`#deco-scroller [data-deco="${row.data.deco}"]`)?.click();
         form.elements.summary.dispatchEvent(new Event('input',{ bubbles:true }));
-        status.textContent = '已恢复投稿资料。请确认柜子、填写学号并重新选择文件，然后提交；旧文件会被替换。';
+        status.textContent = '已恢复投稿资料。请重新选择头像、封面和 3 张展示图片，然后提交；旧文件会被替换。';
       }));
     } catch (error) { status.textContent = `账户读取失败：${error.message}`; }
   };
@@ -79,8 +72,8 @@ export function mountSubmissionAccount(host) {
     checked(await backend.auth.signOut());
     const form = document.querySelector('#submission-form');
     if (form) {
-      for (const name of ['studentName','studentId','email','title','roles','summary']) form.elements[name].value = '';
-      for (const name of ['avatar','cover','gallery','document']) form.elements[name].value = '';
+      for (const name of ['studentName','title','roles','summary']) form.elements[name].value = '';
+      for (const name of ['avatar','cover','gallery']) form.elements[name].value = '';
       form.elements.avatar.dispatchEvent(new Event('change',{bubbles:true}));
       form.elements.cover.dispatchEvent(new Event('change',{bubbles:true}));
       form.elements.summary.dispatchEvent(new Event('input',{bubbles:true}));
@@ -88,9 +81,16 @@ export function mountSubmissionAccount(host) {
     status.textContent = '已退出登录'; await refresh();
   }));
   controls(); refresh();
-  backend?.auth.onAuthStateChange(() => { setTimeout(refresh,0); });
+  const subscription = backend?.auth.onAuthStateChange(() => { setTimeout(() => {if (!disposed) refresh();},0); });
+  const visible = () => { if (!document.hidden && !disposed) refresh(); };
   window.addEventListener('submission-complete',refresh);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+  document.addEventListener('visibilitychange',visible);
+  return () => {
+    disposed = true; generation++; clearInterval(timer);
+    subscription?.data.subscription.unsubscribe();
+    window.removeEventListener('submission-complete',refresh);
+    document.removeEventListener('visibilitychange',visible);
+  };
 }
 
 export function mountReview(host) {
@@ -111,9 +111,9 @@ export function mountReview(host) {
       for (const row of items) {
         const card = document.createElement('article'); card.className = 'review-card';
         card.innerHTML = `<h2>${e(row.data.title)}</h2><p>${e(row.data.studentName)} · ${e(row.data.grade)} · ${e(row.data.category)} · ${e(row.data.year)}</p>
-          <p>联系方式：${e(row.contact_email)}　学号：${e(row.student_id)}</p><p>${e(row.data.roles)}</p><p class="review-copy">${e(row.data.summary)}</p>
+          <p>联系方式：${e(row.contact_email)}</p><p>${e(row.data.roles)}</p><p class="review-copy">${e(row.data.summary)}</p>
           <div class="review-media">${row.files.map(file => file.kind === 'document' ? `<a href="${e(file.url)}" target="_blank" rel="noopener noreferrer">下载 PDF</a>` : `<img src="${e(file.url)}" alt="${file.kind === 'cover' ? '作品封面' : file.kind === 'avatar' ? '学生头像' : '展示图片'}" loading="lazy">`).join('')}</div>
-          <p>展示柜样式：${e(row.data.lockerNumber)}（仅样式预览，不自动覆盖现有柜子）</p><label>审核意见<textarea maxlength="500" rows="2"></textarea></label>
+          <p>柜外装饰：${e(({"-1":"无","0":"心情板","1":"笔筒","2":"背包","3":"便签","4":"海报","5":"日历","6":"便条","7":"吉他"})[row.data.deco] || "无")}</p><label>审核意见<textarea maxlength="500" rows="2"></textarea></label>
           <div>${selected === 'pending' ? '<button type="button" data-review="approve">通过并发布</button>' : ''}<button type="button" data-review="reject">${selected === 'pending' ? '退回修改' : '下架作品'}</button></div>`;
         card.querySelectorAll('[data-review]').forEach(button => button.addEventListener('click', async () => {
           card.querySelectorAll('button').forEach(node => { node.disabled = true; });

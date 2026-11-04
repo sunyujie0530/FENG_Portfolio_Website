@@ -8,12 +8,15 @@ assert.throws(() => validatePublicSupabaseConfig('https://example.supabase.co','
 const secretJwt = `header.${btoa(JSON.stringify({role:'service_role'}))}.signature`;
 assert.throws(() => validatePublicSupabaseConfig('https://example.supabase.co',secretJwt));
 assert.ok(!('video' in fileRules));
+assert.ok(!('document' in fileRules));
 const elements = Object.fromEntries(Object.keys(fileRules).map(name => [name,{files:[]} ]));
 const form = {elements};
 assert.ok(validateFiles(form).errors.length);
 elements.cover.files = [{size:1000,type:'image/png'}];
+elements.avatar.files = [{size:1000,type:'image/png'}];
+elements.gallery.files = Array.from({length:3},()=>({size:1000,type:'image/png'}));
 assert.deepEqual(validateFiles(form).errors,[]);
-elements.gallery.files = Array.from({length:13},() => ({size:1000,type:'image/png'}));
+elements.gallery.files = Array.from({length:4},() => ({size:1000,type:'image/png'}));
 assert.ok(validateFiles(form).errors.length);
 elements.gallery.files = [{size:9*MB,type:'image/png'}];
 assert.ok(validateFiles(form).errors.length);
@@ -28,3 +31,10 @@ const markup = publishedDetail(work,'全部作品');
 assert.ok(!markup.includes('<script>'));
 assert.ok(!markup.includes('<img onerror'));
 assert.ok(markup.includes('&lt;script&gt;'));
+
+elements.gallery.files = Array.from({length:2},()=>({size:1000,type:'image/png'}));
+assert.ok(validateFiles(form).errors.some(error=>error.includes('3 张')));
+elements.gallery.files.push({size:1000,type:'image/png'});
+assert.deepEqual(validateFiles(form).errors,[]);
+elements.avatar.files=[];
+assert.ok(validateFiles(form).errors.includes('请上传个人头像'));

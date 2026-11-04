@@ -44,10 +44,30 @@ assert.equal(history.state.lockerIndex, 3);
 context.move('/works');
 context.move('/submit');
 assert.equal(history.state.submitOrigin, '/works');
-assert.ok(source.includes("if (path === '/submit') submitOrigin = history.state?.submitOrigin || '/'"));
+assert.ok(source.includes("if (['/submit','/my-works','/review'].includes(path)) submitOrigin = history.state?.submitOrigin || '/'"));
 context.goBack(history.state.submitOrigin); pop();
 assert.equal(location.pathname, '/works');
 assert.equal(context.listScroll, 200);
+// Viewing My Works must not replace the original upload entry page.
+context.move('/submit');
+context.move('/my-works');
+assert.equal(history.state.submitOrigin,'/works');
+context.submitOrigin='/'; // Simulate restoring the page after a reload.
+context.submitOrigin=history.state.submitOrigin;
+context.move('/submit');
+assert.equal(history.state.submitOrigin,'/works');
+context.goBack(history.state.submitOrigin);
+assert.equal(location.pathname,'/works');
+// Starting a new upload flow from elsewhere uses the new entry page.
+context.move('/students/4/discs');
+context.move('/submit');
+assert.equal(history.state.submitOrigin,'/students/4/discs');
+context.move('/my-works');
+context.move('/submit');
+assert.equal(history.state.submitOrigin,'/students/4/discs');
+context.goBack(history.state.submitOrigin);
+assert.equal(location.pathname,'/students/4/discs');
+
 context.move('/students/4/discs');
 context.move('/');
 assert.equal(history.state.lockerIndex, undefined, 'Home must not inherit a cabinet to restore');
@@ -67,3 +87,5 @@ for (const prefix of ['students', 'works']) {
   assert.ok(config.rewrites.some(rule => rule.source === `/${prefix}/:path*` && rule.destination === '/index.html'));
 }
 console.log('Route history: one-level returns, double clicks, direct links, persistent upload origin and home isolation passed.');
+
+assert.ok(config.rewrites.some(rule => rule.source === '/my-works' && rule.destination === '/index.html'));

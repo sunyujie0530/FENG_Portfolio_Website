@@ -2,8 +2,7 @@ export const MB = 1024 * 1024;
 export const fileRules = {
   avatar: { count: 1, each: 5 * MB, total: 5 * MB, types: ['image/jpeg', 'image/png', 'image/webp'] },
   cover: { count: 1, each: 5 * MB, total: 5 * MB, types: ['image/jpeg', 'image/png', 'image/webp'] },
-  gallery: { count: 12, each: 8 * MB, total: 60 * MB, types: ['image/jpeg', 'image/png', 'image/webp'] },
-  document: { count: 1, each: 20 * MB, total: 20 * MB, types: ['application/pdf'] },
+  gallery: { count: 3, each: 8 * MB, total: 24 * MB, types: ['image/jpeg', 'image/png', 'image/webp'] },
 };
 export function validateFiles(form) {
   const errors = [];
@@ -16,7 +15,9 @@ export function validateFiles(form) {
     if (files.some(file => file.size <= 0 || !rule.types.includes(file.type))) errors.push(`${name} 包含空文件或不支持的格式`);
     if (files.some(file => file.size > rule.each) || total > rule.total) errors.push(`${name} 大小超过限制`);
   }
+  if (!form.elements.avatar.files.length) errors.push('请上传个人头像');
   if (!form.elements.cover.files.length) errors.push('请上传封面图');
+  if (form.elements.gallery.files.length !== 3) errors.push('请上传恰好 3 张展示图片');
   if (grandTotal > 90 * MB) errors.push('单次投稿总大小不能超过 90MB');
   return { errors, grandTotal };
 }
@@ -26,9 +27,25 @@ export const categoryKind = { '游戏':'game', '动画':'video', '3D':'model', '
 export function publishedWork(row, students) {
   const cover = row.files.find(file => file.kind === 'cover')?.url;
   if (!cover) throw new Error('已发布作品缺少封面');
-  const author = students.findIndex(student => student.name === row.student_name && student.grade === row.grade);
+  const author = students.findIndex(student => student.creatorId === row.creator_id);
   return { id:`submission-${row.id}`, title:row.title, kind:categoryKind[row.category] || 'scene',
     authors:author < 0 ? [] : [author], cover, summary:row.summary, uploaded:true,
     authorName:row.student_name, authorGrade:row.grade, creatorId:row.creator_id,
     year:row.year, roles:row.roles, files:row.files };
 }
+
+// Public creator IDs keep namesakes separate without exposing authentication IDs.
+export function syncPublishedStudents(rows, students) {
+  students.filter(student => student.creatorId).forEach(student => { student.active = false; });
+  for (const row of rows) {
+    let student = students.find(student => student.creatorId === row.creator_id);
+    if (student?.active) continue;
+    if (!student) {
+      student = { creatorId:row.creator_id, color:'#638251' };
+      students.push(student);
+    }
+    Object.assign(student, { name:row.student_name, grade:row.grade, en:'FENG STUDENT',
+      bio:'从作品出发，认识创作者的探索与表达。', tags:'已收录学生作品', active:true });
+  }
+}
+export const studentPath = (student, index) => student.creatorId ? `/creators/${student.creatorId}` : `/students/${index + 1}`;

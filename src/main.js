@@ -198,6 +198,7 @@ scene.add(lockerBank);
 
 const doorPivots = [];
 let idBadge = null;
+const studentBadges = new Map();
 let expandedBadge = null;
 
 // Positive Y: right-hinged door swings outward to ~120°.
@@ -1764,7 +1765,10 @@ function dressDoor(door, index) {
     door.add(hp);
   }
 
-  if (index === 3) {
+  if (index === 3) addStudentBadge(door,index);
+}
+
+function addStudentBadge(door,index) {
     const badgeCard = createIdBadge();
     badgeCard.userData.restScale = 1.2;
     badgeCard.userData.closedScale = 0.58;
@@ -1774,8 +1778,8 @@ function dressDoor(door, index) {
     badgeCard.position.set(0, badgeCard.userData.restY, -DOOR_THICK / 2 - 0.07);
     badgeCard.rotation.y = Math.PI;
     door.add(badgeCard);
-    idBadge = badgeCard;
-  }
+    studentBadges.set(index,badgeCard);
+    if (index === 3) idBadge = badgeCard;
 }
 
 function warlockBodyShape() {
@@ -2045,7 +2049,7 @@ function createRedFolder() {
   return folder;
 }
 
-function createLocker(index, { empty = false } = {}) {
+function createLocker(index, { empty = false, personalInterior = false } = {}) {
   const locker = new THREE.Group();
   const bodyH = LOCKER_HEIGHT - FOOT_H;
   const bodyY = FOOT_H + bodyH / 2;
@@ -2064,10 +2068,10 @@ function createLocker(index, { empty = false } = {}) {
   foot.position.set(0, FOOT_H / 2, 0);
   locker.add(foot);
 
-  const cavityMat = empty
+  const cavityMat = empty && !personalInterior
     ? materials.body
     : new THREE.MeshStandardMaterial({
-      color: new THREE.Color(LOCKER_TINTS[index]).multiplyScalar(0.55),
+      color: new THREE.Color(LOCKER_TINTS[personalInterior ? 3 : index]).multiplyScalar(0.55),
       roughness: 0.86,
       metalness: 0.04
     });
@@ -2106,7 +2110,7 @@ function createLocker(index, { empty = false } = {}) {
   bottom.position.set(0, FOOT_H + WALL / 2, 0);
   locker.add(bottom);
 
-  addInteriorStructure(locker, bodyH, innerW, innerD, cavityMat, !empty);
+  addInteriorStructure(locker, bodyH, innerW, innerD, cavityMat, !empty || personalInterior);
 
   const frameFront = frontZ - FRAME / 2;
   const frameTop = roundedMesh(LOCKER_WIDTH, FRAME, FRAME, 0.012, materials.frame, 1);
@@ -2145,8 +2149,9 @@ function createLocker(index, { empty = false } = {}) {
   addVents(door, -DOOR_HEIGHT * 0.32);
   addHandle(door);
   if (!empty) dressDoor(door, index);
+  else if (personalInterior) addStudentBadge(door,index);
 
-  if (!empty && index === 3) {
+  if ((!empty && index === 3) || personalInterior) {
     const pile = createOfficePile();
     pile.scale.setScalar(2.05);
     pile.position.set(0, 1.95, -0.1);
@@ -2285,7 +2290,7 @@ function viewCamera() {
   return submissionPreviewActive ? submissionCamera : camera;
 }
 function fitSubmissionCamera() {
-  const halfH = 3.05;
+  const halfH = 2.5;
   const aspect = window.innerWidth / Math.max(window.innerHeight, 1);
   submissionCamera.left = -halfH * aspect;
   submissionCamera.right = halfH * aspect;
@@ -2296,7 +2301,7 @@ function fitSubmissionCamera() {
 function setSubmissionCamera() {
   const look = new THREE.Vector3(
     submissionLocker.position.x + 1.72,
-    submissionLocker.position.y + LOCKER_CENTER_Y * submissionLocker.scale.y + 0.47,
+    submissionLocker.position.y + LOCKER_CENTER_Y * submissionLocker.scale.y + 0.12,
     0
   );
   submissionCamera.position.set(look.x - 2.2, look.y + 0.9, 12);
@@ -2581,7 +2586,7 @@ function moveFocus(index) {
   controls.enabled = true;
   const distance = index < 0 ? browseCameraDistance() : 1;
   const focusTarget = index < 0 ? FAR_TARGET.clone()
-    : new THREE.Vector3(lockerBank.children[index].position.x, FAR_TARGET.y, 0);
+    : new THREE.Vector3(lockerBank.children.find(locker => locker.userData.lockerIndex === index).position.x, FAR_TARGET.y, 0);
   controls.minDistance = controls.maxDistance = introRestDistance * distance;
   zoomAnim = {
     fromZoom: camera.zoom,
@@ -2600,25 +2605,25 @@ function moveFocus(index) {
 let hoveredLocker = -1;
 let hoveredBadge = false;
 const lockerHoverCard = document.getElementById('locker-hover-card');
-const lockerNames = STUDENTS.map((student) => student.name);
+
 
 function setLockerHoverCard(index, event, profile = false, discs = false) {
   if (!lockerHoverCard) return;
   lockerHoverCard.setAttribute('aria-hidden', String(index < 0));
   if (index < 0) return;
-  lockerHoverCard.querySelector('strong').textContent = discs ? `${lockerNames[index]} · 作品光盘` : profile ? `${lockerNames[index]} · 学生卡` : `${lockerNames[index]}的柜子`;
+  lockerHoverCard.querySelector('strong').textContent = discs ? `${STUDENTS[index].name} · 作品光盘` : profile ? `${STUDENTS[index].name} · 学生卡` : `${STUDENTS[index].name}的柜子`;
   lockerHoverCard.querySelector('span').textContent = discs ? '点击打开 CD 光盘库 →' : profile ? '点击查看学生卡模型 →' : '点击打开柜门 →';
   lockerHoverCard.style.left = `${Math.min(event.clientX, window.innerWidth - 230)}px`;
   lockerHoverCard.style.top = `${Math.min(event.clientY, window.innerHeight - 120)}px`;
 }
 
 function paintLocker(index, hover) {
-  const locker = lockerBank.children[index];
+  const locker = lockerBank.children.find(locker => locker.userData.lockerIndex === index);
   if (!locker) return;
   locker.traverse((node) => {
     if (!node.isMesh || !node.userData.baseColor) return;
-    node.material.color.copy(hover ? hoverColors[index] : node.userData.baseColor);
-    node.material.emissive.copy(hover ? hoverColors[index] : node.userData.baseColor);
+    node.material.color.copy(hover ? (hoverColors[index] || hoverColors[0]) : node.userData.baseColor);
+    node.material.emissive.copy(hover ? (hoverColors[index] || hoverColors[0]) : node.userData.baseColor);
     node.material.emissiveIntensity = hover ? 0.28 : 0;
   });
   sceneDirty = true;
@@ -2672,13 +2677,13 @@ function hoverLockerAt(event) {
     hoveredLocker = index;
     if (hoveredLocker >= 0) paintLocker(hoveredLocker, true);
   }
-  const profileHover = hoveredBadge && focusedLocker === 3 && doorAnims[3].progress > 0.6;
-  const discHover = focusedLocker === 3 && doorAnims[3].progress > 0.6 && isWorkPlayer(hits[0]?.object);
+  const profileHover = hoveredBadge && studentBadges.has(focusedLocker) && doorAnims[focusedLocker].progress > 0.6;
+  const discHover = studentBadges.has(focusedLocker) && doorAnims[focusedLocker].progress > 0.6 && isWorkPlayer(hits[0]?.object);
   const archiveHit = discHover ? cdArchiveHit(hits[0]?.object) : null;
   hoveredCdPlayer = archiveHit?.archive || null;
   hoveredCdPart = archiveHit?.part || null;
   const accessoriesHover = hoveredCdPart === 'accessories';
-  setLockerHoverCard(accessoriesHover ? -1 : discHover || profileHover ? 3 : doorAnims[hoveredLocker]?.open ? -1 : hoveredLocker, event, profileHover, discHover);
+  setLockerHoverCard(accessoriesHover ? -1 : discHover || profileHover ? focusedLocker : doorAnims[hoveredLocker]?.open ? -1 : hoveredLocker, event, profileHover, discHover);
   renderer.domElement.style.cursor = !accessoriesHover && (hoveredBadge || hoveredLocker >= 0) ? 'pointer' : '';
 }
 
@@ -2742,10 +2747,14 @@ renderer.domElement.addEventListener('pointerup', (event) => {
     returnToLockers();
     return;
   }
-  if (focusedLocker === 3 && doorAnims[3].progress > 0.6 && isWorkPlayer(hits[0]?.object)) {
+  if (studentBadges.has(focusedLocker) && doorAnims[focusedLocker].progress > 0.6 && isWorkPlayer(hits[0]?.object)) {
     if (cdArchiveHit(hits[0]?.object)?.opensLibrary) {
-      window.dispatchEvent(new CustomEvent('browse-discs', { detail: 3 }));
+      window.dispatchEvent(new CustomEvent('browse-discs', { detail: focusedLocker }));
     }
+    return;
+  }
+  if (STUDENTS[focusedLocker]?.creatorId && doorAnims[focusedLocker].progress > 0.6 && isIdBadge(hits[0]?.object)) {
+    window.dispatchEvent(new CustomEvent('browse-student', {detail:focusedLocker}));
     return;
   }
   if (focusedLocker === 3 && doorAnims[3].progress > 0.6 && hits.some((hit) => isIdBadge(hit.object))) {
@@ -2967,7 +2976,7 @@ function animate() {
     if (anim.progress !== previous) sceneDirty = true;
   });
   cdPlayers.forEach(player => {
-    const hovered = player === hoveredCdPlayer && lockersInteractive() && focusedLocker === 3 && doorAnims[3].progress > 0.6;
+    const hovered = player === hoveredCdPlayer && lockersInteractive() && doorIndexFromObject(player) === focusedLocker && doorAnims[focusedLocker]?.progress > 0.6;
     if (updateCdArchive(player, hovered ? hoveredCdPart : null, dt, reducedTransitionMotion.matches)) sceneDirty = true;
   });
   if (submissionPreviewActive) {
@@ -2982,17 +2991,17 @@ function animate() {
     if (submissionDoorAnim.progress !== previous) sceneDirty = true;
   }
 
-  if (idBadge) {
-    const door = doorAnims[3];
+  studentBadges.forEach((badge,index) => {
+    const door = doorAnims[index];
     const t = easeInOutCubic(door.progress);
-    const want = hoveredBadge && door.progress > 0.6 ? 1 : 0;
-    if (Math.abs(want - idBadge.userData.hover) > 0.0001) sceneDirty = true;
-    idBadge.userData.hover += (want - idBadge.userData.hover) * Math.min(1, dt * 9);
-    const hover = idBadge.userData.hover;
-    const base = THREE.MathUtils.lerp(idBadge.userData.closedScale, idBadge.userData.restScale, t);
-    idBadge.scale.setScalar(base * (1 + 0.09 * hover));
-    idBadge.position.y = idBadge.userData.restY + 0.06 * hover;
-  }
+    const want = hoveredBadge && focusedLocker === index && door.progress > 0.6 ? 1 : 0;
+    if (Math.abs(want - badge.userData.hover) > 0.0001) sceneDirty = true;
+    badge.userData.hover += (want - badge.userData.hover) * Math.min(1, dt * 9);
+    const hover = badge.userData.hover;
+    const base = THREE.MathUtils.lerp(badge.userData.closedScale, badge.userData.restScale, t);
+    badge.scale.setScalar(base * (1 + 0.09 * hover));
+    badge.position.y = badge.userData.restY + 0.06 * hover;
+  });
 
   if (zoomAnim) {
     sceneDirty = true;
@@ -3033,6 +3042,27 @@ function animate() {
 window.addEventListener('resize', resizeScene);
 resizeScene();
 renderer.setAnimationLoop(animate);
+// Add public authors to the same bank; indices remain stable for this session.
+window.addEventListener('browse-students-change', () => {
+  STUDENTS.forEach((student,index) => {
+    if (!student.creatorId) return;
+    let locker = lockerBank.children.find(child => child.userData.lockerIndex === index);
+    if (!locker) {
+      const created = createLocker(index,{empty:true,personalInterior:true});
+      locker = created.locker;
+      locker.userData.lockerIndex = index;
+      lockerBank.add(locker);
+      doorPivots[index] = created.doorPivot;
+      doorAnims[index] = {open:false,progress:0};
+      locker.traverse(node => {
+        if (!node.isMesh || !shellMats.has(node.material)) return;
+        node.material = node.material.clone();
+        node.userData.baseColor = node.material.color.clone();
+      });
+    }
+  });
+  sceneDirty = true;
+});
 window.addEventListener('browse-grade', ({ detail: indices }) => {
   doorAnims.forEach((anim) => { anim.open = false; });
   focusedLocker = -1;

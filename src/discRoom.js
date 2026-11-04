@@ -1,4 +1,5 @@
 import './discRoom.css';
+import { escapeHtml } from './submissionData.js';
 import { discInsideTray, clampDisc } from './discDrop.js';
 
 export function mountDiscRoom({ host, student, studentIndex, students, works, state, onOpen, onBack }) {
@@ -15,10 +16,10 @@ export function mountDiscRoom({ host, student, studentIndex, students, works, st
   room.innerHTML = `
     <header class="cd-room-header">
       <button type="button" class="cd-room-back">← 返回打开的柜子</button>
-      <p class="eyebrow page-guide">学生 / ${student.name}的作品光盘库</p>
-      <h1 tabindex="-1">${student.name}的<br>作品光盘库<span>。</span></h1>
+      <p class="eyebrow page-guide">学生 / ${escapeHtml(student.name)}的作品光盘库</p>
+      <h1 tabindex="-1">${escapeHtml(student.name)}的<br>作品光盘库<span>。</span></h1>
     </header>
-    <div class="cd-library"><label for="cd-library-select">切换光盘库</label><select id="cd-library-select"><option value="student">${student.name}的作品</option><option value="all">全部作品</option></select><span id="cd-library-count"></span></div>
+    <div class="cd-library"><label for="cd-library-select">切换光盘库</label><select id="cd-library-select"><option value="student">${escapeHtml(student.name)}的作品</option><option value="all">全部作品</option></select><span id="cd-library-count"></span></div>
     <div class="cd-board" aria-label="拖动光盘到上方CD盒">
       <div class="cd-drive" aria-label="CD盒">
         <div class="cd-tray-shell"><div class="cd-tray">
@@ -64,8 +65,8 @@ export function mountDiscRoom({ host, student, studentIndex, students, works, st
         x: pool.length <= 3 ? 50 + (index - (pool.length - 1) / 2) * 16 : 50 + Math.cos(index * 2.4) * (12 + index * 1.25),
         y: pool.length <= 3 ? 67 + index * 3 : 65 + Math.sin(index * 2.4) * 9,
       };
-      return `<button type="button" class="archive-disc" data-work-id="${work.id}" aria-label="选择光盘：${work.title}" aria-pressed="false" style="left:${position.x}%;top:${position.y}%;--tilt:${(index % 2 ? 1 : -1) * (8 + index * 3)}deg;z-index:${index + 10}">
-        <span class="cd-art" style="background-image:url('${work.cover}')"></span><span class="cd-hub"></span>
+      return `<button type="button" class="archive-disc" data-work-id="${escapeHtml(work.id)}" aria-label="选择光盘：${escapeHtml(work.title)}" aria-pressed="false" style="left:${position.x}%;top:${position.y}%;--tilt:${(index % 2 ? 1 : -1) * (8 + index * 3)}deg;z-index:${index + 10}">
+        <span class="cd-art" style="background-image:url('${escapeHtml(work.cover)}')"></span><span class="cd-hub"></span>
       </button>`;
     }).join('');
     if (pool.length) select(selectedWork());

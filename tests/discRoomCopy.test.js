@@ -8,7 +8,7 @@ for (const removed of ['cd-room-lead', 'cd-archive-stamp', 'cd-current-number', 
 assert.ok(source.includes('放入所选光盘 ↗'));
 assert.ok(source.includes('role="status" aria-live="polite"'));
 assert.ok(source.includes("insert.addEventListener('click'"));
-assert.ok(source.includes("background-image:url('${work.cover}')"));
+assert.ok(source.includes("background-image:url('${escapeHtml(work.cover)}')"));
 assert.ok(!source.includes('cd-label-band'));
 const css = readFileSync(new URL('../src/discRoom.css', import.meta.url), 'utf8');
 const art = css.match(/\.cd-art \{([^}]+)\}/)[1];
