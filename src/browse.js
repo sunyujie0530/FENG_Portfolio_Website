@@ -11,11 +11,11 @@ import { createShiDaoDetail } from './shiDaoDetail.js';
 import { createSlimeDetail } from './slimeDetail.js';
 import { mountDiscRoom } from './discRoom.js';
 import { initStudentLanding, cdIntroMarkup, homeAboutMarkup } from './studentLanding.js';
-import { showWorkDisc } from './worksDiscs.js';
+import { showWorkDisc, showPublishedWorkDisc } from './worksDiscs.js';
 import { navigationGuide } from './navigationGuide.js';
 import { backendConfigured, publishedCatalog } from './submissionBackend.js';
 import { publishedWork, escapeHtml } from './submissionData.js';
-import { publishedDetail, creatorView } from './publishedViews.js';
+import { creatorView } from './publishedViews.js';
 import { mountReview } from './submissionUi.js';
 
 export const STUDENTS = [
@@ -195,11 +195,11 @@ export function initBrowse(showScene) {
     const student = STUDENTS[studentIndex];
     const mode = path === '/submit' ? 'submit' : path === '/about' ? 'about' : (path === '/' || path === '/students') ? 'students' : 'content';
     showScene(mode);
-    document.body.classList.toggle('browse-content', mode === 'content' && (!work || work.uploaded));
+    document.body.classList.toggle('browse-content', mode === 'content' && !work);
     landing.hidden = mode !== 'students';
     setLandingActive(mode === 'students');
-    root.hidden = mode !== 'content' || Boolean(work && !work.uploaded);
-    document.querySelector('#stage').setAttribute('aria-hidden', String(mode === 'content' && (!work || work.uploaded)));
+    root.hidden = mode !== 'content' || Boolean(work);
+    document.querySelector('#stage').setAttribute('aria-hidden', String(mode === 'content' && !work));
     const activeNav = path === '/' ? 'nav-home' : mode === 'submit' || path === '/review' ? 'nav-submit' : mode === 'about' ? 'nav-about' : (student || discMatch || mode === 'students') ? 'nav-lockers' : 'nav-works';
     nav.querySelectorAll('button').forEach((button) => {
       if (button.id === activeNav) button.setAttribute('aria-current', 'page');
@@ -225,11 +225,10 @@ export function initBrowse(showScene) {
       detailOrigin = history.state?.detailOrigin || '/works';
       const back = /^\/(students\/[1-8](\/discs)?|creators\/[0-9a-f-]{36})$/.test(detailOrigin) ? detailOrigin : '/works';
       const backLabel = back === '/works' ? '全部作品' : back.startsWith('/creators/') ? '作者作品' : `${STUDENTS[Number(back.split('/')[2]) - 1].name}的${back.endsWith('/discs') ? '光盘库' : '主页'}`;
+      root.innerHTML = '';
       if (work.uploaded) {
-        root.innerHTML = publishedDetail(work,backLabel);
-        root.querySelector('[data-published-back]').addEventListener('click', () => goBack(back));
+        showPublishedWorkDisc(work, () => goBack(back), backLabel);
       } else {
-        root.innerHTML = '';
         showWorkDisc(work.id === 'slime-runner' ? 19 : WORKS.indexOf(work), () => goBack(back), backLabel, work.authors.map(index => STUDENTS[index]));
       }
     } else if (mode === 'content') {
