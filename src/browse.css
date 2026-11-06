@@ -3,7 +3,7 @@
 .no-webgl #top-nav { visibility:visible !important; pointer-events:auto; }
 .no-webgl #browse > ul { line-height:2.5; }
 .no-webgl .work-detail__intro { width:100%; }
-.no-webgl .work-detail__hero { min-height:auto; padding:120px 5vw 40px; }
+.no-webgl .work-detail__hero { min-height:auto; padding:180px 5vw 40px; }
 .no-webgl .plain-cover { display:block; max-width:100%; width:480px; height:auto; margin-bottom:32px; }
 .graphics-status { position:fixed; top:80px; left:5vw; right:5vw; z-index:100; padding:12px; background:#fff; color:#171a17; border:1px solid #aeb7b1; }
 body.browse-preview { --ink:#252b25; --muted:#6c7369; --paper:#f7f8f4; --line:#dde1d7; font-family:"PingFang SC","Hiragino Sans GB",sans-serif; color:var(--ink); background:var(--paper); }
@@ -75,7 +75,10 @@ body.browse-preview.is-work-detail .work-detail__back { top:90px; }
 .author-link:hover { text-decoration:underline; }
 .muted { color:var(--muted); }
 .project-card > p { margin:12px 0 0; font-size:12px; line-height:1.9; color:var(--muted); }
-.student-profile { display:grid; grid-template-columns:190px 1fr auto; align-items:center; gap:38px; padding:12px 0 42px; border-bottom:1px solid var(--line); }
+.student-profile { display:grid; grid-template-columns:190px minmax(0,1fr) auto; align-items:center; gap:38px; padding:12px 0 42px; border-bottom:1px solid var(--line); }
+.student-profile > div { min-width:0; }
+#browse h1:focus { outline:none; }
+.project-card h2,.student-profile h1,.profile-bio { overflow-wrap:anywhere; }
 .profile-number { height:205px; border-radius:5px; background:var(--author); color:#fff; display:flex; flex-direction:column; justify-content:center; align-items:center; font-size:90px; line-height:1.2; font-weight:300; }
 .profile-number span { font-size:9px; letter-spacing:.15em; margin-top:18px; }
 .student-profile h1 { font-size:44px; line-height:1.2; font-weight:600; letter-spacing:-.05em; margin:0 0 12px; }
@@ -176,8 +179,9 @@ body.browse-preview.is-work-detail .work-detail__back { top:90px; }
 }
 @media(prefers-reduced-motion:reduce) { .project-cover img { transition:none; } }
 
-/* The collection is a record shelf; profile cards keep their original layout. */
-.record-disc { display:none; }
+/* The collection uses the approved closed CD case; profile covers stay flat. */
+.project-cover .cd-case { display:contents; }
+.cd-case-frame { display:none; }
 #browse:has(#project-results) .collection-heading { margin-bottom:18px; }
 #browse:has(#project-results) .collection-total small { white-space:nowrap; }
 #browse:has(#project-results) .result-count { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); margin:0; }
@@ -185,12 +189,11 @@ body.browse-preview.is-work-detail .work-detail__back { top:90px; }
 #project-results .project-card { position:relative; }
 #project-results .project-cover { aspect-ratio:1.75; overflow:visible; background:transparent; border:0; border-radius:0; isolation:isolate; }
 #project-results .project-cover:hover { outline:none; }
-#project-results .project-cover img { position:absolute; width:56%; height:auto; aspect-ratio:1; left:20%; bottom:8px; object-fit:cover; border-radius:2px; box-shadow:0 0 0 1px #00000012, -4px 5px 13px #00000016; z-index:2; transition:transform .3s; }
-#project-results .project-cover:hover img { transform:translateY(-3px); }
-#project-results .record-disc { display:block; position:absolute; width:54%; aspect-ratio:1; right:3%; bottom:8px; padding:0; border-radius:50%; background:repeating-radial-gradient(circle,transparent 0 2px,#ffffff13 2.5px,transparent 3.2px),conic-gradient(from 25deg,#101010,#393939 12%,#090909 24%,#292929 40%,#080808 54%,#424242 66%,#0a0a0a 80%,#222 94%,#101010); border:1px solid #272727; box-shadow:2px 3px 7px #0003,inset 0 0 0 4px #111; transition:transform .35s; z-index:1; }
-#project-results .record-disc::before { content:""; position:absolute; inset:34%; border-radius:50%; background:conic-gradient(#b7b8b4,#f5f5f1,#a7a9a6,#e8e8e4,#b7b8b4); box-shadow:0 0 0 1px #777,inset 0 0 0 5px #ffffff30; }
-#project-results .record-disc::after { content:""; position:absolute; inset:47%; border-radius:50%; background:#333; box-shadow:inset 1px 1px 2px #000,0 0 0 1px #ddd; }
-#project-results .project-cover:hover .record-disc { transform:translateX(5px) rotate(8deg); }
+/* Keep the previous 56%-wide square cover's center and height, at the same shelf baseline. */
+#project-results .project-cover .cd-case { display:block; position:absolute; width:63.6364%; aspect-ratio:900 / 792; left:16.1818%; right:auto; bottom:8px; padding:0; border-radius:0; background:transparent; filter:drop-shadow(2px 3px 3px #26323b24); z-index:2; transition:transform .3s; }
+#project-results .cd-case img { position:absolute; left:11.6715%; top:3.0328%; bottom:auto; width:83.6897%; height:93.9345%; aspect-ratio:auto; object-fit:cover; border-radius:0; box-shadow:none; transform:none; z-index:0; transition:none; }
+#project-results .cd-case-frame { display:block; position:absolute; inset:0; background:url('/assets/cd-jewel-case-frame.png') center / 100% 100% no-repeat; pointer-events:none; z-index:1; }
+#project-results .project-cover:hover .cd-case { transform:translateY(-3px); }
 #project-results .project-cover::before,#project-results .project-cover::after { content:""; position:absolute; left:calc(var(--shelf-gap) / -2); right:calc(var(--shelf-gap) / -2); pointer-events:none; }
 #project-results .project-cover::before { bottom:8px; height:32px; background:linear-gradient(#e3e3e5,#d4d4d6); z-index:0; }
 #project-results .project-cover::after { bottom:0; height:9px; background:linear-gradient(#fafafa 0%,#e7e7e7 60%,#bcbcbc 100%); box-shadow:0 9px 10px #0003,0 19px 24px #00000012; z-index:3; }
@@ -206,12 +209,13 @@ body.browse-preview #browse #project-search { padding:9px 34px 9px 12px; width:1
 @media(max-width:600px) {
   #project-results { --shelf-gap:0px; row-gap:26px; margin-top:24px; }
   #project-results .project-cover { aspect-ratio:1.55; }
-  #project-results .project-cover img { width:62%; left:13%; }
-  #project-results .record-disc { width:60%; right:3%; }
+  #project-results .project-cover .cd-case { width:70.4545%; left:8.7727%; }
   #project-results .project-meta,#project-results h2,#project-results .project-authors { padding-inline:6%; }
   body.browse-preview #browse #project-search { min-width:0; width:auto; }
 }
-@media(prefers-reduced-motion:reduce) { #project-results .record-disc,#project-results .project-cover img { transition:none; } }
+@media(prefers-reduced-motion:reduce) { #project-results .cd-case { transition:none; } }
+.cd-case-transition { position:fixed; inset:0; z-index:1000; overflow:hidden; background:transparent; }
+.cd-case-transition canvas { display:block; width:100%; height:100%; pointer-events:none; }
 
 /* Alternate whole shelf rows, keeping each record's caption directly below it. */
 #project-results { width:84%; margin-left:auto; margin-top:76px; row-gap:90px; padding-bottom:40px; }

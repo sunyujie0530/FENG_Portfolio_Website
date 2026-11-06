@@ -26,7 +26,7 @@ export function createPublishedDetail(work, onBack) {
   panel.querySelector('.work-detail__back').addEventListener('click',onBack);
   panel.querySelector('.work-detail__down').addEventListener('click',event => {
     event.preventDefault();
-    panel.scrollTo({top:panel.clientHeight,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
+    panel.scrollTo({top:panel.querySelector('.work-detail__content').offsetTop,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
   });
   document.querySelector('#works').append(panel);
   return panel;

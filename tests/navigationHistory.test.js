@@ -89,3 +89,6 @@ for (const prefix of ['students', 'works']) {
 console.log('Route history: one-level returns, double clicks, direct links, persistent upload origin and home isolation passed.');
 
 assert.ok(config.rewrites.some(rule => rule.source === '/my-works' && rule.destination === '/index.html'));
+history.replaceState({},'', '/#about');
+context.move('/');
+assert.equal(location.hash,'','Returning home from About must not reopen About after refresh');

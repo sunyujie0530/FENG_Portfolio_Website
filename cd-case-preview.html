@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CD 盒模型预览 · FENG</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;color:#1e2528;background:#f5f6f7;font-family:Arial,"Microsoft YaHei",sans-serif}header{padding:28px 4vw 22px;background:#fff;border-bottom:1px solid #dfe4e7;display:flex;gap:24px;align-items:end;justify-content:space-between}h1{font-size:28px;font-weight:500;margin:7px 0 0;letter-spacing:-1px}.eyebrow{font:10px monospace;letter-spacing:2px;color:#677581;margin:0}.scope{font-size:12px;color:#64717a;margin:0 0 2px}.toolbar{display:flex;align-items:center;justify-content:space-between;padding:18px 4vw;gap:18px;flex-wrap:wrap}.controls{display:flex;gap:8px;align-items:center}button,select{font-family:inherit;font-size:12px;border:1px solid #cbd2d6;background:#fff;color:#25323b;padding:9px 14px;border-radius:3px;cursor:pointer}button[aria-pressed="true"]{background:#243541;color:#fff;border-color:#243541}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #8ca9bf;outline-offset:3px}label{font-size:12px;color:#566571;display:flex;gap:12px;align-items:center}input{accent-color:#2c495d;width:110px}#stage{position:relative;height:clamp(430px,calc(100dvh - 220px),660px);min-height:420px;background:#f2f4f5;overflow:hidden}canvas{position:absolute;inset:0;width:100%;height:100%;display:block}.views{position:absolute;inset:0;display:grid;grid-template-columns:42% 58%}.view{position:relative;touch-action:none;cursor:grab}.view:active{cursor:grabbing}.view-label{position:absolute;top:25px;left:7%;font-size:11px;letter-spacing:1px;color:#526373;pointer-events:none}.view-label b{font:10px monospace;color:#8c9ba5;margin-right:12px}.bottom-label{position:absolute;bottom:28px;left:7%;font-size:11px;color:#6b7d89;pointer-events:none}.divider{position:absolute;left:42%;top:7%;height:86%;width:1px;background:#78909f22;pointer-events:none}footer{padding:20px 4vw;display:flex;justify-content:space-between;gap:18px;font-size:11px;color:#6b7780;border-top:1px solid #dfe4e7;background:white}#status{margin:0;min-height:16px}.blue .view-label,.blue .bottom-label{color:#e4f0f7}.blue .view-label b{color:#c7dce9}@media(max-width:700px){header{align-items:start;flex-direction:column;gap:12px}h1{font-size:25px}.toolbar{padding:14px 5vw}.controls{flex-wrap:wrap}#stage{height:850px}.views{grid-template-columns:1fr;grid-template-rows:44% 56%}.divider{left:7%;top:44%;width:86%;height:1px}.view-label{top:20px}.bottom-label{bottom:12px}footer{flex-direction:column;gap:8px}}
+  </style>
+</head>
+<body>
+  <header><div><p class="eyebrow">FENG / CD JEWEL CASE STUDY</p><h1>透明 CD 盒 · 模型预览</h1></div><p class="scope">仅预览新模型 · 柜子、作品位置及线上页面均未修改</p></header>
+  <div class="toolbar">
+    <label>图片封面<select id="cover"><option value="clay">泥人张 · 指尖塑梦</option><option value="wrong">Wrong Plane</option><option value="velvet">绒花数字花园</option></select></label>
+    <div class="controls"><button data-background="white" aria-pressed="true">网页白底</button><button data-background="blue" aria-pressed="false">参考蓝底</button><label>展开角度<input id="opening" type="range" min="100" max="180" value="170" aria-label="展开角度"><output id="angle">170°</output></label><button id="reset">重置视角</button></div>
+  </div>
+  <main id="stage"><canvas aria-label="可拖动旋转的透明CD盒模型"></canvas><div class="views"><section class="view" id="closed-view" aria-label="合盖CD盒"><div class="view-label"><b>01</b>合盖 · 图片封面</div><div class="bottom-label">透明边框 / 侧边铰链 / 纸质封套</div></section><section class="view" id="open-view" aria-label="展开CD盒"><div class="view-label"><b>02</b>展开 · CD 内托</div><div class="bottom-label">透明内托 / 印刷 CD / 中心卡扣</div></section></div><div class="divider"></div></main>
+  <footer><span>拖动旋转，滚轮缩放 · 切换封面及背景查看材质</span><p id="status" role="status">正在加载模型和图片…</p></footer>
+  <script type="module" src="/src/cdCasePreview.js"></script>
+</body>
+</html>

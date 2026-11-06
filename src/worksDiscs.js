@@ -12,7 +12,7 @@ import { createWrongPlaneDetail } from './wrongPlaneDetail.js';
 import { BEAKER_FRONT, createBeakerDetail } from './beakerDetail.js';
 import { PANTHEON_BACK, createPantheonDetail } from './pantheonDetail.js';
 import { SHI_BACK, SHI_FRONT, createShiDaoDetail } from './shiDaoDetail.js';
-import { detailPhases, pageProgress } from './workDetailMotion.js';
+import { detailPhases, pageProgress, detailDiscScreenPose } from './workDetailMotion.js';
 import { createPublishedDetail } from './publishedViews.js';
 import { standardWorkLayout } from './standardWorkLayout.js';
 
@@ -29,6 +29,11 @@ let restoreDetailFocus = () => {};
 let openRoutedDetail;
 let openPublishedDetail;
 let detailRouteBack = null;
+let routedDetailReady = Promise.resolve();
+
+export function waitForWorkDisc() {
+  return routedDetailReady;
+}
 
 function resetDetail() {
   detailTween?.kill();
@@ -46,6 +51,7 @@ function resetDetail() {
 
 function closeDetail() {
   if (!detail) return;
+  if (detailRouteBack) { detailRouteBack(); return; }
   detailPanel.style.pointerEvents = 'none';
   detailPanel.scrollTop = 0;
   detailPanel.querySelector('video')?.pause();
@@ -256,7 +262,7 @@ export function initWorks(background = 0xf6f7fa) {
     }
     return detailPanels.get(index);
   };
-  const openDetail = (disc) => {
+  const openDetail = (disc, instant = false) => {
     if (detail || reveal < 1) return;
     detailPanel = getDetailPanel(disc.userData.index);
     if (!detailPanel) return;
@@ -273,8 +279,9 @@ export function initWorks(background = 0xf6f7fa) {
     document.body.classList.add('is-work-detail');
     detailPanel.updateLayout?.();
     detailTween = gsap.to(detail, {
-      progress: 1, duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1.7,
+      progress: 1, duration: instant || matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1.7,
       ease: 'none', onComplete() {
+        detailPanel.style.opacity = '1';
         detailPanel.style.pointerEvents = 'auto';
         detailPanel.querySelector('h1').focus({ preventScroll: true });
       }
@@ -317,8 +324,11 @@ export function initWorks(background = 0xf6f7fa) {
     selected.position.set(0, 0, 1);
     selected.rotation.set(0, 0, 0);
     selected.scale.setScalar(Math.min(camera.top * 0.75, 2));
-    openDetail(selected);
     detailRouteBack = onBack;
+    openDetail(selected,true);
+    const openingPanel=detailPanel;
+    openingPanel.setAttribute('aria-busy','true');
+    routedDetailReady=Promise.resolve(selected.userData.loadArt?.()).then(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))).then(()=>openingPanel.removeAttribute('aria-busy'));
     if (detailPanel) detailPanel.querySelector('.work-detail__back').textContent = `← 返回${backLabel}`;
     detailPanel?.querySelectorAll('h2, header p').forEach(heading => {
       const text = authors.reduce((text, author) => text.replace(new RegExp(`(${author.name}\\s*)\\d{4}级`, 'g'), `$1${author.grade}`), heading.textContent);
@@ -405,8 +415,8 @@ export function initWorks(background = 0xf6f7fa) {
     const moving = dragging || velocity !== 0 || Math.abs(targetAngle - angle) > 0.00005 || reveal < 1;
     angle += (targetAngle - angle) * 0.16;
 
-    placeDiscs(angle, camera);
-    const visible = collectVisibleDiscs();
+    if (!detail) placeDiscs(angle, camera);
+    const visible = detail ? [detail.disc] : collectVisibleDiscs();
     visible.forEach(disc => disc.userData.loadArt?.());
     if (detail) {
       hovered = null;
@@ -445,14 +455,14 @@ export function initWorks(background = 0xf6f7fa) {
     });
     if (detail) {
       const p = detail.progress;
-      const { gather, flip, move, text } = detailPhases(p);
+      const { gather, flip: animatedFlip, move, text } = detailPhases(p);
+      const flip = detailRouteBack ? 0 : animatedFlip;
       const direct = detailPanel.classList.contains('bcw-detail') && DIRECT_DETAIL.has(detail.disc.userData.index);
       const scroll = direct
         ? pageProgress(detailPanel.scrollTop, innerHeight)
         : smooth(0, innerHeight, detailPanel.scrollTop);
-      const mobile = innerWidth < 700;
-      const heroRadius = mobile ? camera.top * 0.34 : camera.top * 0.96;
-      const smallRadius = Math.min(camera.right * 0.1, camera.top * 0.15);
+      const entryPose = detailDiscScreenPose(innerWidth,innerHeight,scroll);
+      const heroRadius = entryPose.radius / innerHeight * camera.top * 2;
       discs.forEach((disc, index) => {
         const pose = detail.poses[index];
         if (disc !== detail.disc) {
@@ -466,8 +476,8 @@ export function initWorks(background = 0xf6f7fa) {
           return;
         }
         disc.visible = true;
-        const x = THREE.MathUtils.lerp(mobile ? 0 : camera.right * 0.76, camera.right * 0.81, scroll);
-        const y = THREE.MathUtils.lerp(mobile ? camera.top * 0.45 : 0, camera.top - smallRadius * 1.5, scroll);
+        const x = (entryPose.x / innerWidth * 2 - 1) * camera.right;
+        const y = (1 - entryPose.y / innerHeight * 2) * camera.top;
         if (direct) {
           disc.position.set(
             THREE.MathUtils.lerp(pose.position.x, x, move),
@@ -475,7 +485,7 @@ export function initWorks(background = 0xf6f7fa) {
             THREE.MathUtils.lerp(pose.position.z, 1, move),
           );
           disc.rotation.set(0, THREE.MathUtils.lerp(pose.rotation.y, Math.PI, flip), THREE.MathUtils.lerp(pose.rotation.z, 0, flip), 'ZYX');
-          disc.scale.setScalar(THREE.MathUtils.lerp(pose.scale, THREE.MathUtils.lerp(heroRadius, smallRadius, scroll), move));
+          disc.scale.setScalar(THREE.MathUtils.lerp(pose.scale, heroRadius, move));
           return;
         }
         disc.position.set(
@@ -487,7 +497,7 @@ export function initWorks(background = 0xf6f7fa) {
         disc.position.y = THREE.MathUtils.lerp(disc.position.y, y, move);
         disc.rotation.set(0, THREE.MathUtils.lerp(pose.rotation.y, Math.PI, flip), THREE.MathUtils.lerp(pose.rotation.z, 0, flip), 'ZYX');
         const centeredSize = THREE.MathUtils.lerp(pose.scale, Math.min(camera.top * 0.75, 2), gather);
-        disc.scale.setScalar(THREE.MathUtils.lerp(centeredSize, THREE.MathUtils.lerp(heroRadius, smallRadius, scroll), move));
+        disc.scale.setScalar(THREE.MathUtils.lerp(centeredSize, heroRadius, move));
       });
       detailPanel.style.opacity = String(text);
     }
@@ -645,7 +655,7 @@ function createDisc(index, geometry, palette, hubMaterial, darkHub, rimMaterial,
   group.userData.halo = halo;
   group.userData.loadArt = () => {
     const url = COVER_ART[index];
-    if (!url || group.userData.artUrl === url) return;
+    if (!url || group.userData.artUrl === url) return group.userData.artReady;
     group.userData.artUrl = url;
     face.map?.dispose();
     face.map = coverTexture(url);
@@ -655,6 +665,8 @@ function createDisc(index, geometry, palette, hubMaterial, darkHub, rimMaterial,
       materials[2].map = coverTexture(BACK_ART[index]);
       materials[2].needsUpdate = true;
     }
+    group.userData.artReady=Promise.all([face.map.userData?.ready,materials[2]?.map.userData?.ready]);
+    return group.userData.artReady;
   };
   return group;
 }
@@ -675,11 +687,13 @@ function coverTexture(url) {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#111';
+  ctx.fillStyle = '#e4e8e8';
   ctx.fillRect(0, 0, size, size);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 8;
+  let ready;
+  texture.userData.ready=new Promise(resolve => { ready=resolve; });
   textureLoader.load(url, (source) => {
     const image = source.image;
     const scale = Math.max(size / image.width, size / image.height);
@@ -688,6 +702,7 @@ function coverTexture(url) {
     ctx.drawImage(image, (size - w) / 2, (size - h) / 2, w, h);
     texture.needsUpdate = true;
     source.dispose();
+    ready();
   }, undefined, () => {
     ctx.fillStyle = '#ddd';
     ctx.font = '36px sans-serif';
@@ -695,6 +710,7 @@ function coverTexture(url) {
     ctx.fillText('封面暂未加载', size / 2, size / 2);
     texture.needsUpdate = true;
     window.dispatchEvent(new Event('signed-media-error'));
+    ready();
   });
   return texture;
 }

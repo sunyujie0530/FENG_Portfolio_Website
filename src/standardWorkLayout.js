@@ -28,7 +28,7 @@ export function standardWorkLayout(panel, index) {
   down.textContent = '滑动查看更多';
   down.addEventListener('click', event => {
     event.preventDefault();
-    panel.scrollTo({ top: panel.clientHeight, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    panel.scrollTo({ top: content.offsetTop, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   });
   intro.append(...author.childNodes, introCopy, down);
   hero.append(intro);
