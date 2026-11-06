@@ -4,22 +4,24 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('../src/worksDiscs.js', import.meta.url), 'utf8');
 const browse = readFileSync(new URL('../src/browse.js', import.meta.url), 'utf8');
-assert.ok(browse.includes("showWorkDisc(work.id === 'slime-runner' ? 19 : WORKS.indexOf(work), () => goBack(back), backLabel, work.authors.map(index => STUDENTS[index]))"));
+assert.ok(browse.includes("showWorkDisc(work.id === 'slime-runner' ? 19 : WORKS.indexOf(work), () => returnFromCase(back), backLabel, work.authors.map(index => STUDENTS[index]))"));
 assert.ok(browse.includes("root.hidden = mode !== 'content' || Boolean(work)"));
 const button = { textContent: '' };
 const authorHeading = { textContent: '陈嘉伟 2025级硕士' };
-let opened, returned = 0, reset = 0;
+let opened, immediate, returned = 0, reset = 0;
 const context = vm.createContext({
   discs: [0, 1, 2, 19].map(index => ({ userData: { index }, position: { set() {} }, rotation: { set() {} }, scale: { setScalar() {} } })),
   resetDetail() { reset++; }, workKinds: new Set(['video']),
   angle: 0, targetAngle: 0, camera: { top: 3 }, placeDiscs() {},
-  openDetail(disc) { opened = disc.userData.index; },
-  detailPanel: { querySelector: () => button, querySelectorAll: () => [authorHeading] }, detailRouteBack: null,
+  openDetail(disc,instant) { opened = disc.userData.index; immediate=instant; },
+  requestAnimationFrame:callback=>callback(),
+  detailPanel: { querySelector: () => button, querySelectorAll: () => [authorHeading],setAttribute(){},removeAttribute(){} }, detailRouteBack: null,
 });
 vm.runInContext(source.match(/  openRoutedDetail = \(index, onBack, backLabel, authors = \[\]\) => \{[\s\S]*?\n  \};/)[0], context);
 for (const index of [0, 1, 2, 19]) {
   context.openRoutedDetail(index, () => returned++, '全部作品', [{ name: '陈嘉伟', grade: '2024级' }]);
   assert.equal(opened, index);
+  assert.equal(immediate,true,'Routed details skip the repeated CD spin');
   assert.deepEqual(Array.from(context.discs.filter(disc => disc.visible), disc => disc.userData.index), [index]);
   assert.equal(context.workKinds.size, 0);
   assert.equal(button.textContent, '← 返回全部作品');
@@ -29,7 +31,23 @@ context.detailRouteBack();
 assert.equal(returned, 1);
 assert.equal(reset, 4);
 assert.ok(source.includes('disc.visible = !detailRouteBack && pose.visible && gather < 0.99'));
-assert.ok(browse.includes("transform: 'translateX(62%) rotate(12deg)'"));
+assert.ok(browse.includes('link.isConnected && await playCdCaseTransition(record,enterDetail)'));
+
+await context.routedDetailReady;
+let releaseArt,ready=false;
+const frames=[];
+context.discs[0].userData.loadArt=()=>new Promise(resolve=>{releaseArt=resolve;});
+context.requestAnimationFrame=callback=>frames.push(callback);
+context.openRoutedDetail(0,()=>{},'全部作品');
+context.routedDetailReady.then(()=>{ready=true;});
+await Promise.resolve();
+assert.equal(frames.length,0,'Do not release the overlay while the target texture is loading');
+releaseArt();await new Promise(setImmediate);
+assert.equal(frames.length,1);
+frames.shift()();
+assert.equal(ready,false,'Wait for the first rendered frame to be presented');
+frames.shift()();await context.routedDetailReady;
+assert.equal(ready,true);
 
 // Routed close must navigate once; ordinary legacy close must still restore focus.
 let focus = 0;
@@ -45,6 +63,8 @@ vm.runInContext(source.slice(source.indexOf('function closeDetail()'), source.in
 closeContext.closeDetail();
 assert.equal(returned, 2);
 assert.equal(focus, 0);
+assert.ok(closeContext.detailRouteBack,'The routed exit retains the visible CD until the reverse transition takes over');
+closeContext.detailRouteBack=null;
 closeContext.closeDetail();
 assert.equal(focus, 1);
 console.log('Routed work discs: cover indices, filter isolation and return callbacks passed.');

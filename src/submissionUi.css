@@ -2,6 +2,9 @@ body.browse-preview .submission-account { border:1px solid var(--ui-line); paddi
 .submission-account h2 { margin:0 0 10px; font-size:22px; }
 .account-controls { display:flex; flex-wrap:wrap; align-items:flex-end; gap:12px; }
 .account-controls label { display:grid; gap:5px; }
+.account-controls label { min-width:0; max-width:100%; }
+.account-controls input { min-width:0; max-width:100%; }
+.submission-account { overflow-wrap:anywhere; }
 .account-controls input,.account-controls button,.submission-account article button,.review-tools button,.review-card button { min-height:40px; padding:8px 12px; border:1px solid #aeb7b1; border-radius:3px; background:#fff; color:#171a17; font:inherit; }
 .account-controls button:enabled:hover,.review-card button:enabled:hover { background:#dfff21; cursor:pointer; }
 .account-controls button:disabled { opacity:.5; }
@@ -10,7 +13,8 @@ body.browse-preview .submission-account { border:1px solid var(--ui-line); paddi
 .submission-account article span { margin:0 12px; color:#69736d; }
 #review-status,#account-status { white-space:pre-wrap; }
 .review-tools { display:flex; flex-wrap:wrap; gap:10px; margin:20px 0; }
-.review-card { padding:24px 0; border-bottom:1px solid #d8ddd8; }
+.review-card { padding:24px 0; border-bottom:1px solid #d8ddd8; overflow-wrap:anywhere; }
+.review-card textarea { width:100%; box-sizing:border-box; }
 .review-card h2 { font-size:24px; }
 .review-card label { display:grid; gap:8px; margin:16px 0; }
 .review-card textarea { font:inherit; max-width:600px; }

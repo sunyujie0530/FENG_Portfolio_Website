@@ -71,6 +71,7 @@ export function mountDiscRoom({ host, student, studentIndex, students, works, st
     }).join('');
     if (pool.length) select(selectedWork());
     else {
+      discs.innerHTML = '<p class="cd-empty">这位学生还没有收录作品。<br>可在右上方切换到“全部作品”继续浏览。</p>';
       status.textContent = '可切换到全部作品光盘库继续浏览。';
     }
   };

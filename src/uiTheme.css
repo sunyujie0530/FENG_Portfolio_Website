@@ -40,7 +40,7 @@ body.browse-preview #page-location {
   font:400 11px/1.5 var(--ui-font); letter-spacing:.08em; pointer-events:none;
 }
 body.browse-preview .student-landing[data-directory="true"] .landing-heading { transform:translateY(30px); }
-body.browse-preview #browse:has(> .breadcrumbs) { padding-top:64px; }
+body.browse-preview #browse:has(> .breadcrumbs),body.browse-preview #browse:has(> .back-link) { padding-top:112px; }
 body.browse-preview.is-disc-room .cd-room-header { top:66px; }
 body.browse-preview.is-work-detail .work-detail__back { left:4vw; right:auto; }
 body.browse-preview.is-work-detail .work-detail { z-index:3; }
@@ -52,8 +52,8 @@ body.browse-preview .submit-view .portal-shell { width:min(560px,40vw); margin:0
 body.browse-preview .close-submit { display:none; }
 @media(max-width:720px) {
   body.browse-preview .submit-view { background:#fff; }
-  body.browse-preview .submit-view .portal-shell { width:90vw; margin:0 5vw; padding:18px 16px 80px; }
-  body.browse-preview .submit-view .deco-picker { position:relative; inset:auto; width:90vw; margin:72px 5vw 24px; }
+  body.browse-preview .submit-view .portal-shell { width:90%; margin:0 5%; padding:18px 16px 100px; }
+  body.browse-preview .submit-view .deco-picker { position:relative; inset:auto; width:90%; margin:96px 5% 24px; }
 }
 @media(max-width:600px) {
   body.browse-preview.is-submit #top-nav { height:64px; padding:0 5vw; gap:10px; }
@@ -61,6 +61,14 @@ body.browse-preview .close-submit { display:none; }
   body.browse-preview .close-submit { top:78px; }
   body.browse-preview .submit-back { top:110px; left:5vw; right:auto; }
   body.browse-preview.is-work-detail .work-detail__back { top:110px; left:5vw; right:auto; }
+  body.browse-preview.is-submit #top-nav #nav-submit,
+  body.browse-preview.is-work-detail #top-nav #nav-submit,
+  body.browse-preview:has(#browse:not([hidden]) #my-works-account) #top-nav #nav-submit { top:110px; bottom:auto; right:5vw; width:auto; padding:8px 12px; border:1px solid var(--ui-line); background:#fff; }
+  body.browse-preview.is-submit #nav-submit img,
+  body.browse-preview.is-work-detail #nav-submit img,
+  body.browse-preview:has(#browse:not([hidden]) #my-works-account) #nav-submit img { display:none; }
+  body.browse-preview.is-work-detail .work-detail__back { max-width:calc(100vw - 150px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  body.browse-preview.is-submit .deco-drum { height:112px; }
 }
 
 /* State variables let every control share feedback without overriding its geometry. */
@@ -265,7 +273,7 @@ body.browse-preview .breadcrumbs > :is(a,span) {
 body.browse-preview :is(.breadcrumbs a,.author-link,.project-card h2 a,.section-heading a):hover { color:var(--ui-ink); background:var(--ui-accent); text-decoration:none; }
 body.browse-preview .project-cover { border:1px solid var(--ui-line); border-radius:var(--ui-radius); }
 body.browse-preview .project-cover:hover { outline:2px solid var(--ui-accent); outline-offset:2px; border-color:var(--ui-ink); }
-body.browse-preview .project-cover span { color:var(--ui-ink); background:var(--ui-accent); border:1px solid var(--ui-ink); border-radius:var(--ui-radius); }
+body.browse-preview .project-cover span:not(.cd-case) { color:var(--ui-ink); background:var(--ui-accent); border:1px solid var(--ui-ink); border-radius:var(--ui-radius); }
 body.browse-preview :is(.profile-number,.detail-cover,.detail-gallery img) { border-radius:var(--ui-radius); }
 body.browse-preview .profile-number { border:1px solid var(--ui-ink); font-family:var(--ui-mono); }
 body.browse-preview .about-view { background:var(--ui-paper); color:var(--ui-ink); }

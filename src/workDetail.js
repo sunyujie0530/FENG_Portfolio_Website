@@ -40,7 +40,7 @@ export function createWorkDetail(onBack) {
   panel.querySelector('button').addEventListener('click', onBack);
   panel.querySelector('a').addEventListener('click', (event) => {
     event.preventDefault();
-    panel.scrollTo({ top: innerHeight, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    panel.scrollTo({ top: panel.querySelector('.work-detail__content').offsetTop, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   });
   return panel;
 }

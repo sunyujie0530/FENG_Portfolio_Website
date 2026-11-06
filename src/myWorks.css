@@ -1,5 +1,7 @@
 .my-works-heading { display:flex; align-items:center; justify-content:space-between; gap:24px; margin:20px 0 36px; }
 .my-works-heading h1,.my-works-heading h2 { margin:8px 0; }
+.my-works-heading > div { min-width:0; overflow-wrap:anywhere; }
+.my-works-heading > button { flex-shrink:0; }
 .my-works-toolbar,.my-works-toolbar > div,.edit-actions { display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
 .my-works-toolbar { justify-content:space-between; margin-bottom:24px; }
 .my-works-toolbar button,.my-works-heading button,.edit-actions button { font:inherit; color:inherit; background:#fff; border:1px solid #aeb7b1; padding:10px 16px; cursor:pointer; }
@@ -16,6 +18,8 @@
 .work-editor { display:grid; gap:24px; }
 .work-editor label { display:grid; gap:10px; font-size:15px; }
 .edit-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+.edit-grid > label,.edit-media-grid > label,.my-work-card > div { min-width:0; overflow-wrap:anywhere; }
+.work-editor input[type="file"] { min-width:0; max-width:100%; }
 .work-editor input:not([type="checkbox"]),.work-editor select,.work-editor textarea { box-sizing:border-box; width:100%; padding:12px; border:1px solid #aeb7b1; background:white; color:inherit; font:inherit; }
 .edit-media-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
 .edit-previews { display:flex; flex-wrap:wrap; gap:10px; }

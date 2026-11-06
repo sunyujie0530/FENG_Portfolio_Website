@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import * as THREE from 'three';
+import { createCdCase } from '../src/cdCase.js';
+
+const texture=new THREE.Texture();
+const model=createCdCase({cover:texture});
+const size=new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3());
+assert.ok(Math.abs(size.x-2.84)<.03);
+assert.ok(Math.abs(size.y-2.5)<.03);
+assert.ok(size.z<.25,'The case keeps a slim jewel-case profile');
+for(const name of ['front-cover','back-cover','printed-cd','clear-inner-tray','hinged-lid','tray-center-spindle'])assert.ok(model.getObjectByName(name),name);
+for(const material of model.userData.artMaterials)assert.equal(material.map,texture);
+assert.equal(model.userData.disc.getObjectByName('printed-cd'),model.getObjectByName('printed-cd'));
+model.traverse(node=>assert.ok(!node.isLineSegments,'The clear case has no dark drawn outline'));
+const paper=model.getObjectByName('front-cover');
+const closedPosition=paper.getWorldPosition(new THREE.Vector3());
+model.userData.lid.rotation.y=-Math.PI;
+model.updateMatrixWorld(true);
+const openPosition=paper.getWorldPosition(new THREE.Vector3());
+assert.ok(openPosition.x<closedPosition.x-2,'The cover opens to the left around its hinge');
+assert.equal(createCdCase({opening:10}).userData.lid.rotation.y,-Math.PI);
+assert.ok(createCdCase({opening:-1}).userData.lid.rotation.y===0);
+console.log('CD jewel case: proportions, image materials, interior assembly and left hinge passed.');

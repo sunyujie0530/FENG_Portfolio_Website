@@ -11,7 +11,7 @@ import { createShiDaoDetail } from './shiDaoDetail.js';
 import { createSlimeDetail } from './slimeDetail.js';
 import { mountDiscRoom } from './discRoom.js';
 import { initStudentLanding, cdIntroMarkup, homeAboutMarkup } from './studentLanding.js';
-import { showWorkDisc, showPublishedWorkDisc } from './worksDiscs.js';
+import { showWorkDisc, showPublishedWorkDisc, waitForWorkDisc } from './worksDiscs.js';
 import { navigationGuide } from './navigationGuide.js';
 import { backendConfigured, publishedCatalog, signedFiles } from './submissionBackend.js';
 import { publishedWork, escapeHtml, syncPublishedStudents, studentPath } from './submissionData.js';
@@ -52,7 +52,7 @@ const authorLinks = (work) => work.uploaded ? `<a class="author-link" href="/cre
 function card(work) {
   const title = escapeHtml(work.title), cover = escapeHtml(work.cover), id = escapeHtml(work.id);
   return `<article class="project-card" style="--author:${colorOf(work)}">
-    <a class="project-cover" href="/works/${id}" aria-label="查看${title}作品详情"><i class="record-disc" aria-hidden="true"></i><img src="${cover}" alt="${title}封面" loading="lazy"></a>
+    <a class="project-cover" href="/works/${id}" aria-label="查看${title}作品详情"><span class="cd-case"><img src="${cover}" crossorigin="anonymous" alt="${title}封面" loading="lazy"><i class="cd-case-frame" aria-hidden="true"></i></span></a>
     <div class="project-meta"><span>${kinds[work.kind]}</span></div>
     <h2><a href="/works/${id}">${title}</a></h2><div class="project-authors">${authorLinks(work)}</div>
   </article>`;
@@ -111,6 +111,7 @@ export function initBrowse(showScene, { plain = false } = {}) {
   let returning = false;
   let lockerContext = { studentIndex: null, card: false };
   let extractingRecord = false;
+  let caseReturn=null,closingCase=false;
   const discStates = new Map();
   let disposeDiscRoom = () => {};
   let disposeReview = () => {};
@@ -120,7 +121,7 @@ export function initBrowse(showScene, { plain = false } = {}) {
   let catalogVersion = 0;
   const move = (path, { replace = false, state = {} } = {}) => {
     if (path === '/about') path = '/#about';
-    if (path === location.pathname) { root.scrollTop = 0; if (path === '/') window.dispatchEvent(new Event('browse-home')); else if (path === '/students') window.dispatchEvent(new Event('browse-overview')); return; }
+    if (path === location.pathname) { root.scrollTop = 0; if (path === '/') {if(location.hash)history.replaceState(history.state,'','/');window.dispatchEvent(new Event('browse-home'));} else if (path === '/students') window.dispatchEvent(new Event('browse-overview')); return; }
     if (location.pathname === '/works') listScroll = root.scrollTop;
     if (location.pathname === '/students') history.replaceState({ ...history.state, lockerIndex: lockerContext.studentIndex }, '', location.href);
     const uploadFlow = ['/submit','/my-works','/review'];
@@ -149,6 +150,36 @@ export function initBrowse(showScene, { plain = false } = {}) {
       returning = true;
       history.back();
     } else move(path, { replace: true, state });
+  };
+  const returnFromCase=async(back,alreadyNavigated=false)=>{
+    if(closingCase)return;
+    if(plain || back!=='/works' || !caseReturn || caseReturn.path!==(alreadyNavigated?current:location.pathname)){
+      if(alreadyNavigated)render();else goBack(back);
+      return;
+    }
+    closingCase=true;
+    const entry=caseReturn;
+    const origin=location.pathname;
+    try{
+      const {playCdCaseTransition}=await import('./cdCaseTransition.js');
+      if(location.pathname!==origin)return;
+      const revealShelf=async()=>{
+        if(alreadyNavigated)render();
+        else if(history.state?.from===back){
+          const changed=new Promise(resolve=>window.addEventListener('popstate',resolve,{once:true}));
+          goBack(back);await changed;
+        }else goBack(back);
+        if(location.pathname!==back)return null;
+        await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+        const link=[...root.querySelectorAll('a.project-cover')].find(link=>new URL(link.href).pathname===entry.path);
+        return link?.querySelector('.cd-case');
+      };
+      await playCdCaseTransition(entry.element,revealShelf,{reverse:true,rect:entry.rect});
+      if(!alreadyNavigated && location.pathname===origin)goBack(back);
+    }catch(error){
+      console.warn('CD 盒退出过渡无法显示，直接返回作品列表',error.message);
+      if(alreadyNavigated)render();else if(location.pathname===origin)goBack(back);
+    }finally{closingCase=false;}
   };
   const crumbs = (parts) => `<nav class="breadcrumbs" aria-label="当前位置"><a href="/">首页</a>${parts.map(([label, href]) => `<span>/</span>${href ? `<a href="${href}">${label}</a>` : `<span aria-current="page">${label}</span>`}`).join('')}</nav>`;
   const syncPageGuide = () => {
@@ -247,7 +278,7 @@ export function initBrowse(showScene, { plain = false } = {}) {
       const backLabel = back === '/works' ? '全部作品' : back.startsWith('/creators/') ? `${STUDENTS.find(s => back.includes(s.creatorId))?.name || '作者'}的${back.endsWith('/discs') ? '光盘库' : '主页'}` : `${STUDENTS[Number(back.split('/')[2]) - 1]?.name || '学生'}的${back.endsWith('/discs') ? '光盘库' : '主页'}`;
       root.innerHTML = '';
       if (plain) {
-        const onBack = () => goBack(back);
+        const onBack = () => returnFromCase(back);
         const panel = work.uploaded ? createPublishedDetail(work,onBack) : standardWorkLayout(work.factory(onBack),WORKS.indexOf(work));
         root.append(panel);
         panel.hidden = false;
@@ -257,9 +288,9 @@ export function initBrowse(showScene, { plain = false } = {}) {
         panel.querySelector('.work-detail__intro').insertAdjacentHTML('afterbegin',`<img class="plain-cover" src="${escapeHtml(work.cover)}" alt="${escapeHtml(work.title)}封面">`);
       } else try {
         if (work.uploaded) {
-          showPublishedWorkDisc(work, () => goBack(back), backLabel);
+          showPublishedWorkDisc(work, () => returnFromCase(back), backLabel);
         } else {
-          showWorkDisc(work.id === 'slime-runner' ? 19 : WORKS.indexOf(work), () => goBack(back), backLabel, work.authors.map(index => STUDENTS[index]));
+          showWorkDisc(work.id === 'slime-runner' ? 19 : WORKS.indexOf(work), () => returnFromCase(back), backLabel, work.authors.map(index => STUDENTS[index]));
         }
       } catch (error) {
         console.error('作品三维显示失败，切换图文浏览', error);
@@ -304,7 +335,8 @@ export function initBrowse(showScene, { plain = false } = {}) {
     if (!path) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    move(path);
+    if(path==='/works' && caseReturn?.path===location.pathname)returnFromCase('/works');
+    else move(path);
   }, true);
   const leaveSubmit = event => { event.stopImmediatePropagation(); goBack(submitOrigin); };
   document.querySelector('#close-submit').addEventListener('click', leaveSubmit, true);
@@ -320,21 +352,27 @@ export function initBrowse(showScene, { plain = false } = {}) {
     }
     if (url.pathname !== '/' && !/^\/(students|works|creators)(\/|$)/.test(url.pathname) && !['/submit','/review','/my-works'].includes(url.pathname)) return;
     event.preventDefault();
-    const record = link.closest('#project-results .project-card')?.querySelector('.record-disc');
+    const record = link.closest('#project-results .project-card')?.querySelector('.cd-case');
     if (record && url.pathname.startsWith('/works/')) {
       if (extractingRecord) return;
       extractingRecord = true;
       const article = record.closest('.project-card');
       article.classList.add('is-extracting');
       const origin = location.pathname;
+      const entry={path:url.pathname,element:record,rect:record.getBoundingClientRect()};
       try {
-        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          await record.animate([
-            { transform: 'translateX(0) rotate(0)' },
-            { transform: 'translateX(62%) rotate(12deg)' },
-          ], { duration: 580, easing: 'cubic-bezier(.22,.61,.36,1)', fill: 'forwards' }).finished;
-        }
-        if (location.pathname === origin && link.isConnected) move(url.pathname);
+        let completed=true;
+        try {
+          const {playCdCaseTransition}=await import('./cdCaseTransition.js');
+          const enterDetail=async () => {
+            if (location.pathname!==origin || !link.isConnected) return;
+            caseReturn=entry;
+            move(url.pathname);
+            if (!plain) await waitForWorkDisc();
+          };
+          completed=location.pathname===origin && link.isConnected && await playCdCaseTransition(record,enterDetail);
+        } catch(error) { console.warn('CD 盒过渡无法显示，直接打开作品',error.message); }
+        if (completed && location.pathname === origin && link.isConnected) {caseReturn=entry;move(url.pathname);}
       } finally {
         article.classList.remove('is-extracting');
         extractingRecord = false;
@@ -364,11 +402,14 @@ export function initBrowse(showScene, { plain = false } = {}) {
   window.addEventListener('browse-discs', ({ detail }) => {
     if (STUDENTS[detail]) move(`${studentPath(STUDENTS[detail],detail)}/discs`);
   });
-  window.addEventListener('popstate', render);
+  window.addEventListener('popstate',()=>{
+    if(!closingCase && caseReturn && current===caseReturn.path && location.pathname==='/works')returnFromCase('/works',true);
+    else render();
+  });
   window.addEventListener('keydown', (event) => {
     if (document.body.classList.contains('is-disc-room')) return;
     if (event.key !== 'Escape' || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
-    if (location.pathname.startsWith('/works/')) goBack(detailOrigin);
+    if (location.pathname.startsWith('/works/')) {event.preventDefault();event.stopImmediatePropagation();returnFromCase(detailOrigin);}
     else if (/^\/(students|creators)\//.test(location.pathname)) goBack('/students', { lockerIndex: STUDENTS.findIndex((s,i) => studentPath(s,i) === location.pathname.replace(/\/discs$/, '')) });
   });
   const refreshCatalog = async () => {
