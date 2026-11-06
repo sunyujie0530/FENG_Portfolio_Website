@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-const read = file => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+const read = file => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8').replace(/\r\n/g,'\n');
 const html = read('index.html');
 assert.ok(html.includes('id="locker-overview"'));
 assert.ok(!html.includes('id="locker-student-name"'));

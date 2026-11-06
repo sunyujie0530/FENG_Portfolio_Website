@@ -17,7 +17,8 @@ for (let i = 1; i <= 100; i++) {
   previous = next;
 }
 for (const file of ['back', 'visual-2', 'visual-3', 'key-visual']) {
-  const data = readFileSync(new URL(`../public/assets/works/clay-doll/${file}.png`, import.meta.url));
-  assert.equal(data.subarray(1, 4).toString(), 'PNG');
+  const data = readFileSync(new URL(`../public/assets/works/clay-doll/${file}.webp`, import.meta.url));
+  assert.equal(data.subarray(8, 12).toString(), 'WEBP');
+  assert.ok(data.length < 500000, 'Detail images stay below 500 KB');
 }
-console.log('Work detail: staged/reversible motion and all four PNG assets passed.');
+console.log('Work detail: staged/reversible motion and all four compressed WebP assets passed.');

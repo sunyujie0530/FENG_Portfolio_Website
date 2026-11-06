@@ -1330,7 +1330,7 @@ function createIdBadge() {
   );
   portrait.position.set(0.16, 0.01, faceZ + 0.014);
   badge.add(portrait);
-  new THREE.TextureLoader().load('/assets/studio-portrait.png', (tex) => {
+  new THREE.TextureLoader().load('/assets/studio-portrait.webp', (tex) => {
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = 8;
     portrait.material.map = tex;
@@ -1549,7 +1549,7 @@ function createExpandedIdBadge() {
   portrait.position.set(0.79, -0.02, 0.105);
   portrait.rotation.z = -0.055;
   holder.add(portrait);
-  new THREE.TextureLoader().load('/assets/studio-portrait.png', (texture) => {
+  new THREE.TextureLoader().load('/assets/studio-portrait.webp', (texture) => {
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = 8;
     portrait.material.map = texture;

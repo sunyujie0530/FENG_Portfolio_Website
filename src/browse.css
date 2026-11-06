@@ -1,4 +1,11 @@
 /* Shared public information stays consistent around each creator's work. */
+.no-webgl #stage { display:none; }
+.no-webgl #top-nav { visibility:visible !important; pointer-events:auto; }
+.no-webgl #browse > ul { line-height:2.5; }
+.no-webgl .work-detail__intro { width:100%; }
+.no-webgl .work-detail__hero { min-height:auto; padding:120px 5vw 40px; }
+.no-webgl .plain-cover { display:block; max-width:100%; width:480px; height:auto; margin-bottom:32px; }
+.graphics-status { position:fixed; top:80px; left:5vw; right:5vw; z-index:100; padding:12px; background:#fff; color:#171a17; border:1px solid #aeb7b1; }
 body.browse-preview { --ink:#252b25; --muted:#6c7369; --paper:#f7f8f4; --line:#dde1d7; font-family:"PingFang SC","Hiragino Sans GB",sans-serif; color:var(--ink); background:var(--paper); }
 .browse-preview a { color:inherit; text-decoration:none; }
 .browse-preview button,.browse-preview input { font:inherit; }

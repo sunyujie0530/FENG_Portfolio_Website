@@ -16,11 +16,13 @@ export async function currentUser() {
 export async function isAdmin() {
   return backend && await currentUser() ? Boolean(checked(await backend.rpc('is_submission_admin'))) : false;
 }
-export async function signedFiles(files) {
-  return Promise.all(files.map(async file => ({ ...file,
-    url:checked(await backend.storage.from('submissions').createSignedUrl(file.path, 300,
-      file.kind === 'document' ? { download:'作品资料.pdf' } : {})).signedUrl,
-  })));
+export async function signedFiles(files, force = false) {
+  return Promise.all(files.map(async file => {
+    if (!force && file.url && file.expiresAt > Date.now() + 60000) return file;
+    const signed = checked(await backend.storage.from('submissions').createSignedUrl(file.path, 300,
+      file.kind === 'document' ? { download:'作品资料.pdf' } : {}));
+    return { ...file, url:signed.signedUrl, expiresAt:Date.now() + 300000 };
+  }));
 }
 export async function publishedCatalog() {
   if (!backend) return [];

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8').replace(/\r\n/g,'\n');
 
 assert.ok(main.includes("badge.name = 'expanded-id-badge'"));
 assert.ok(main.includes("style: 'studio-card-blue-pink'"));
