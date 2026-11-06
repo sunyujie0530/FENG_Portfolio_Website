@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 const source = readFileSync(new URL('../src/introMarquee.js', import.meta.url), 'utf8')
-  .replace(/^import .*;\n/gm, '').replace(/export function /g, 'function ');
+  .replace(/^import .*;\r?\n/gm, '').replace(/export function /g, 'function ');
 
 const listeners = new Map();
 const classes = new Set();

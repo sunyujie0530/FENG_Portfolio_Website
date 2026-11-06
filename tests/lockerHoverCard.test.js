@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8').replace(/\r\n/g,'\n');
+const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8').replace(/\r\n/g,'\n');
 
 assert.ok(html.includes('id="locker-hover-card"'));
 assert.ok(main.includes('STUDENTS[index].name'));

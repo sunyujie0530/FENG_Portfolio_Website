@@ -3,9 +3,14 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { escapeHtml } from '../src/submissionData.js';
 
+const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+assert.ok(!html.includes('id="intro"'), 'The retired welcome screen must not appear before the homepage loads.');
+const introCss = readFileSync(new URL('../src/introMarquee.css', import.meta.url), 'utf8');
+assert.match(introCss, /body\s*\{[^}]*background:\s*#fff;/, 'Startup background stays white while JavaScript initializes.');
+
 const source = readFileSync(new URL('../src/browse.js', import.meta.url), 'utf8');
 const render = source.slice(source.indexOf('const render = () =>'));
-assert.ok(render.indexOf("landing.hidden = mode !== 'students'") < render.indexOf("setLandingActive(mode === 'students')"), 'Show landing before measuring its text.');
+assert.ok(render.indexOf("landing.hidden = mode !== 'students'") < render.indexOf("setLandingActive(mode === 'students' && !plain)"), 'Show landing before measuring its text.');
 assert.ok(!source.includes("crumbs([['全部作品']])"));
 assert.ok(!source.includes('id="student-home-back"'));
 assert.ok(source.includes('src="/assets/upload-folder.png" alt=""'));

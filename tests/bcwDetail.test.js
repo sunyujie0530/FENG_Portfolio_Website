@@ -12,7 +12,7 @@ assert.ok(panel.innerHTML.includes('策划：陈嘉伟'));
 assert.equal((panel.innerHTML.match(/这是一款本地双人合作闯关游戏/g) || []).length, 1);
 assert.equal((panel.innerHTML.match(/<img /g) || []).length, 3);
 assert.ok(panel.innerHTML.includes('<video controls'));
-for (const file of ['scene-1.png', 'back.png', 'scene-3.png', 'demo.mp4']) {
+for (const file of ['scene-1.webp', 'back.webp', 'scene-3.webp', 'demo.mp4']) {
   assert.ok(statSync(new URL(`../public/assets/works/blind-can-walk/${file}`, import.meta.url)).size > 1000);
 }
 const discs = readFileSync(new URL('../src/worksDiscs.js', import.meta.url), 'utf8');

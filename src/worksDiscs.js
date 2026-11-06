@@ -198,6 +198,14 @@ export function initWorks(background = 0xf6f7fa) {
     scene.add(disc);
     discs.push(disc);
   }
+  window.addEventListener('published-media-change', ({ detail: replacements }) => {
+    const disc = discs.find(item => item.userData.uploaded);
+    if (!disc) return;
+    const index = disc.userData.index;
+    COVER_ART[index] = replacements.get(COVER_ART[index]) || COVER_ART[index];
+    BACK_ART[index] = replacements.get(BACK_ART[index]) || BACK_ART[index];
+    disc.userData.loadArt();
+  });
   document.querySelector('.works-filters')?.addEventListener('change', (event) => {
     if (event.target.name !== 'workKind') return;
     workKinds.clear();
@@ -399,6 +407,7 @@ export function initWorks(background = 0xf6f7fa) {
 
     placeDiscs(angle, camera);
     const visible = collectVisibleDiscs();
+    visible.forEach(disc => disc.userData.loadArt?.());
     if (detail) {
       hovered = null;
       hoverDirty = true;
@@ -575,7 +584,7 @@ function placeDiscs(offset, view) {
 function createDisc(index, geometry, palette, hubMaterial, darkHub, rimMaterial, discParts) {
   const group = new THREE.Group();
   const face = new THREE.MeshPhysicalMaterial({
-    map: COVER_ART[index] ? coverTexture(COVER_ART[index]) : faceTexture(palette, 0.17 + index * 0.11),
+    map: COVER_ART[index] ? null : faceTexture(palette, 0.17 + index * 0.11),
     roughness: COVER_ART[index] ? 0.42 : 0.27,
     metalness: 0.03,
     clearcoat: 0.58,
@@ -591,7 +600,6 @@ function createDisc(index, geometry, palette, hubMaterial, darkHub, rimMaterial,
     const vertices = new Set(Array.from(discGeometry.index.array.slice(backGroup.start, backGroup.start + backGroup.count)));
     vertices.forEach((vertex) => uv.setX(vertex, 1 - uv.getX(vertex)));
     const back = face.clone();
-    back.map = coverTexture(BACK_ART[index]);
     materials.push(back);
   }
   const body = new THREE.Mesh(discGeometry, materials);
@@ -635,6 +643,19 @@ function createDisc(index, geometry, palette, hubMaterial, darkHub, rimMaterial,
   group.userData.hover = 0;
   group.userData.glow = glow;
   group.userData.halo = halo;
+  group.userData.loadArt = () => {
+    const url = COVER_ART[index];
+    if (!url || group.userData.artUrl === url) return;
+    group.userData.artUrl = url;
+    face.map?.dispose();
+    face.map = coverTexture(url);
+    face.needsUpdate = true;
+    if (materials[2]) {
+      materials[2].map?.dispose();
+      materials[2].map = coverTexture(BACK_ART[index]);
+      materials[2].needsUpdate = true;
+    }
+  };
   return group;
 }
 
@@ -666,6 +687,14 @@ function coverTexture(url) {
     const h = image.height * scale;
     ctx.drawImage(image, (size - w) / 2, (size - h) / 2, w, h);
     texture.needsUpdate = true;
+    source.dispose();
+  }, undefined, () => {
+    ctx.fillStyle = '#ddd';
+    ctx.font = '36px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('封面暂未加载', size / 2, size / 2);
+    texture.needsUpdate = true;
+    window.dispatchEvent(new Event('signed-media-error'));
   });
   return texture;
 }

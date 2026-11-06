@@ -50,7 +50,7 @@ export function cdIntroMarkup(works) {
     <div class="cd-orbit-stage" style="--orbit-disc-size:${CD_ORBIT_DIAMETER * 100}%;--orbit-elevation:${-CD_ORBIT_ELEVATION}deg;--orbit-perspective:${CD_ORBIT_PERSPECTIVE};--orbit-vertical-scale:${CD_ORBIT_VERTICAL_SCALE}"><div class="cd-orbit-lens"><nav class="cd-orbit" aria-label="学生作品光盘">${works.map((work, index) => {
       const p = cdOrbitPosition(index, works.length);
       return `<a class="cd-orbit-link" href="/works/${work.id}" aria-label="查看作品：${work.title}" style="--orbit-x:${p.x};--orbit-z:${p.z};--orbit-yaw:${p.yaw}deg;--orbit-lean:${p.lean}deg">
-        <span class="cd-orbit-face"><img src="${work.cover}" alt="${work.title}" decoding="async"><i></i></span></a>`;
+        <span class="cd-orbit-face"><img data-src="${work.cover}" alt="${work.title}" loading="lazy" decoding="async"><i></i></span></a>`;
     }).join('')}</nav></div>
     <div class="cd-orbit-copy"><h2 id="home-cd-title">一张 CD，一个作品</h2><p>每张光盘，收录一件学生作品。<br>从游戏、影像到三维与视觉设计，<br>在这里发现创作者的灵感与表达。</p><a class="cd-intro-cta" href="/works">从全部作品开始</a></div></div>
   </section>`;
@@ -124,6 +124,12 @@ export function initStudentLanding(landing) {
     document.body.classList.toggle('is-student-directory', previewStarted);
     savedScroll = previewStarted ? 0 : window.scrollY;
     const scrollProgress = landingFrame(innerWidth, innerHeight, savedScroll - HOME_SECTION_GAP).progress;
+    if (!previewStarted && savedScroll > innerHeight * .5) {
+      cdIntro.querySelectorAll('img[data-src]').forEach(image => {
+        image.src = image.dataset.src;
+        delete image.dataset.src;
+      });
+    }
     const sections = homeSections(innerHeight, savedScroll, about.offsetHeight);
     // Scrolling explores the CD introduction; only the button enters the directory.
     const f = landingFrame(innerWidth, innerHeight, previewStarted ? innerHeight : 0);

@@ -13,9 +13,10 @@ import { mountDiscRoom } from './discRoom.js';
 import { initStudentLanding, cdIntroMarkup, homeAboutMarkup } from './studentLanding.js';
 import { showWorkDisc, showPublishedWorkDisc } from './worksDiscs.js';
 import { navigationGuide } from './navigationGuide.js';
-import { backendConfigured, publishedCatalog } from './submissionBackend.js';
+import { backendConfigured, publishedCatalog, signedFiles } from './submissionBackend.js';
 import { publishedWork, escapeHtml, syncPublishedStudents, studentPath } from './submissionData.js';
-import { creatorView } from './publishedViews.js';
+import { creatorView, createPublishedDetail } from './publishedViews.js';
+import { standardWorkLayout } from './standardWorkLayout.js';
 import { mountMyWorks } from './myWorks.js';
 import { mountReview } from './submissionUi.js';
 
@@ -57,7 +58,7 @@ function card(work) {
   </article>`;
 }
 
-export function initBrowse(showScene) {
+export function initBrowse(showScene, { plain = false } = {}) {
   document.body.classList.add('browse-preview');
   const nav = document.querySelector('#top-nav');
   nav.querySelector('#nav-about').hidden = true;
@@ -81,7 +82,7 @@ export function initBrowse(showScene) {
     <div class="grade-picker"><p class="eyebrow">按入学年级浏览</p><div class="kind-tabs" role="group" aria-label="学生年级筛选"><button type="button" data-grade="all" aria-pressed="true">全部</button><button type="button" data-grade="2024级" aria-pressed="false">2024级</button><button type="button" data-grade="2025级" aria-pressed="false">2025级</button></div></div>
     <nav class="locker-access" aria-label="键盘选择学生">${STUDENTS.map((s, i) => `<a href="/students/${i + 1}" data-student="${i}">${String(i + 1).padStart(2, '0')} · ${s.name} · ${s.grade}</a>`).join('')}</nav>${cdIntroMarkup([...WORKS,
       {...WORKS[0], cover:'/assets/works/wrong-plane/scene-1.png'},
-      {...WORKS[1], cover:'/assets/works/clay-doll/visual-2.png'},
+      {...WORKS[1], cover:'/assets/works/clay-doll/visual-2-thumb.webp'},
     ])}${homeAboutMarkup(STUDENTS)}`;
   document.body.append(landing);
   landing.querySelector('.landing-heading').insertAdjacentHTML('afterbegin', '<p class="eyebrow page-guide landing-page-guide" hidden>学生 / 柜子展厅</p>');
@@ -209,10 +210,11 @@ export function initBrowse(showScene) {
     const student = STUDENTS[studentIndex]?.active !== false ? STUDENTS[studentIndex] : null;
     const mode = path === '/submit' ? 'submit' : path === '/about' ? 'about' : (path === '/' || path === '/students') ? 'students' : 'content';
     showScene(mode);
-    document.body.classList.toggle('browse-content', mode === 'content' && !work);
-    landing.hidden = mode !== 'students';
-    setLandingActive(mode === 'students');
+    document.body.classList.toggle('browse-content', mode === 'content' && (!work || plain));
+    landing.hidden = mode !== 'students' || plain;
+    setLandingActive(mode === 'students' && !plain);
     root.hidden = mode !== 'content' || Boolean(work);
+    if (plain) root.hidden = mode === 'submit' || mode === 'about';
     document.querySelector('#stage').setAttribute('aria-hidden', String(mode === 'content' && !work));
     const activeNav = path === '/' ? 'nav-home' : mode === 'submit' || path === '/review' || path === '/my-works' ? 'nav-submit' : mode === 'about' ? 'nav-about' : (student || discMatch || mode === 'students') ? 'nav-lockers' : 'nav-works';
     nav.querySelectorAll('button').forEach((button) => {
@@ -220,7 +222,9 @@ export function initBrowse(showScene) {
       else button.removeAttribute('aria-current');
     });
     root.style.setProperty('--author', student?.color || (work ? colorOf(work) : '#638251'));
-    if (path === '/my-works') {
+    if (plain && mode === 'students') {
+      root.innerHTML = `<h1 tabindex="-1">学生作品集</h1><p role="status">当前设备暂时无法显示三维场景，已切换为图文浏览。</p><ul>${STUDENTS.flatMap((student,index) => student.active === false ? [] : [`<li><a href="${studentPath(student,index)}">${escapeHtml(student.name)} · ${escapeHtml(student.grade)}</a></li>`]).join('')}</ul><a href="/works">浏览全部作品 →</a>`;
+    } else if (path === '/my-works') {
       disposeMyWorks = mountMyWorks(root);
     } else if (path === '/review') {
       disposeReview = mountReview(root);
@@ -240,23 +244,47 @@ export function initBrowse(showScene) {
     } else if (work) {
       detailOrigin = history.state?.detailOrigin || '/works';
       const back = /^\/(students\/\d+(\/discs)?|creators\/[0-9a-f-]{36}(\/discs)?)$/.test(detailOrigin) ? detailOrigin : '/works';
-      const backLabel = back === '/works' ? '全部作品' : back.startsWith('/creators/') ? `${STUDENTS.find(s => back.includes(s.creatorId))?.name || '作者'}的${back.endsWith('/discs') ? '光盘库' : '主页'}` : `${STUDENTS[Number(back.split('/')[2]) - 1].name}的${back.endsWith('/discs') ? '光盘库' : '主页'}`;
+      const backLabel = back === '/works' ? '全部作品' : back.startsWith('/creators/') ? `${STUDENTS.find(s => back.includes(s.creatorId))?.name || '作者'}的${back.endsWith('/discs') ? '光盘库' : '主页'}` : `${STUDENTS[Number(back.split('/')[2]) - 1]?.name || '学生'}的${back.endsWith('/discs') ? '光盘库' : '主页'}`;
       root.innerHTML = '';
-      if (work.uploaded) {
-        showPublishedWorkDisc(work, () => goBack(back), backLabel);
-      } else {
-        showWorkDisc(work.id === 'slime-runner' ? 19 : WORKS.indexOf(work), () => goBack(back), backLabel, work.authors.map(index => STUDENTS[index]));
+      if (plain) {
+        const onBack = () => goBack(back);
+        const panel = work.uploaded ? createPublishedDetail(work,onBack) : standardWorkLayout(work.factory(onBack),WORKS.indexOf(work));
+        root.append(panel);
+        panel.hidden = false;
+        panel.style.opacity = '1';
+        panel.style.pointerEvents = 'auto';
+        panel.querySelector('.work-detail__back').textContent = `← 返回${backLabel}`;
+        panel.querySelector('.work-detail__intro').insertAdjacentHTML('afterbegin',`<img class="plain-cover" src="${escapeHtml(work.cover)}" alt="${escapeHtml(work.title)}封面">`);
+      } else try {
+        if (work.uploaded) {
+          showPublishedWorkDisc(work, () => goBack(back), backLabel);
+        } else {
+          showWorkDisc(work.id === 'slime-runner' ? 19 : WORKS.indexOf(work), () => goBack(back), backLabel, work.authors.map(index => STUDENTS[index]));
+        }
+      } catch (error) {
+        console.error('作品三维显示失败，切换图文浏览', error);
+        plain = true;
+        document.body.classList.add('no-webgl');
+        render();
+        return;
       }
-    } else if (mode === 'content') {
+    } else if (path === '/works') {
       root.innerHTML = `<header class="collection-heading"><div><p class="eyebrow page-guide">全部作品 / 分类浏览与检索</p><h1 tabindex="-1">创作，正在发生<span>。</span></h1><p>游戏、角色、场景与影像。找到你感兴趣的作品，直接进入创作现场。</p></div><span class="collection-total">${WORKS.length.toString().padStart(2, '0')}<small>件已收录作品</small></span></header>
         <div class="collection-tools"><div class="kind-tabs" role="group" aria-label="按作品类型筛选">${Object.entries(kinds).map(([key, label]) => `<button type="button" data-kind="${key}" aria-pressed="${key === filter}">${label}</button>`).join('')}</div><label class="search-field"><span>搜索作品或作者</span><input type="search" id="project-search" placeholder="作品名称 / 作者" aria-label="搜索作品或作者"></label></div><p class="result-count" id="result-count" aria-live="polite"></p><div class="project-grid" id="project-results"></div>`;
       root.querySelector('#project-search').value = search;
       renderResults();
       if (backendConfigured && (catalogLoading || catalogError)) root.insertAdjacentHTML('afterbegin', `<p class="backend-load-status" role="status">${catalogLoading ? '正在读取新投稿…' : `新投稿读取失败：${escapeHtml(catalogError)} <button type="button" data-reload-catalog>重试</button>`}</p>`);
+    } else if (mode === 'content') {
+      root.innerHTML = '<h1 tabindex="-1">未找到页面</h1><p>这个作品或学生链接不存在，或内容已经移除。</p><a class="back-link" href="/works">← 返回全部作品</a>';
     }
     document.title = `${path === '/my-works' ? '我的作品' : path === '/review' ? '投稿审核' : creatorMatch && !student ? '创作者作品' : discMatch && STUDENTS[discStudentIndex] ? `${STUDENTS[discStudentIndex].name}的作品光盘库` : student?.name || work?.title || (mode === 'students' ? '学生展厅' : mode === 'about' ? '关于' : mode === 'submit' ? '作品投稿' : '全部作品')} · FENG`;
     if (mode === 'students') syncLandingNav();
     else syncPageGuide();
+    if (root.querySelector('h1')?.textContent === '未找到页面') {
+      document.title = '未找到页面 · FENG';
+      pageGuide.textContent = '未找到页面';
+      pageGuide.hidden = false;
+    }
     root.scrollTop = path === '/works' ? listScroll : 0;
     if (current && !work) {
       const focusTarget = path === '/works' && restoreFocus ? root.querySelector(`a[href="${restoreFocus}"]`) : root.querySelector('h1');
@@ -371,6 +399,48 @@ export function initBrowse(showScene) {
       }
     }
   };
+  let mediaRefresh, lastMediaRetry = 0;
+  const renewMedia = (force = false) => {
+    if (!backendConfigured || mediaRefresh) return mediaRefresh;
+    const works = WORKS.filter(work => work.uploaded && (force || work.files.some(file => file.expiresAt <= Date.now() + 60000)));
+    if (!works.length) return;
+    mediaRefresh = Promise.all(works.map(async work => {
+      const previous = work.files;
+      const files = await signedFiles(previous,force);
+      return {work,previous,files};
+    })).then(groups => {
+      const replacements = new Map(groups.flatMap(({work,previous,files}) => {
+        work.files = files;
+        work.cover = files.find(file => file.kind === 'cover').url;
+        return files.map((file,index) => [previous[index].url,file.url]);
+      }));
+      document.querySelectorAll('img[src],a[href],.cd-art').forEach(element => {
+        for (const attribute of ['src','href']) {
+          const replacement = replacements.get(element.getAttribute(attribute));
+          if (replacement) element.setAttribute(attribute,replacement);
+        }
+        if (element.matches('.cd-art')) {
+          for (const [oldUrl,newUrl] of replacements) element.style.backgroundImage = element.style.backgroundImage.replace(oldUrl,newUrl);
+        }
+      });
+      window.dispatchEvent(new CustomEvent('published-media-change',{detail:replacements}));
+    }).catch(error => console.warn('作品图片链接续期失败，可稍后重试',error.message))
+      .finally(() => { mediaRefresh = null; });
+    return mediaRefresh;
+  };
+  const retryMedia = () => {
+    if (Date.now() - lastMediaRetry < 60000) return;
+    lastMediaRetry = Date.now();
+    renewMedia(true);
+  };
+  if (backendConfigured) {
+    setInterval(() => { if (!document.hidden) renewMedia(); },30000);
+    document.addEventListener('visibilitychange',() => { if (!document.hidden) renewMedia(); });
+    document.addEventListener('error',event => {
+      if (event.target.tagName === 'IMG' && WORKS.some(work => work.uploaded && work.files.some(file => file.url === event.target.src))) retryMedia();
+    },true);
+    window.addEventListener('signed-media-error',retryMedia);
+  }
   window.addEventListener('published-catalog-change',refreshCatalog);
   if (!/^\/(students(\/\d+(\/discs)?)?|works(\/[^/]+)?|creators\/[0-9a-f-]{36}(\/discs)?|submit|review|my-works|about)?$/.test(location.pathname)) history.replaceState({}, '', '/');
   render();

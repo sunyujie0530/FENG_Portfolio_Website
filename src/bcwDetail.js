@@ -1,4 +1,4 @@
-export const BCW_BACK = '/assets/works/blind-can-walk/back.png';
+export const BCW_BACK = '/assets/works/blind-can-walk/back.webp';
 
 export function createBcwDetail(onBack) {
   const panel = document.createElement('article');
@@ -16,9 +16,9 @@ export function createBcwDetail(onBack) {
       </div>
       <div class="bcw-media">
         <div class="work-detail__gallery">
-          <img src="/assets/works/blind-can-walk/scene-1.png" alt="Blind Can Walk 操作指引场景" loading="lazy">
+          <img src="/assets/works/blind-can-walk/scene-1.webp" alt="Blind Can Walk 操作指引场景" loading="lazy">
           <img src="${BCW_BACK}" alt="Blind Can Walk 悬浮道具场景" loading="lazy">
-          <img src="/assets/works/blind-can-walk/scene-3.png" alt="Blind Can Walk 双人协作场景" loading="lazy">
+          <img src="/assets/works/blind-can-walk/scene-3.webp" alt="Blind Can Walk 双人协作场景" loading="lazy">
         </div>
         <h3>02 视频简介</h3>
         <video controls playsinline preload="none" poster="${BCW_BACK}" aria-label="Blind Can Walk 游戏演示"><source src="/assets/works/blind-can-walk/demo.mp4" type="video/mp4"></video>

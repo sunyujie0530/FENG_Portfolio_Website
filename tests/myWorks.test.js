@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {fileRules,validateFiles,escapeHtml,statusLabels} from '../src/submissionData.js';
 import {validatePublicSupabaseConfig} from '../src/backendConfig.js';
-const ui = readFileSync(new URL('../src/myWorks.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replace(/export /g,'');
+const ui = readFileSync(new URL('../src/myWorks.js',import.meta.url),'utf8').replace(/\r\n/g,'\n').replace(/^import .*;\n/gm,'').replace(/export /g,'');
 const view = vm.createContext({e:escapeHtml,statusLabels,fileRules});
 vm.runInContext(ui+'\nthis.editor=editorMarkup;this.current=currentVersions;',view);
 const files = ['avatar','cover','gallery','gallery','gallery'].map((kind,i)=>({kind,mime:'image/png',bytes:1024,path:`original/${i}`,url:`/image-${i}.png`}));
@@ -27,7 +27,7 @@ const fake = {
  rpc:async(name,args)=>{calls.push({name,args});return name==='begin_work_revision' ? {data:'revision'} : {data:'revision'};},
  storage:{from:()=>({list:async()=>({data:[]}),remove:async()=>({data:[]}),download:async path=>{downloads.push(path);return {data:{blob:true}};},upload:async(path,file)=>{if(failure) return {error:new Error('network')};uploads.push({path,file});return {data:{path}};}})},
 };
-const source = readFileSync(new URL('../src/submissionBackend.js',import.meta.url),'utf8').replace(/^import .*;\n/gm,'').replace(/import\.meta\.env/g,'env').replace(/export /g,'');
+const source = readFileSync(new URL('../src/submissionBackend.js',import.meta.url),'utf8').replace(/\r\n/g,'\n').replace(/^import .*;\n/gm,'').replace(/import\.meta\.env/g,'env').replace(/export /g,'');
 const ctx = vm.createContext({env:{VITE_SUPABASE_URL:'https://example.supabase.co',VITE_SUPABASE_PUBLISHABLE_KEY:'sb_publishable_test'},createClient:()=>fake,fileRules,validateFiles,validatePublicSupabaseConfig});
 vm.runInContext(source+'\nthis.save=saveWorkRevision;',ctx);
 await ctx.save(row,form,null);

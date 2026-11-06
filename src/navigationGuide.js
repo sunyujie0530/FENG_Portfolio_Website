@@ -4,7 +4,7 @@ export function navigationGuide({ path, origin = '/works', studentIndex = null, 
   if (path === '/students') return studentIndex === null ? '学生 / 柜子展厅' : studentTrail(studentIndex) + (card ? ' / 学生卡' : '');
   if (path === '/works') return '全部作品';
   const student = path.match(/^\/students\/(\d+)(?:\/discs)?$/);
-  if (student) return `${studentTrail(Number(student[1]) - 1)} / 作品详情`;
+  if (student) return `${studentTrail(Number(student[1]) - 1)} / ${path.endsWith('/discs') ? '作品光盘库' : '个人主页'}`;
   const creator = path.match(/^\/creators\/([0-9a-f-]{36})(\/discs)?$/);
   if (creator) {
     const index = students.findIndex(student => student.creatorId === creator[1] && student.active !== false);

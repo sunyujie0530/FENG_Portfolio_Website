@@ -42,8 +42,8 @@ const base = '学生 / 柜子展厅 / 王文骥';
 for (const [state, expected] of [
   [{ path: '/students', studentIndex: 3 }, base],
   [{ path: '/students', studentIndex: 3, card: true }, `${base} / 学生卡`],
-  [{ path: '/students/4/discs' }, `${base} / 作品详情`],
-  [{ path: '/students/4' }, `${base} / 作品详情`],
+  [{ path: '/students/4/discs' }, `${base} / 作品光盘库`],
+  [{ path: '/students/4' }, `${base} / 个人主页`],
   [{ path: '/works/barbarian', origin: '/students/4/discs' }, `${base} / 作品详情`],
   [{ path: '/works/barbarian', origin: '/students/4' }, `${base} / 作品详情`],
   [{ path: '/works/barbarian', origin: '/works' }, '全部作品 / 作品详情'],

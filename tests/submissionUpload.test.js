@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import { fileRules,validateFiles } from '../src/submissionData.js';
 import { validatePublicSupabaseConfig } from '../src/backendConfig.js';
 
-const source = readFileSync(new URL('../src/submissionBackend.js',import.meta.url),'utf8')
+const source = readFileSync(new URL('../src/submissionBackend.js',import.meta.url),'utf8').replace(/\r\n/g,'\n')
   .replace(/^import .*;\n/gm,'').replace(/import\.meta\.env/g,'env').replace(/export /g,'');
 const values = {studentName:'学生甲',title:'测试作品',grade:'2025级',category:'3D',year:'2026',roles:'独立完成',summary:'作品介绍。'.repeat(20),lockerNumber:'01',lockerColor:'#9aa3ac',lockerAccent:'#2aa800'};
 const form = {elements:Object.fromEntries(Object.entries(values).map(([name,value]) => [name,{value}]))};
